@@ -1,5 +1,12 @@
 package brazier
 
+import "errors"
+
+// Errors.
+var (
+	ErrKeyNotFound = errors.New("key not found")
+)
+
 // An Item is a key value pair saved in a bucket.
 type Item struct {
 	Key  string
