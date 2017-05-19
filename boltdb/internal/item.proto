@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package internal;
+
+message Item {
+  // @inject_tag: storm:"id,increment"
+  int64 id = 1;
+  // @inject_tag: storm:"unique"
+  string key = 2;
+  bytes data = 3;
+}
