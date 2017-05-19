@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ brazier.Backend = new(Backend)
+
 // NewBackend returns a BoltDB backend.
 func NewBackend(path string) (*Backend, error) {
 	var err error

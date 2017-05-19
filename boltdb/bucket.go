@@ -50,10 +50,15 @@ func (b *Bucket) Save(key string, data []byte) (*brazier.Item, error) {
 		return nil, err
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to commit")
+	}
+
 	return &brazier.Item{
 		Key:  i.Key,
 		Data: i.Data,
-	}, tx.Commit()
+	}, nil
 }
 
 // Get an item by key.

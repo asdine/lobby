@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package internal;
+
+message Bucket {
+  // @inject_tag: storm:"id"
+  string Name = 1;
+  string Backend = 2;
+}

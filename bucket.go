@@ -4,7 +4,9 @@ import "errors"
 
 // Errors.
 var (
-	ErrKeyNotFound = errors.New("key not found")
+	ErrKeyNotFound         = errors.New("key not found")
+	ErrBucketNotFound      = errors.New("bucket not found")
+	ErrBucketAlreadyExists = errors.New("bucket already exists")
 )
 
 // An Item is a key value pair saved in a bucket.
@@ -40,7 +42,7 @@ type Registry interface {
 	// Register a backend under the given name.
 	RegisterBackend(name string, backend Backend)
 	// Create a bucket and register it to the Registry.
-	Create(bucketName, backendName string) error
+	Create(backendName, bucketName string) error
 	// Fetch a bucket directly from the associated Backend.
 	Bucket(name string) (Bucket, error)
 	// Close the registry connection.
