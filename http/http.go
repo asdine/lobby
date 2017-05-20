@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -129,6 +130,7 @@ func NewHandler(r lobby.Registry) http.Handler {
 	router.PUT("/v1/b/:bucket/:key", handler.putItem)
 	router.GET("/v1/b/:bucket/:key", handler.getItem)
 	router.DELETE("/v1/b/:bucket/:key", handler.deleteItem)
+	router.GET("/v1/b/:bucket", handler.listItems)
 	return router
 }
 
@@ -244,6 +246,43 @@ func (h *Handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprout
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
+}
+
+func (h *Handler) listItems(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	b, err := h.registry.Bucket(ps.ByName("bucket"))
+	if err != nil {
+		if err == lobby.ErrBucketNotFound {
+			http.NotFound(w, r)
+			return
+		}
+
+		Error(w, err, http.StatusInternalServerError, h.logger)
+		return
+	}
+
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	perPage, err := strconv.Atoi(r.URL.Query().Get("per_page"))
+	if err != nil || perPage <= 0 {
+		perPage = 20
+	}
+
+	items, err := b.Page(page, perPage)
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.logger)
+		return
+	}
+
+	data, err := ljson.MarshalList(items)
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.logger)
+		return
+	}
+
+	writeRawJSON(w, data, http.StatusOK, h.logger)
 }
 
 // BucketCreationRequest is used to create a bucket.
