@@ -7,7 +7,7 @@ import "types.proto";
 // The Bucket service definition.
 service BucketService {
   // Put user data
-  rpc Put (stream NewItem) returns (Empty) {}
+  rpc Put (stream NewItem) returns (PutSummary) {}
   // Get an item
   rpc Get (Key) returns (Item) {}
   // Delete an item
@@ -16,9 +16,19 @@ service BucketService {
   rpc List (Page) returns (stream Item) {}
 }
 
+// NewItem is used to put an item in a bucket.
 message NewItem {
-  string bucket = 1;
-  Item item = 2;
+  // Item to save in the bucket.
+  Item item = 1;
+
+  // Bucket name.
+  string bucket = 2;
+}
+
+// PutSummary is received in response to a Put route.
+message PutSummary {
+  // The number of items received.
+  int32 item_count = 1;
 }
 
 message Page {
