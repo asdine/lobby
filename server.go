@@ -1,4 +1,4 @@
-package brazier
+package lobby
 
 import "net"
 

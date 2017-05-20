@@ -3,13 +3,15 @@ package boltdb
 import (
 	"time"
 
-	"github.com/asdine/brazier"
-	"github.com/asdine/brazier/boltdb/internal"
+	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/boltdb/internal"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
 )
+
+var _ lobby.Registry = new(Registry)
 
 // NewRegistry returns a BoltDB Registry.
 func NewRegistry(path string) (*Registry, error) {
@@ -29,18 +31,18 @@ func NewRegistry(path string) (*Registry, error) {
 
 	return &Registry{
 		DB:       db,
-		backends: make(map[string]brazier.Backend),
+		backends: make(map[string]lobby.Backend),
 	}, nil
 }
 
 // Registry is a BoltDB registry.
 type Registry struct {
 	DB       *storm.DB
-	backends map[string]brazier.Backend
+	backends map[string]lobby.Backend
 }
 
 // RegisterBackend registers a backend under the given name.
-func (r *Registry) RegisterBackend(name string, backend brazier.Backend) {
+func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
 	r.backends[name] = backend
 }
 
@@ -56,7 +58,7 @@ func (r *Registry) Create(backendName, bucketName string) error {
 
 	err = tx.One("Name", bucketName, &bucket)
 	if err == nil {
-		return brazier.ErrBucketAlreadyExists
+		return lobby.ErrBucketAlreadyExists
 	}
 
 	if err != storm.ErrNotFound {
@@ -77,12 +79,12 @@ func (r *Registry) Create(backendName, bucketName string) error {
 }
 
 // Bucket returns the selected bucket from the Backend.
-func (r *Registry) Bucket(name string) (brazier.Bucket, error) {
+func (r *Registry) Bucket(name string) (lobby.Bucket, error) {
 	var bucket internal.Bucket
 
 	err := r.DB.One("Name", name, &bucket)
 	if err == storm.ErrNotFound {
-		return nil, brazier.ErrBucketNotFound
+		return nil, lobby.ErrBucketNotFound
 	}
 
 	if err != nil {

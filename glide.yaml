@@ -1,4 +1,4 @@
-package: github.com/asdine/brazier
+package: github.com/asdine/lobby
 import:
 - package: github.com/asdine/storm
   version: ^0.8.0

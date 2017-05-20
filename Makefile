@@ -1,4 +1,4 @@
-NAME      := brazier
+NAME      := lobby
 PACKAGES  := $(shell glide novendor)
 
 .PHONY: deps install test testrace bench gen

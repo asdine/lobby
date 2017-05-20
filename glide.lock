@@ -1,5 +1,5 @@
-hash: 72deb9ba2194acf58025504b61bf201bff2355517fe9c9a127fb79292791ea32
-updated: 2017-05-19T19:40:58.889790401+02:00
+hash: 8dbfe70b7e59fb4d85c263cb73bee07c36c75e962e088f3da4dc06598a71fc40
+updated: 2017-05-20T13:15:28.439586769+02:00
 imports:
 - name: github.com/asdine/storm
   version: e8518cc1200f320e508639491f9390b9c7c37970
@@ -23,6 +23,8 @@ imports:
   version: fec3b39b059c0f88fa6b20f5ed012b1aa203a8b4
   subpackages:
   - proto
+- name: github.com/julienschmidt/httprouter
+  version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: golang.org/x/sys

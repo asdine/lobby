@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/asdine/brazier/json"
+	"github.com/asdine/lobby/json"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,6 +34,8 @@ func TestValidateFromBytes(t *testing.T) {
 
 func TestClean(t *testing.T) {
 	require.Equal(t, []byte(``), json.Clean([]byte(``)))
+	require.Equal(t, []byte(``), json.Clean([]byte(`      
+	   `)))
 	require.Equal(t, []byte(`"a b    c"`), json.Clean([]byte(`"a b    c"`)))
 	require.Equal(t, []byte(`"a b    c"`), json.Clean([]byte(`   "a b    c"  `)))
 	require.Equal(t, []byte(`10`), json.Clean([]byte("10\n")))
@@ -44,20 +46,6 @@ func TestClean(t *testing.T) {
 
 
 		`)))
-}
-
-func BenchmarkClean(b *testing.B) {
-	data := []byte(`
-
-		{
-								"the name"       : "  &éà"      , "another     key"   : [ 1,  		10,9, "    str  " ]   }
-
-
-		`)
-
-	for i := 0; i < b.N; i++ {
-		json.Clean(data)
-	}
 }
 
 func TestToValidJSON(t *testing.T) {
@@ -80,6 +68,21 @@ func TestToValidJSON(t *testing.T) {
 	}
 }
 
+func BenchmarkClean(b *testing.B) {
+	data := []byte(`
+
+		{
+								"the name"       : "  &éà"      , "another     key"   : [ 1,  		10,9, "    str  " ]   }
+
+
+		`)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		json.Clean(data)
+	}
+}
+
 func BenchmarkToValidJSON(b *testing.B) {
 	invalidJSON := []byte(`
 
@@ -89,6 +92,7 @@ func BenchmarkToValidJSON(b *testing.B) {
 
 		`)
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		json.ToValidJSONFromBytes(invalidJSON)
 	}

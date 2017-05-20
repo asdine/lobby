@@ -3,8 +3,8 @@ package boltdb_test
 import (
 	"testing"
 
-	"github.com/asdine/brazier"
-	"github.com/asdine/brazier/boltdb"
+	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/boltdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,13 +30,13 @@ func TestRegistry(t *testing.T) {
 		require.NoError(t, err)
 
 		err = r.Create("bolt1", "a")
-		require.Equal(t, brazier.ErrBucketAlreadyExists, err)
+		require.Equal(t, lobby.ErrBucketAlreadyExists, err)
 
 		err = r.Create("bolt1", "b")
 		require.NoError(t, err)
 
 		err = r.Create("bolt2", "a")
-		require.Equal(t, brazier.ErrBucketAlreadyExists, err)
+		require.Equal(t, lobby.ErrBucketAlreadyExists, err)
 	})
 
 	t.Run("bucket", func(t *testing.T) {
@@ -50,10 +50,10 @@ func TestRegistry(t *testing.T) {
 		r.RegisterBackend("bolt2", s)
 
 		b, err := r.Bucket("")
-		require.Equal(t, brazier.ErrBucketNotFound, err)
+		require.Equal(t, lobby.ErrBucketNotFound, err)
 
 		b, err = r.Bucket("a")
-		require.Equal(t, brazier.ErrBucketNotFound, err)
+		require.Equal(t, lobby.ErrBucketNotFound, err)
 
 		err = r.Create("bolt1", "a")
 		require.NoError(t, err)
@@ -70,6 +70,6 @@ func TestRegistry(t *testing.T) {
 		require.NotNil(t, b)
 
 		err = r.Create("bolt2", "a")
-		require.Equal(t, brazier.ErrBucketAlreadyExists, err)
+		require.Equal(t, lobby.ErrBucketAlreadyExists, err)
 	})
 }

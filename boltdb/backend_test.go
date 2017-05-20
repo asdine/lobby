@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/asdine/brazier/boltdb"
+	"github.com/asdine/lobby/boltdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +15,7 @@ type errorHandler interface {
 }
 
 func preparePath(t errorHandler, dbName string) (string, func()) {
-	dir, err := ioutil.TempDir(os.TempDir(), "brazier")
+	dir, err := ioutil.TempDir(os.TempDir(), "lobby")
 	if err != nil {
 		t.Error(err)
 	}

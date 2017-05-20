@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/asdine/brazier"
-	"github.com/asdine/brazier/boltdb"
+	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/boltdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,7 +54,7 @@ func TestBucketGet(t *testing.T) {
 	require.Equal(t, i.Data, j.Data)
 
 	_, err = b.Get("some id")
-	require.Equal(t, brazier.ErrKeyNotFound, err)
+	require.Equal(t, lobby.ErrKeyNotFound, err)
 
 	err = b.Close()
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestBucketDelete(t *testing.T) {
 
 	err = b.Delete(i.Key)
 	require.Error(t, err)
-	require.Equal(t, brazier.ErrKeyNotFound, err)
+	require.Equal(t, lobby.ErrKeyNotFound, err)
 
 	err = b.Close()
 	require.NoError(t, err)

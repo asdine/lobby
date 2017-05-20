@@ -3,14 +3,14 @@ package boltdb
 import (
 	"time"
 
-	"github.com/asdine/brazier"
+	"github.com/asdine/lobby"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
 )
 
-var _ brazier.Backend = new(Backend)
+var _ lobby.Backend = new(Backend)
 
 // NewBackend returns a BoltDB backend.
 func NewBackend(path string) (*Backend, error) {
@@ -39,7 +39,7 @@ type Backend struct {
 }
 
 // Bucket returns the bucket associated with the given id.
-func (s *Backend) Bucket(name string) (brazier.Bucket, error) {
+func (s *Backend) Bucket(name string) (lobby.Bucket, error) {
 	return NewBucket(s.DB.From(name)), nil
 }
 
