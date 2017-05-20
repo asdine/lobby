@@ -48,6 +48,10 @@ func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
 
 // Create a bucket in the registry.
 func (r *Registry) Create(backendName, bucketName string) error {
+	if _, ok := r.backends[backendName]; !ok {
+		return lobby.ErrBackendNotFound
+	}
+
 	tx, err := r.DB.Begin(true)
 	if err != nil {
 		return errors.Wrap(err, "failed to create a transaction")

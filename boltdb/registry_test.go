@@ -23,6 +23,9 @@ func TestRegistry(t *testing.T) {
 		require.NoError(t, err)
 		defer r.Close()
 
+		err = r.Create("bolt1", "a")
+		require.Equal(t, lobby.ErrBackendNotFound, err)
+
 		r.RegisterBackend("bolt1", s)
 		r.RegisterBackend("bolt2", s)
 

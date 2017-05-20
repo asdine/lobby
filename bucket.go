@@ -4,6 +4,7 @@ import "errors"
 
 // Errors.
 var (
+	ErrBackendNotFound     = errors.New("backend not found")
 	ErrKeyNotFound         = errors.New("key not found")
 	ErrBucketNotFound      = errors.New("bucket not found")
 	ErrBucketAlreadyExists = errors.New("bucket already exists")
