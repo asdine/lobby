@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package proto;
+
+import "types.proto";
+
+// The Bucket service definition.
+service BucketService {
+  // Put user data
+  rpc Put (stream NewItem) returns (Empty) {}
+  // Get an item
+  rpc Get (Key) returns (Item) {}
+  // Delete an item
+  rpc Delete (Key) returns (Empty) {}
+  // List the bucket content
+  rpc List (Page) returns (stream Item) {}
+}
+
+message NewItem {
+  string bucket = 1;
+  Item item = 2;
+}
+
+message Page {
+  string bucket = 1;
+  int32 page = 2;
+  int32 perPage = 3;
+}
+
+message Key {
+  string bucket = 1;
+  string key = 2;
+}
+
+message Item {
+  string key = 1;
+  bytes value = 2;
+}

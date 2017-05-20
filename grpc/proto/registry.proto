@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package proto;
+
+import "types.proto";
+
+service RegistryService {
+  rpc Create (NewBucket) returns (Empty) {}
+}
+
+message NewBucket {
+  string name = 1;
+  string backend = 2;
+}
