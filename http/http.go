@@ -106,6 +106,15 @@ func encodeJSON(w http.ResponseWriter, v interface{}, status int, logger *log.Lo
 	}
 }
 
+// encodeJSON encodes v to w in JSON format. Error() is called if encoding fails.
+func writeRawJSON(w http.ResponseWriter, v []byte, status int, logger *log.Logger) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if _, err := w.Write(v); err != nil {
+		Error(w, err, http.StatusInternalServerError, logger)
+	}
+}
+
 // NewHandler instantiates a configured Handler.
 func NewHandler(r lobby.Registry) http.Handler {
 	router := httprouter.New()
@@ -118,6 +127,8 @@ func NewHandler(r lobby.Registry) http.Handler {
 
 	router.POST("/v1/buckets/:backend", handler.createBucket)
 	router.PUT("/v1/b/:bucket/:key", handler.putItem)
+	router.GET("/v1/b/:bucket/:key", handler.getItem)
+	router.DELETE("/v1/b/:bucket/:key", handler.deleteItem)
 	return router
 }
 
@@ -186,7 +197,53 @@ func (h *Handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	encodeJSON(w, item, http.StatusOK, h.logger)
+	writeRawJSON(w, item.Data, http.StatusOK, h.logger)
+}
+
+func (h *Handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	b, err := h.registry.Bucket(ps.ByName("bucket"))
+	if err != nil {
+		if err == lobby.ErrBucketNotFound {
+			http.NotFound(w, r)
+			return
+		}
+
+		Error(w, err, http.StatusInternalServerError, h.logger)
+		return
+	}
+
+	item, err := b.Get(ps.ByName("key"))
+	switch err {
+	case nil:
+		writeRawJSON(w, item.Data, http.StatusOK, h.logger)
+	case lobby.ErrKeyNotFound:
+		http.NotFound(w, r)
+	default:
+		Error(w, err, http.StatusInternalServerError, h.logger)
+	}
+}
+
+func (h *Handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	b, err := h.registry.Bucket(ps.ByName("bucket"))
+	if err != nil {
+		if err == lobby.ErrBucketNotFound {
+			http.NotFound(w, r)
+			return
+		}
+
+		Error(w, err, http.StatusInternalServerError, h.logger)
+		return
+	}
+
+	err = b.Delete(ps.ByName("key"))
+	switch err {
+	case nil:
+		w.WriteHeader(http.StatusNoContent)
+	case lobby.ErrKeyNotFound:
+		http.NotFound(w, r)
+	default:
+		Error(w, err, http.StatusInternalServerError, h.logger)
+	}
 }
 
 // BucketCreationRequest is used to create a bucket.

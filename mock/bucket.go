@@ -38,7 +38,7 @@ func (b *Bucket) Get(key string) (*lobby.Item, error) {
 	b.GetInvoked++
 
 	if b.GetFn != nil {
-		return b.Get(key)
+		return b.GetFn(key)
 	}
 
 	return nil, nil
@@ -49,7 +49,7 @@ func (b *Bucket) Delete(key string) error {
 	b.DeleteInvoked++
 
 	if b.DeleteFn != nil {
-		return b.Delete(key)
+		return b.DeleteFn(key)
 	}
 
 	return nil

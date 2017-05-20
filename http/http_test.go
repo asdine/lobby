@@ -187,3 +187,131 @@ func TestSaveItem(t *testing.T) {
 		require.Equal(t, http.StatusOK, w.Code)
 	})
 }
+
+func TestGetItem(t *testing.T) {
+	t.Run("BucketNotFound", func(t *testing.T) {
+		var registry mock.Registry
+		h := lobbyHttp.NewHandler(&registry)
+
+		registry.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return nil, lobby.ErrBucketNotFound
+		}
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("GET", "/v1/b/bucket/key", nil)
+		h.ServeHTTP(w, r)
+		require.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("KeyNotFound", func(t *testing.T) {
+		var registry mock.Registry
+		h := lobbyHttp.NewHandler(&registry)
+
+		registry.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				GetFn: func(key string) (*lobby.Item, error) {
+					require.Equal(t, "key", key)
+
+					return nil, lobby.ErrKeyNotFound
+				},
+			}, nil
+		}
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("GET", "/v1/b/bucket/key", nil)
+		h.ServeHTTP(w, r)
+		require.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		var registry mock.Registry
+		h := lobbyHttp.NewHandler(&registry)
+
+		registry.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				GetFn: func(key string) (*lobby.Item, error) {
+					require.Equal(t, "key", key)
+
+					return &lobby.Item{
+						Key:  key,
+						Data: []byte(`"hello"`),
+					}, nil
+				},
+			}, nil
+		}
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("GET", "/v1/b/bucket/key", nil)
+		h.ServeHTTP(w, r)
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Equal(t, `"hello"`, w.Body.String())
+	})
+}
+
+func TestDeleteItem(t *testing.T) {
+	t.Run("BucketNotFound", func(t *testing.T) {
+		var registry mock.Registry
+		h := lobbyHttp.NewHandler(&registry)
+
+		registry.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return nil, lobby.ErrBucketNotFound
+		}
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("DELETE", "/v1/b/bucket/key", nil)
+		h.ServeHTTP(w, r)
+		require.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("KeyNotFound", func(t *testing.T) {
+		var registry mock.Registry
+		h := lobbyHttp.NewHandler(&registry)
+
+		registry.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				DeleteFn: func(key string) error {
+					require.Equal(t, "key", key)
+
+					return lobby.ErrKeyNotFound
+				},
+			}, nil
+		}
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("DELETE", "/v1/b/bucket/key", nil)
+		h.ServeHTTP(w, r)
+		require.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		var registry mock.Registry
+		h := lobbyHttp.NewHandler(&registry)
+
+		registry.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				DeleteFn: func(key string) error {
+					require.Equal(t, "key", key)
+
+					return nil
+				},
+			}, nil
+		}
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest("DELETE", "/v1/b/bucket/key", nil)
+		h.ServeHTTP(w, r)
+		require.Equal(t, http.StatusNoContent, w.Code)
+	})
+}
