@@ -1,10 +1,10 @@
-package boltdb
+package bolt
 
 import (
 	"time"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/boltdb/internal"
+	"github.com/asdine/lobby/bolt/internal"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	"github.com/boltdb/bolt"

@@ -1,4 +1,4 @@
-package boltdb_test
+package bolt_test
 
 import (
 	"io/ioutil"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/asdine/lobby/boltdb"
+	"github.com/asdine/lobby/bolt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +29,7 @@ func TestBackend(t *testing.T) {
 	path, cleanup := preparePath(t, "backend.db")
 	defer cleanup()
 
-	s, err := boltdb.NewBackend(path)
+	s, err := bolt.NewBackend(path)
 	require.NoError(t, err)
 	defer s.Close()
 

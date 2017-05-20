@@ -1,10 +1,10 @@
-package boltdb_test
+package bolt_test
 
 import (
 	"testing"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/boltdb"
+	"github.com/asdine/lobby/bolt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,14 +12,14 @@ func TestRegistry(t *testing.T) {
 	pathStore, cleanupStore := preparePath(t, "backend.db")
 	defer cleanupStore()
 
-	s, err := boltdb.NewBackend(pathStore)
+	s, err := bolt.NewBackend(pathStore)
 	require.NoError(t, err)
 	defer s.Close()
 
 	t.Run("create", func(t *testing.T) {
 		pathReg, cleanupReg := preparePath(t, "reg.db")
 		defer cleanupReg()
-		r, err := boltdb.NewRegistry(pathReg)
+		r, err := bolt.NewRegistry(pathReg)
 		require.NoError(t, err)
 		defer r.Close()
 
@@ -45,7 +45,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("bucket", func(t *testing.T) {
 		pathReg, cleanupReg := preparePath(t, "reg.db")
 		defer cleanupReg()
-		r, err := boltdb.NewRegistry(pathReg)
+		r, err := bolt.NewRegistry(pathReg)
 		require.NoError(t, err)
 		defer r.Close()
 

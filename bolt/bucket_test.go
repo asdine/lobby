@@ -1,11 +1,11 @@
-package boltdb_test
+package bolt_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/boltdb"
+	"github.com/asdine/lobby/bolt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +13,7 @@ func TestBucketSave(t *testing.T) {
 	path, cleanup := preparePath(t, "store.db")
 	defer cleanup()
 
-	s, err := boltdb.NewBackend(path)
+	s, err := bolt.NewBackend(path)
 	require.NoError(t, err)
 
 	b, err := s.Bucket("1a")
@@ -40,7 +40,7 @@ func TestBucketGet(t *testing.T) {
 	path, cleanup := preparePath(t, "store.db")
 	defer cleanup()
 
-	s, err := boltdb.NewBackend(path)
+	s, err := bolt.NewBackend(path)
 	require.NoError(t, err)
 
 	b, err := s.Bucket("a")
@@ -64,7 +64,7 @@ func TestBucketDelete(t *testing.T) {
 	path, cleanup := preparePath(t, "store.db")
 	defer cleanup()
 
-	s, err := boltdb.NewBackend(path)
+	s, err := bolt.NewBackend(path)
 	require.NoError(t, err)
 
 	b, err := s.Bucket("a")
@@ -91,7 +91,7 @@ func TestBucketPage(t *testing.T) {
 	path, cleanup := preparePath(t, "store.db")
 	defer cleanup()
 
-	s, err := boltdb.NewBackend(path)
+	s, err := bolt.NewBackend(path)
 	require.NoError(t, err)
 
 	b, err := s.Bucket("a")

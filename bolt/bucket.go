@@ -1,8 +1,8 @@
-package boltdb
+package bolt
 
 import (
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/boltdb/internal"
+	"github.com/asdine/lobby/bolt/internal"
 	"github.com/asdine/storm"
 	"github.com/pkg/errors"
 )
