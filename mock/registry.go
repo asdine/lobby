@@ -9,7 +9,7 @@ type Registry struct {
 	CreateFn      func(string, string) error
 	CreateInvoked int
 
-	BuckerFn      func(string) (lobby.Bucket, error)
+	BucketFn      func(string) (lobby.Bucket, error)
 	BucketInvoked int
 
 	CloseFn      func() error
@@ -34,8 +34,8 @@ func (r *Registry) Create(backendName, bucketName string) error {
 func (r *Registry) Bucket(name string) (lobby.Bucket, error) {
 	r.BucketInvoked++
 
-	if r.BuckerFn != nil {
-		return r.BuckerFn(name)
+	if r.BucketFn != nil {
+		return r.BucketFn(name)
 	}
 
 	return nil, nil

@@ -15,6 +15,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+const maxBodySize = 1024 * 1024
+
 // Server wraps an HTTP server.
 type Server struct {
 	http.Server
@@ -47,7 +49,13 @@ func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	rw := NewResponseWriter(w)
-	s.ServeMux.ServeHTTP(rw, r)
+
+	if r.ContentLength > maxBodySize {
+		w.WriteHeader(http.StatusRequestEntityTooLarge)
+
+	} else {
+		s.ServeMux.ServeHTTP(rw, r)
+	}
 
 	log.Printf(
 		"%s %s %s %d %d %s",
@@ -163,17 +171,22 @@ func (h *Handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 
 	b, err := h.registry.Bucket(ps.ByName("bucket"))
 	if err != nil {
+		if err == lobby.ErrBucketNotFound {
+			http.NotFound(w, r)
+			return
+		}
+
 		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	item, err := b.Save(ps.ByName("key"), data)
-	switch err {
-	case nil:
-		encodeJSON(w, item, http.StatusOK, h.logger)
-	default:
+	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.logger)
+		return
 	}
+
+	encodeJSON(w, item, http.StatusOK, h.logger)
 }
 
 // BucketCreationRequest is used to create a bucket.
