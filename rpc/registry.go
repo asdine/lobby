@@ -22,7 +22,7 @@ type registryService struct {
 	logger   *log.Logger
 }
 
-// Put an item in the registry.
+// Create a bucket in the registry.
 func (s *registryService) Create(ctx context.Context, newBucket *proto.NewBucket) (*proto.Empty, error) {
 	err := validation.Validate(newBucket)
 	if err != nil {

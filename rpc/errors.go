@@ -21,7 +21,7 @@ func Error(err error, logger *log.Logger) error {
 	var code codes.Code
 
 	switch {
-	case validation.IsError(err):
+	case validation.IsError(err) || err == lobby.ErrBackendNotFound:
 		code = codes.InvalidArgument
 	case err == lobby.ErrBucketNotFound || err == lobby.ErrKeyNotFound:
 		code = codes.NotFound

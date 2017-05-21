@@ -65,6 +65,26 @@ func TestRegistryCreate(t *testing.T) {
 		require.Equal(t, codes.AlreadyExists, grpc.Code(err))
 	})
 
+	t.Run("BackendNotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.CreateFn = func(backendName, bucketName string) error {
+			require.Equal(t, "backend", backendName)
+			require.Equal(t, "bucket", bucketName)
+
+			return lobby.ErrBackendNotFound
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewRegistryServiceClient(conn)
+
+		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
+		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
+	})
+
 	t.Run("InternalError", func(t *testing.T) {
 		var r mock.Registry
 
