@@ -12,14 +12,14 @@ var (
 
 // An Item is a key value pair saved in a bucket.
 type Item struct {
-	Key  string
-	Data []byte
+	Key   string
+	Value []byte
 }
 
 // A Bucket manages a collection of items.
 type Bucket interface {
-	// Save a key value pair. It returns the created item.
-	Save(key string, data []byte) (*Item, error)
+	// Put a key value pair in the bucket. It returns the created or updated item.
+	Put(key string, value []byte) (*Item, error)
 	// Get an item from the bucket.
 	Get(key string) (*Item, error)
 	// Delete an item from the bucket.

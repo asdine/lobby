@@ -25,7 +25,7 @@ func marshalList(items []lobby.Item) []map[string]interface{} {
 			"key": k,
 		}
 
-		v := json.RawMessage(items[i].Data)
+		v := json.RawMessage(items[i].Value)
 		list[i]["value"] = &v
 	}
 

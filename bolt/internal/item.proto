@@ -7,5 +7,5 @@ message Item {
   int64 id = 1;
   // @inject_tag: storm:"unique"
   string key = 2;
-  bytes data = 3;
+  bytes value = 3;
 }

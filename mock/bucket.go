@@ -6,8 +6,8 @@ var _ lobby.Bucket = new(Bucket)
 
 // Bucket is a mock service that runs provided functions. Useful for testing.
 type Bucket struct {
-	SaveFn      func(key string, data []byte) (*lobby.Item, error)
-	SaveInvoked int
+	PutFn      func(key string, value []byte) (*lobby.Item, error)
+	PutInvoked int
 
 	GetFn      func(key string) (*lobby.Item, error)
 	GetInvoked int
@@ -22,12 +22,12 @@ type Bucket struct {
 	CloseInvoked int
 }
 
-// Save runs SaveFn and increments SaveInvoked when invoked.
-func (b *Bucket) Save(key string, data []byte) (*lobby.Item, error) {
-	b.SaveInvoked++
+// Put runs PutFn and increments PutInvoked when invoked.
+func (b *Bucket) Put(key string, value []byte) (*lobby.Item, error) {
+	b.PutInvoked++
 
-	if b.SaveFn != nil {
-		return b.SaveFn(key, data)
+	if b.PutFn != nil {
+		return b.PutFn(key, value)
 	}
 
 	return nil, nil

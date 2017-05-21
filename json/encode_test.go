@@ -10,11 +10,11 @@ import (
 
 func TestMarshalList(t *testing.T) {
 	items := []lobby.Item{
-		{Key: "k1", Data: []byte(`"Data1"`)},
-		{Key: "k2", Data: []byte(`"Data2"`)},
+		{Key: "k1", Value: []byte(`"Value1"`)},
+		{Key: "k2", Value: []byte(`"Value2"`)},
 	}
 
-	expected := `[{"key":"k1","value":"Data1"},{"key":"k2","value":"Data2"}]`
+	expected := `[{"key":"k1","value":"Value1"},{"key":"k2","value":"Value2"}]`
 	out, err := json.MarshalList(items)
 	require.NoError(t, err)
 	require.Equal(t, expected, string(out))

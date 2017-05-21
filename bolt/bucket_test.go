@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBucketSave(t *testing.T) {
+func TestBucketPut(t *testing.T) {
 	path, cleanup := preparePath(t, "store.db")
 	defer cleanup()
 
@@ -19,18 +19,18 @@ func TestBucketSave(t *testing.T) {
 	b, err := s.Bucket("1a")
 	require.NoError(t, err)
 
-	i1, err := b.Save("2a", []byte("Data"))
+	i1, err := b.Put("2a", []byte("Value"))
 	require.NoError(t, err)
 	require.Equal(t, "2a", i1.Key)
-	require.Equal(t, []byte("Data"), i1.Data)
+	require.Equal(t, []byte("Value"), i1.Value)
 
 	i2, err := b.Get("2a")
 	require.NoError(t, err)
 	require.Equal(t, *i1, *i2)
 
-	j, err := b.Save("2a", []byte("New Data"))
+	j, err := b.Put("2a", []byte("New Value"))
 	require.NoError(t, err)
-	require.Equal(t, []byte("New Data"), j.Data)
+	require.Equal(t, []byte("New Value"), j.Value)
 
 	err = b.Close()
 	require.NoError(t, err)
@@ -46,12 +46,12 @@ func TestBucketGet(t *testing.T) {
 	b, err := s.Bucket("a")
 	require.NoError(t, err)
 
-	i, err := b.Save("id", []byte("Data"))
+	i, err := b.Put("id", []byte("Value"))
 	require.NoError(t, err)
 
 	j, err := b.Get(i.Key)
 	require.NoError(t, err)
-	require.Equal(t, i.Data, j.Data)
+	require.Equal(t, i.Value, j.Value)
 
 	_, err = b.Get("some id")
 	require.Equal(t, lobby.ErrKeyNotFound, err)
@@ -70,7 +70,7 @@ func TestBucketDelete(t *testing.T) {
 	b, err := s.Bucket("a")
 	require.NoError(t, err)
 
-	i, err := b.Save("id", []byte("Data"))
+	i, err := b.Put("id", []byte("Value"))
 	require.NoError(t, err)
 
 	_, err = b.Get(i.Key)
@@ -99,7 +99,7 @@ func TestBucketPage(t *testing.T) {
 	defer b.Close()
 
 	for i := 0; i < 20; i++ {
-		_, err := b.Save(fmt.Sprintf("%d", i), []byte("Data"))
+		_, err := b.Put(fmt.Sprintf("%d", i), []byte("Value"))
 		require.NoError(t, err)
 	}
 

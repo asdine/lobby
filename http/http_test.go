@@ -169,13 +169,13 @@ func TestSaveItem(t *testing.T) {
 			require.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
-				SaveFn: func(key string, data []byte) (*lobby.Item, error) {
+				PutFn: func(key string, value []byte) (*lobby.Item, error) {
 					require.Equal(t, "key", key)
-					require.Equal(t, []byte(`"hello"`), data)
+					require.Equal(t, []byte(`"hello"`), value)
 
 					return &lobby.Item{
-						Key:  key,
-						Data: data,
+						Key:   key,
+						Value: value,
 					}, nil
 				},
 			}, nil
@@ -239,8 +239,8 @@ func TestGetItem(t *testing.T) {
 					require.Equal(t, "key", key)
 
 					return &lobby.Item{
-						Key:  key,
-						Data: []byte(`"hello"`),
+						Key:   key,
+						Value: []byte(`"hello"`),
 					}, nil
 				},
 			}, nil

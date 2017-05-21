@@ -21,8 +21,8 @@ type Bucket struct {
 	node storm.Node
 }
 
-// Save data to the bucket. Returns an Item.
-func (b *Bucket) Save(key string, data []byte) (*lobby.Item, error) {
+// Put value to the bucket. Returns an Item.
+func (b *Bucket) Put(key string, value []byte) (*lobby.Item, error) {
 	var i internal.Item
 
 	tx, err := b.node.Begin(true)
@@ -38,11 +38,11 @@ func (b *Bucket) Save(key string, data []byte) (*lobby.Item, error) {
 		}
 
 		i = internal.Item{
-			Key:  key,
-			Data: data,
+			Key:   key,
+			Value: value,
 		}
 	} else {
-		i.Data = data
+		i.Value = value
 	}
 
 	err = tx.Save(&i)
@@ -56,8 +56,8 @@ func (b *Bucket) Save(key string, data []byte) (*lobby.Item, error) {
 	}
 
 	return &lobby.Item{
-		Key:  i.Key,
-		Data: i.Data,
+		Key:   i.Key,
+		Value: i.Value,
 	}, nil
 }
 
@@ -75,8 +75,8 @@ func (b *Bucket) Get(key string) (*lobby.Item, error) {
 	}
 
 	return &lobby.Item{
-		Key:  i.Key,
-		Data: i.Data,
+		Key:   i.Key,
+		Value: i.Value,
 	}, nil
 }
 
@@ -132,7 +132,7 @@ func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
 	items := make([]lobby.Item, len(list))
 	for i := range list {
 		items[i].Key = list[i].Key
-		items[i].Data = list[i].Data
+		items[i].Value = list[i].Value
 	}
 	return items, nil
 }

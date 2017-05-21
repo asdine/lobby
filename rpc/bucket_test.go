@@ -21,13 +21,13 @@ func TestPut(t *testing.T) {
 			require.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
-				SaveFn: func(key string, data []byte) (*lobby.Item, error) {
+				PutFn: func(key string, value []byte) (*lobby.Item, error) {
 					require.Equal(t, fmt.Sprintf("key%d", i+1), key)
-					require.Equal(t, fmt.Sprintf(`"value%d"`, i+1), string(data))
+					require.Equal(t, fmt.Sprintf(`"value%d"`, i+1), string(value))
 					i++
 					return &lobby.Item{
-						Key:  key,
-						Data: data,
+						Key:   key,
+						Value: value,
 					}, nil
 				},
 			}, nil
@@ -106,7 +106,7 @@ func TestPut(t *testing.T) {
 			require.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
-				SaveFn: func(key string, data []byte) (*lobby.Item, error) {
+				PutFn: func(key string, data []byte) (*lobby.Item, error) {
 					require.Equal(t, "hello", key)
 					require.Equal(t, `"value"`, string(data))
 					return nil, errors.New("something unexpected happened !")

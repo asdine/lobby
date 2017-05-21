@@ -193,13 +193,13 @@ func (h *Handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	item, err := b.Save(ps.ByName("key"), data)
+	item, err := b.Put(ps.ByName("key"), data)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
-	writeRawJSON(w, item.Data, http.StatusOK, h.logger)
+	writeRawJSON(w, item.Value, http.StatusOK, h.logger)
 }
 
 func (h *Handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -217,7 +217,7 @@ func (h *Handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 	item, err := b.Get(ps.ByName("key"))
 	switch err {
 	case nil:
-		writeRawJSON(w, item.Data, http.StatusOK, h.logger)
+		writeRawJSON(w, item.Value, http.StatusOK, h.logger)
 	case lobby.ErrKeyNotFound:
 		http.NotFound(w, r)
 	default:

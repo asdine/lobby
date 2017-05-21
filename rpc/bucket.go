@@ -51,7 +51,7 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 		}
 
 		data := json.ToValidJSONFromBytes(newItem.Item.Value)
-		_, err = b.Save(newItem.Item.Key, data)
+		_, err = b.Put(newItem.Item.Key, data)
 		if err != nil {
 			return Error(err, s.logger)
 		}
