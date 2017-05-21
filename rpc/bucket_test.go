@@ -224,4 +224,135 @@ func TestGet(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, codes.NotFound, grpc.Code(err))
 	})
+
+	t.Run("InternalError", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				GetFn: func(key string) (*lobby.Item, error) {
+					require.Equal(t, "unknown", key)
+
+					return nil, errors.New("something unexpected happened !")
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Get(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
+		require.Error(t, err)
+		require.Equal(t, codes.Internal, grpc.Code(err))
+	})
+}
+
+func TestDelete(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				DeleteFn: func(key string) error {
+					require.Equal(t, "hello", key)
+
+					return nil
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Delete(context.Background(), &proto.Key{Bucket: "bucket", Key: "hello"})
+		require.NoError(t, err)
+	})
+
+	t.Run("EmptyFields", func(t *testing.T) {
+		var r mock.Registry
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Delete(context.Background(), new(proto.Key))
+		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
+	})
+
+	t.Run("BucketNotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "unknown", name)
+
+			return nil, lobby.ErrBucketNotFound
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Delete(context.Background(), &proto.Key{Bucket: "unknown", Key: "hello"})
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, grpc.Code(err))
+	})
+
+	t.Run("KeyNotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				DeleteFn: func(key string) error {
+					require.Equal(t, "unknown", key)
+
+					return lobby.ErrKeyNotFound
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Delete(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, grpc.Code(err))
+	})
+
+	t.Run("InternalError", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				DeleteFn: func(key string) error {
+					require.Equal(t, "unknown", key)
+
+					return errors.New("something unexpected happened !")
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Delete(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
+		require.Error(t, err)
+		require.Equal(t, codes.Internal, grpc.Code(err))
+	})
 }

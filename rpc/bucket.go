@@ -81,7 +81,22 @@ func (s *bucketService) Get(ctx context.Context, key *proto.Key) (*proto.Item, e
 }
 
 func (s *bucketService) Delete(ctx context.Context, key *proto.Key) (*proto.Empty, error) {
-	return nil, nil
+	err := validation.Validate(key)
+	if err != nil {
+		return nil, Error(err, s.logger)
+	}
+
+	b, err := s.registry.Bucket(key.Bucket)
+	if err != nil {
+		return nil, Error(err, s.logger)
+	}
+
+	err = b.Delete(key.Key)
+	if err != nil {
+		return nil, Error(err, s.logger)
+	}
+
+	return new(proto.Empty), nil
 }
 
 func (s *bucketService) List(page *proto.Page, stream proto.BucketService_ListServer) error {
