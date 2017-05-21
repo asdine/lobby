@@ -25,6 +25,8 @@ func Error(err error, logger *log.Logger) error {
 		code = codes.InvalidArgument
 	case err == lobby.ErrBucketNotFound || err == lobby.ErrKeyNotFound:
 		code = codes.NotFound
+	case err == lobby.ErrBucketAlreadyExists:
+		code = codes.AlreadyExists
 	default:
 		code = codes.Internal
 	}

@@ -18,8 +18,10 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 type NewBucket struct {
-	Name    string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Backend string `protobuf:"bytes,2,opt,name=backend" json:"backend,omitempty"`
+	// @inject_tag: valid:"required"
+	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty" valid:"required"`
+	// @inject_tag: valid:"required"
+	Backend string `protobuf:"bytes,2,opt,name=backend" json:"backend,omitempty" valid:"required"`
 }
 
 func (m *NewBucket) Reset()                    { *m = NewBucket{} }

@@ -9,6 +9,8 @@ service RegistryService {
 }
 
 message NewBucket {
+  // @inject_tag: valid:"required"
   string name = 1;
+  // @inject_tag: valid:"required"
   string backend = 2;
 }
