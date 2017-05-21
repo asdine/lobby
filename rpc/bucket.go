@@ -36,24 +36,24 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 			})
 		}
 		if err != nil {
-			return Error(err, s.logger)
+			return newError(err, s.logger)
 		}
 
 		itemCount++
 		err = validation.Validate(newItem)
 		if err != nil {
-			return Error(err, s.logger)
+			return newError(err, s.logger)
 		}
 
 		b, err := s.registry.Bucket(newItem.Bucket)
 		if err != nil {
-			return Error(err, s.logger)
+			return newError(err, s.logger)
 		}
 
 		data := json.ToValidJSONFromBytes(newItem.Item.Value)
 		_, err = b.Put(newItem.Item.Key, data)
 		if err != nil {
-			return Error(err, s.logger)
+			return newError(err, s.logger)
 		}
 	}
 }
@@ -61,17 +61,17 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 func (s *bucketService) Get(ctx context.Context, key *proto.Key) (*proto.Item, error) {
 	err := validation.Validate(key)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	b, err := s.registry.Bucket(key.Bucket)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	item, err := b.Get(key.Key)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	return &proto.Item{
@@ -83,17 +83,17 @@ func (s *bucketService) Get(ctx context.Context, key *proto.Key) (*proto.Item, e
 func (s *bucketService) Delete(ctx context.Context, key *proto.Key) (*proto.Empty, error) {
 	err := validation.Validate(key)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	b, err := s.registry.Bucket(key.Bucket)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	err = b.Delete(key.Key)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	return new(proto.Empty), nil
@@ -102,12 +102,12 @@ func (s *bucketService) Delete(ctx context.Context, key *proto.Key) (*proto.Empt
 func (s *bucketService) List(page *proto.Page, stream proto.BucketService_ListServer) error {
 	err := validation.Validate(page)
 	if err != nil {
-		return Error(err, s.logger)
+		return newError(err, s.logger)
 	}
 
 	b, err := s.registry.Bucket(page.Bucket)
 	if err != nil {
-		return Error(err, s.logger)
+		return newError(err, s.logger)
 	}
 
 	p := 1
@@ -122,7 +122,7 @@ func (s *bucketService) List(page *proto.Page, stream proto.BucketService_ListSe
 
 	items, err := b.Page(p, pp)
 	if err != nil {
-		return Error(err, s.logger)
+		return newError(err, s.logger)
 	}
 
 	for i := range items {
@@ -131,7 +131,7 @@ func (s *bucketService) List(page *proto.Page, stream proto.BucketService_ListSe
 			Value: items[i].Value,
 		})
 		if err != nil {
-			return Error(err, s.logger)
+			return newError(err, s.logger)
 		}
 	}
 	return nil

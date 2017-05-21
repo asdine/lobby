@@ -47,7 +47,7 @@ func (e validationError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
-// AddError an error under the given name.
+// AddError adds an error under the given name.
 func AddError(verr error, name string, err error) error {
 	var e validationError
 	var ok bool

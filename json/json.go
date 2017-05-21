@@ -70,7 +70,7 @@ func ToValidJSONFromBytes(data []byte) []byte {
 	return WrapIntoJSONString(data)
 }
 
-// WrapIntoJSONString turns any data into a valid json value.
+// WrapIntoJSONString turns any data into a valid json string.
 func WrapIntoJSONString(data []byte) []byte {
 	count := bytes.Count(data, []byte(`"`))
 	out := make([]byte, len(data)+count+2)

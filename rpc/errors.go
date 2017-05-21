@@ -17,7 +17,7 @@ const (
 )
 
 // Error writes an API error message to the response and logger.
-func Error(err error, logger *log.Logger) error {
+func newError(err error, logger *log.Logger) error {
 	var code codes.Code
 
 	switch {

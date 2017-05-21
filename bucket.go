@@ -24,7 +24,7 @@ type Bucket interface {
 	Get(key string) (*Item, error)
 	// Delete an item from the bucket.
 	Delete(key string) error
-	// Get the paginated list of items. perPage can be set to -1 to fetch all the items.
+	// Get the paginated list of items.
 	Page(page int, perPage int) ([]Item, error)
 	// Close the bucket. Can be used to close sessions if required.
 	Close() error
@@ -32,7 +32,7 @@ type Bucket interface {
 
 // A Backend is able to create buckets that can be used to store and fetch data.
 type Backend interface {
-	// Get a bucket managing the given path.
+	// Get a bucket by name.
 	Bucket(name string) (Bucket, error)
 	// Close the backend connection.
 	Close() error

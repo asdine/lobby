@@ -26,12 +26,12 @@ type registryService struct {
 func (s *registryService) Create(ctx context.Context, newBucket *proto.NewBucket) (*proto.Empty, error) {
 	err := validation.Validate(newBucket)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	err = s.registry.Create(newBucket.Backend, newBucket.Name)
 	if err != nil {
-		return nil, Error(err, s.logger)
+		return nil, newError(err, s.logger)
 	}
 
 	return new(proto.Empty), nil

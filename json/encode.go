@@ -11,7 +11,7 @@ func MarshalList(items []lobby.Item) ([]byte, error) {
 	return json.Marshal(marshalList(items))
 }
 
-// MarshalListPretty marshals a list of items.
+// MarshalListPretty marshals a list of items with indentation.
 func MarshalListPretty(items []lobby.Item) ([]byte, error) {
 	return json.MarshalIndent(marshalList(items), "", "  ")
 }

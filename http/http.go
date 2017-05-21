@@ -49,7 +49,7 @@ type ServeMux struct {
 func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
-	rw := NewResponseWriter(w)
+	rw := newResponseWriter(w)
 
 	if r.ContentLength > maxBodySize {
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
@@ -69,17 +69,17 @@ func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// NewResponseWriter instantiates a ResponseWriter.
-func NewResponseWriter(w http.ResponseWriter) *ResponseWriter {
-	return &ResponseWriter{
+// newResponseWriter instantiates a responseWriter.
+func newResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{
 		ResponseWriter: w,
 		status:         http.StatusOK,
 	}
 }
 
-// ResponseWriter is a wrapper around http.ResponseWriter.
+// responseWriter is a wrapper around http.ResponseWriter.
 // It allows to capture informations about the response.
-type ResponseWriter struct {
+type responseWriter struct {
 	http.ResponseWriter
 
 	status int
@@ -88,12 +88,12 @@ type ResponseWriter struct {
 
 // WriteHeader stores the status before calling the underlying
 // http.ResponseWriter WriteHeader.
-func (w *ResponseWriter) WriteHeader(status int) {
+func (w *responseWriter) WriteHeader(status int) {
 	w.status = status
 	w.ResponseWriter.WriteHeader(status)
 }
 
-func (w *ResponseWriter) Write(data []byte) (int, error) {
+func (w *responseWriter) Write(data []byte) (int, error) {
 	w.len = len(data)
 	return w.ResponseWriter.Write(data)
 }
@@ -103,7 +103,7 @@ func encodeJSON(w http.ResponseWriter, v interface{}, status int, logger *log.Lo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
-		Error(w, err, http.StatusInternalServerError, logger)
+		writeError(w, err, http.StatusInternalServerError, logger)
 	}
 }
 
@@ -112,7 +112,7 @@ func writeRawJSON(w http.ResponseWriter, v []byte, status int, logger *log.Logge
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if _, err := w.Write(v); err != nil {
-		Error(w, err, http.StatusInternalServerError, logger)
+		writeError(w, err, http.StatusInternalServerError, logger)
 	}
 }
 
@@ -120,39 +120,39 @@ func writeRawJSON(w http.ResponseWriter, v []byte, status int, logger *log.Logge
 func NewHandler(r lobby.Registry) http.Handler {
 	router := httprouter.New()
 
-	handler := Handler{
+	h := handler{
 		registry: r,
 		logger:   log.New(os.Stderr, "", log.LstdFlags),
 		router:   router,
 	}
 
-	router.POST("/v1/buckets/:backend", handler.createBucket)
-	router.PUT("/v1/b/:bucket/:key", handler.putItem)
-	router.GET("/v1/b/:bucket/:key", handler.getItem)
-	router.DELETE("/v1/b/:bucket/:key", handler.deleteItem)
-	router.GET("/v1/b/:bucket", handler.listItems)
+	router.POST("/v1/buckets/:backend", h.createBucket)
+	router.PUT("/v1/b/:bucket/:key", h.putItem)
+	router.GET("/v1/b/:bucket/:key", h.getItem)
+	router.DELETE("/v1/b/:bucket/:key", h.deleteItem)
+	router.GET("/v1/b/:bucket", h.listItems)
 	return router
 }
 
 // Handler is the main http handler.
-type Handler struct {
+type handler struct {
 	registry lobby.Registry
 	router   *httprouter.Router
 	logger   *log.Logger
 }
 
-func (h *Handler) createBucket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var req BucketCreationRequest
+func (h *handler) createBucket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var req bucketCreationRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
+		writeError(w, errInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	err = req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.logger)
+		writeError(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
@@ -163,21 +163,21 @@ func (h *Handler) createBucket(w http.ResponseWriter, r *http.Request, ps httpro
 	case lobby.ErrBackendNotFound:
 		http.NotFound(w, r)
 	case lobby.ErrBucketAlreadyExists:
-		Error(w, validation.AddError(nil, "name", err), http.StatusBadRequest, h.logger)
+		writeError(w, validation.AddError(nil, "name", err), http.StatusBadRequest, h.logger)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
-func (h *Handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.ContentLength == 0 {
-		Error(w, ErrEmptyContent, http.StatusBadRequest, h.logger)
+		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	data := ljson.ToValidJSONFromReader(r.Body)
 	if len(data) == 0 {
-		Error(w, ErrEmptyContent, http.StatusBadRequest, h.logger)
+		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
 		return
 	}
 	defer r.Body.Close()
@@ -189,20 +189,20 @@ func (h *Handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	item, err := b.Put(ps.ByName("key"), data)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	writeRawJSON(w, item.Value, http.StatusOK, h.logger)
 }
 
-func (h *Handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	b, err := h.registry.Bucket(ps.ByName("bucket"))
 	if err != nil {
 		if err == lobby.ErrBucketNotFound {
@@ -210,7 +210,7 @@ func (h *Handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -221,11 +221,11 @@ func (h *Handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 	case lobby.ErrKeyNotFound:
 		http.NotFound(w, r)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
-func (h *Handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	b, err := h.registry.Bucket(ps.ByName("bucket"))
 	if err != nil {
 		if err == lobby.ErrBucketNotFound {
@@ -233,7 +233,7 @@ func (h *Handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprout
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -244,11 +244,11 @@ func (h *Handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprout
 	case lobby.ErrKeyNotFound:
 		http.NotFound(w, r)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
-func (h *Handler) listItems(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *handler) listItems(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	b, err := h.registry.Bucket(ps.ByName("bucket"))
 	if err != nil {
 		if err == lobby.ErrBucketNotFound {
@@ -256,7 +256,7 @@ func (h *Handler) listItems(w http.ResponseWriter, r *http.Request, ps httproute
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -272,13 +272,13 @@ func (h *Handler) listItems(w http.ResponseWriter, r *http.Request, ps httproute
 
 	items, err := b.Page(page, perPage)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	data, err := ljson.MarshalList(items)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.logger)
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -286,12 +286,12 @@ func (h *Handler) listItems(w http.ResponseWriter, r *http.Request, ps httproute
 }
 
 // BucketCreationRequest is used to create a bucket.
-type BucketCreationRequest struct {
+type bucketCreationRequest struct {
 	Name string `json:"name" valid:"required,alphanum,stringlength(1|64)"`
 }
 
 // Validate bucket creation payload.
-func (b *BucketCreationRequest) Validate() error {
+func (b *bucketCreationRequest) Validate() error {
 	b.Name = strings.TrimSpace(b.Name)
 
 	return validation.Validate(b)
