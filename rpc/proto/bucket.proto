@@ -19,9 +19,11 @@ service BucketService {
 // NewItem is used to put an item in a bucket.
 message NewItem {
   // Item to save in the bucket.
+  // @inject_tag: valid:"required"
   Item item = 1;
 
   // Bucket name.
+  // @inject_tag: valid:"required"
   string bucket = 2;
 }
 
@@ -32,17 +34,22 @@ message PutSummary {
 }
 
 message Page {
+  // @inject_tag: valid:"required"
   string bucket = 1;
   int32 page = 2;
   int32 perPage = 3;
 }
 
 message Key {
+  // @inject_tag: valid:"required"
   string bucket = 1;
+  // @inject_tag: valid:"required"
   string key = 2;
 }
 
 message Item {
+  // @inject_tag: valid:"required"
   string key = 1;
+  // @inject_tag: valid:"required"
   bytes value = 2;
 }

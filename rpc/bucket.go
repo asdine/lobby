@@ -3,12 +3,21 @@ package rpc
 import (
 	"io"
 	"log"
+	"os"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/json"
 	"github.com/asdine/lobby/rpc/proto"
+	"github.com/asdine/lobby/validation"
 	"golang.org/x/net/context"
 )
+
+func newBucketService(r lobby.Registry) *bucketService {
+	return &bucketService{
+		registry: r,
+		logger:   log.New(os.Stderr, "", log.LstdFlags),
+	}
+}
 
 type bucketService struct {
 	registry lobby.Registry
@@ -31,6 +40,11 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 		}
 
 		itemCount++
+		err = validation.Validate(newItem)
+		if err != nil {
+			return Error(err, s.logger)
+		}
+
 		b, err := s.registry.Bucket(newItem.Bucket)
 		if err != nil {
 			return Error(err, s.logger)

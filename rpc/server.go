@@ -11,9 +11,9 @@ import (
 // NewServer returns a configured gRPC server.
 func NewServer(r lobby.Registry) lobby.Server {
 	g := grpc.NewServer()
-	b := bucketService{registry: r}
+	b := newBucketService(r)
 
-	proto.RegisterBucketServiceServer(g, &b)
+	proto.RegisterBucketServiceServer(g, b)
 
 	return &server{srv: g}
 }

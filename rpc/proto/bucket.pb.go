@@ -43,9 +43,11 @@ const _ = proto1.ProtoPackageIsVersion2 // please upgrade the proto package
 // NewItem is used to put an item in a bucket.
 type NewItem struct {
 	// Item to save in the bucket.
-	Item *Item `protobuf:"bytes,1,opt,name=item" json:"item,omitempty"`
+	// @inject_tag: valid:"required"
+	Item *Item `protobuf:"bytes,1,opt,name=item" json:"item,omitempty" valid:"required"`
 	// Bucket name.
-	Bucket string `protobuf:"bytes,2,opt,name=bucket" json:"bucket,omitempty"`
+	// @inject_tag: valid:"required"
+	Bucket string `protobuf:"bytes,2,opt,name=bucket" json:"bucket,omitempty" valid:"required"`
 }
 
 func (m *NewItem) Reset()                    { *m = NewItem{} }
@@ -70,7 +72,7 @@ func (m *NewItem) GetBucket() string {
 // PutSummary is received in response to a Put route.
 type PutSummary struct {
 	// The number of items received.
-	ItemCount int32 `protobuf:"varint,1,opt,name=item_count,json=itemCount" json:"item_count,omitempty"`
+	ItemCount int32 `protobuf:"varint,1,opt,name=item_count,json=itemCount" json:"item_count,omitempty" `
 }
 
 func (m *PutSummary) Reset()                    { *m = PutSummary{} }
@@ -86,7 +88,8 @@ func (m *PutSummary) GetItemCount() int32 {
 }
 
 type Page struct {
-	Bucket  string `protobuf:"bytes,1,opt,name=bucket" json:"bucket,omitempty"`
+	// @inject_tag: valid:"required"
+	Bucket  string `protobuf:"bytes,1,opt,name=bucket" json:"bucket,omitempty" valid:"required"`
 	Page    int32  `protobuf:"varint,2,opt,name=page" json:"page,omitempty"`
 	PerPage int32  `protobuf:"varint,3,opt,name=perPage" json:"perPage,omitempty"`
 }
@@ -118,8 +121,10 @@ func (m *Page) GetPerPage() int32 {
 }
 
 type Key struct {
-	Bucket string `protobuf:"bytes,1,opt,name=bucket" json:"bucket,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
+	// @inject_tag: valid:"required"
+	Bucket string `protobuf:"bytes,1,opt,name=bucket" json:"bucket,omitempty" valid:"required"`
+	// @inject_tag: valid:"required"
+	Key string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty" valid:"required"`
 }
 
 func (m *Key) Reset()                    { *m = Key{} }
@@ -142,8 +147,10 @@ func (m *Key) GetKey() string {
 }
 
 type Item struct {
-	Key   string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
-	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	// @inject_tag: valid:"required"
+	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty" valid:"required"`
+	// @inject_tag: valid:"required"
+	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty" valid:"required"`
 }
 
 func (m *Item) Reset()                    { *m = Item{} }

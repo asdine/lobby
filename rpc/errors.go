@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/validation"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -19,8 +20,10 @@ const (
 func Error(err error, logger *log.Logger) error {
 	var code codes.Code
 
-	switch err {
-	case lobby.ErrBucketNotFound:
+	switch {
+	case validation.IsError(err):
+		code = codes.InvalidArgument
+	case err == lobby.ErrBucketNotFound:
 		code = codes.NotFound
 	default:
 		code = codes.Internal
