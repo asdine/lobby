@@ -59,7 +59,25 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 }
 
 func (s *bucketService) Get(ctx context.Context, key *proto.Key) (*proto.Item, error) {
-	return nil, nil
+	err := validation.Validate(key)
+	if err != nil {
+		return nil, Error(err, s.logger)
+	}
+
+	b, err := s.registry.Bucket(key.Bucket)
+	if err != nil {
+		return nil, Error(err, s.logger)
+	}
+
+	item, err := b.Get(key.Key)
+	if err != nil {
+		return nil, Error(err, s.logger)
+	}
+
+	return &proto.Item{
+		Key:   item.Key,
+		Value: item.Value,
+	}, nil
 }
 
 func (s *bucketService) Delete(ctx context.Context, key *proto.Key) (*proto.Empty, error) {

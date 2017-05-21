@@ -10,6 +10,8 @@ import (
 	"github.com/asdine/lobby/mock"
 	"github.com/asdine/lobby/rpc/proto"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 func TestPut(t *testing.T) {
@@ -71,6 +73,7 @@ func TestPut(t *testing.T) {
 
 		_, err = stream.CloseAndRecv()
 		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
 	})
 
 	t.Run("BucketNotFound", func(t *testing.T) {
@@ -98,6 +101,7 @@ func TestPut(t *testing.T) {
 
 		_, err = stream.CloseAndRecv()
 		require.Error(t, err)
+		require.Equal(t, codes.NotFound, grpc.Code(err))
 	})
 
 	t.Run("InternalError", func(t *testing.T) {
@@ -132,5 +136,92 @@ func TestPut(t *testing.T) {
 
 		_, err = stream.CloseAndRecv()
 		require.Error(t, err)
+		require.Equal(t, codes.Internal, grpc.Code(err))
+	})
+}
+
+func TestGet(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				GetFn: func(key string) (*lobby.Item, error) {
+					require.Equal(t, "hello", key)
+
+					return &lobby.Item{
+						Key:   key,
+						Value: []byte(`"value"`),
+					}, nil
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		item, err := client.Get(context.Background(), &proto.Key{Bucket: "bucket", Key: "hello"})
+		require.NoError(t, err)
+		require.Equal(t, "hello", item.Key)
+		require.Equal(t, `"value"`, string(item.Value))
+	})
+
+	t.Run("EmptyFields", func(t *testing.T) {
+		var r mock.Registry
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Get(context.Background(), new(proto.Key))
+		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
+	})
+
+	t.Run("BucketNotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "unknown", name)
+
+			return nil, lobby.ErrBucketNotFound
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Get(context.Background(), &proto.Key{Bucket: "unknown", Key: "hello"})
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, grpc.Code(err))
+	})
+
+	t.Run("KeyNotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				GetFn: func(key string) (*lobby.Item, error) {
+					require.Equal(t, "unknown", key)
+
+					return nil, lobby.ErrKeyNotFound
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		_, err := client.Get(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, grpc.Code(err))
 	})
 }

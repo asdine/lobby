@@ -23,7 +23,7 @@ func Error(err error, logger *log.Logger) error {
 	switch {
 	case validation.IsError(err):
 		code = codes.InvalidArgument
-	case err == lobby.ErrBucketNotFound:
+	case err == lobby.ErrBucketNotFound || err == lobby.ErrKeyNotFound:
 		code = codes.NotFound
 	default:
 		code = codes.Internal
@@ -37,5 +37,5 @@ func Error(err error, logger *log.Logger) error {
 		err = ErrInternal
 	}
 
-	return status.Error(codes.Internal, err.Error())
+	return status.Error(code, err.Error())
 }
