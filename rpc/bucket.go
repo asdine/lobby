@@ -100,5 +100,39 @@ func (s *bucketService) Delete(ctx context.Context, key *proto.Key) (*proto.Empt
 }
 
 func (s *bucketService) List(page *proto.Page, stream proto.BucketService_ListServer) error {
+	err := validation.Validate(page)
+	if err != nil {
+		return Error(err, s.logger)
+	}
+
+	b, err := s.registry.Bucket(page.Bucket)
+	if err != nil {
+		return Error(err, s.logger)
+	}
+
+	p := 1
+	pp := 20
+
+	if page.Page > 0 {
+		p = int(page.Page)
+	}
+	if page.PerPage > 0 {
+		pp = int(page.PerPage)
+	}
+
+	items, err := b.Page(p, pp)
+	if err != nil {
+		return Error(err, s.logger)
+	}
+
+	for i := range items {
+		err = stream.Send(&proto.Item{
+			Key:   items[i].Key,
+			Value: items[i].Value,
+		})
+		if err != nil {
+			return Error(err, s.logger)
+		}
+	}
 	return nil
 }

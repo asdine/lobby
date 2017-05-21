@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/asdine/lobby"
@@ -352,6 +353,146 @@ func TestDelete(t *testing.T) {
 		client := proto.NewBucketServiceClient(conn)
 
 		_, err := client.Delete(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
+		require.Error(t, err)
+		require.Equal(t, codes.Internal, grpc.Code(err))
+	})
+}
+
+func TestList(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				PageFn: func(page, perPage int) ([]lobby.Item, error) {
+					require.Equal(t, 10, page)
+					require.Equal(t, 30, perPage)
+
+					items := make([]lobby.Item, 5)
+					for i := 0; i < 5; i++ {
+						items[i].Key = fmt.Sprintf("key%d", i+1)
+						items[i].Value = []byte(fmt.Sprintf(`"value%d"`, i+1))
+					}
+					return items, nil
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		stream, err := client.List(context.Background(), &proto.Page{Bucket: "bucket", Page: 10, PerPage: 30})
+		require.NoError(t, err)
+
+		var i int
+		for {
+			item, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			require.NoError(t, err)
+			require.Equal(t, fmt.Sprintf("key%d", i+1), item.Key)
+			require.Equal(t, fmt.Sprintf(`"value%d"`, i+1), string(item.Value))
+			i++
+		}
+		require.Equal(t, 5, i)
+	})
+
+	t.Run("BadPages", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				PageFn: func(page, perPage int) ([]lobby.Item, error) {
+					require.Equal(t, 1, page)
+					require.Equal(t, 20, perPage)
+
+					return []lobby.Item{}, nil
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		stream, err := client.List(context.Background(), &proto.Page{Bucket: "bucket", Page: -10, PerPage: -30})
+		require.NoError(t, err)
+
+		_, err = stream.Recv()
+		require.Equal(t, io.EOF, err)
+	})
+
+	t.Run("EmptyFields", func(t *testing.T) {
+		var r mock.Registry
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		stream, err := client.List(context.Background(), new(proto.Page))
+		require.NoError(t, err)
+
+		_, err = stream.Recv()
+		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
+	})
+
+	t.Run("BucketNotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "unknown", name)
+
+			return nil, lobby.ErrBucketNotFound
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		stream, err := client.List(context.Background(), &proto.Page{Bucket: "unknown"})
+		require.NoError(t, err)
+
+		_, err = stream.Recv()
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, grpc.Code(err))
+	})
+
+	t.Run("InternalError", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return &mock.Bucket{
+				PageFn: func(page, perPage int) ([]lobby.Item, error) {
+					require.Equal(t, 1, page)
+					require.Equal(t, 20, perPage)
+
+					return nil, errors.New("something unexpected happened !")
+				},
+			}, nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewBucketServiceClient(conn)
+
+		stream, err := client.List(context.Background(), &proto.Page{Bucket: "bucket"})
+		require.NoError(t, err)
+
+		_, err = stream.Recv()
 		require.Error(t, err)
 		require.Equal(t, codes.Internal, grpc.Code(err))
 	})
