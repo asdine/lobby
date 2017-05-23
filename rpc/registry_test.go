@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRegistryCreate(t *testing.T) {
+func TestRegistryServerCreate(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 

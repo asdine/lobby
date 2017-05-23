@@ -2,9 +2,11 @@ package rpc
 
 import (
 	"log"
+	"strings"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/validation"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -40,4 +42,20 @@ func newError(err error, logger *log.Logger) error {
 	}
 
 	return status.Error(code, err.Error())
+}
+
+func errFromGRPC(err error) error {
+	code := grpc.Code(err)
+
+	switch code {
+	case codes.AlreadyExists:
+		return lobby.ErrBucketAlreadyExists
+	case codes.NotFound:
+		if strings.Contains(err.Error(), lobby.ErrKeyNotFound.Error()) {
+			return lobby.ErrKeyNotFound
+		}
+		return lobby.ErrBucketNotFound
+	default:
+		return err
+	}
 }

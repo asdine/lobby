@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-func TestPut(t *testing.T) {
+func TestBucketServerPut(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
@@ -141,7 +141,7 @@ func TestPut(t *testing.T) {
 	})
 }
 
-func TestGet(t *testing.T) {
+func TestBucketServerGet(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
@@ -252,7 +252,7 @@ func TestGet(t *testing.T) {
 	})
 }
 
-func TestDelete(t *testing.T) {
+func TestBucketServerDelete(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
@@ -358,7 +358,7 @@ func TestDelete(t *testing.T) {
 	})
 }
 
-func TestList(t *testing.T) {
+func TestBucketServerList(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
