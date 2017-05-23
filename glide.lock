@@ -1,5 +1,5 @@
-hash: 88cc0901567efb3094d628a421fd9817e5ae53b89e15842b0d5201a3b43b4bc8
-updated: 2017-05-20T15:14:25.855592201+02:00
+hash: fc168b8faa617cfbc03749f3470ef4ee2a4dcfa98501d6b2eaad34d75eb79536
+updated: 2017-05-22T23:45:21.211781949+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -25,14 +25,56 @@ imports:
   version: fec3b39b059c0f88fa6b20f5ed012b1aa203a8b4
   subpackages:
   - proto
+  - ptypes/any
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/mitchellh/go-homedir
+  version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: golang.org/x/net
+  version: 0d772244c73d752bbe0c729ff997a09d6a6fdaf1
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
 - name: golang.org/x/sys
   version: a2e06a18b0d52d8cb2010e04b372a1965d8e3439
   subpackages:
   - unix
+- name: golang.org/x/text
+  version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/genproto
+  version: bb3573be0c484136831138976d444b8754777aff
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: d2e1b51f33ff8c5e4a15560ff049d200e83726c5
+  subpackages:
+  - codes
+  - credentials
+  - grpclb/grpc_lb_v1
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - stats
+  - status
+  - tap
+  - transport
+- name: gopkg.in/urfave/cli.v1
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9

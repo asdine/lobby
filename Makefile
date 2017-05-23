@@ -1,7 +1,12 @@
 NAME      := lobby
 PACKAGES  := $(shell glide novendor)
 
-.PHONY: deps install test testrace bench gen
+.PHONY: all $(NAME) deps install test testrace bench gen
+
+all: $(NAME)
+
+$(NAME):
+	go install ./cmd/$@
 
 deps:
 	glide up
