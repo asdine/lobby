@@ -1,7 +1,7 @@
 NAME      := lobby
 PACKAGES  := $(shell glide novendor)
 
-.PHONY: all $(NAME) deps install test testrace bench gen
+.PHONY: all $(NAME) deps install test testrace bench gen plugin
 
 all: $(NAME)
 
@@ -25,3 +25,6 @@ bench:
 
 gen:
 	go generate $(PACKAGES)
+
+plugin:
+	go build -o $(NAME)-$(PLUGIN) ./plugin/backend/$(PLUGIN) 

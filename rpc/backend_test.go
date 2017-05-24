@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newBackend(t *testing.T, r lobby.Registry) (*rpc.Backend, func()) {
+func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 	l, err := net.Listen("tcp", ":")
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(r)
+	srv := rpc.NewServer(rpc.WithBucketService(b))
 
 	go func() {
 		srv.Serve(l)
@@ -34,9 +34,9 @@ func newBackend(t *testing.T, r lobby.Registry) (*rpc.Backend, func()) {
 
 func TestBucketPut(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		var r mock.Registry
+		var b mock.Backend
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
@@ -51,7 +51,7 @@ func TestBucketPut(t *testing.T) {
 			}, nil
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("bucket")
@@ -64,13 +64,13 @@ func TestBucketPut(t *testing.T) {
 	})
 
 	t.Run("BucketNotFound", func(t *testing.T) {
-		var r mock.Registry
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		var b mock.Backend
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			assert.Equal(t, "unknown", name)
 			return nil, lobby.ErrBucketNotFound
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("unknown")
@@ -82,9 +82,9 @@ func TestBucketPut(t *testing.T) {
 	})
 
 	t.Run("InternalError", func(t *testing.T) {
-		var r mock.Registry
+		var b mock.Backend
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
@@ -96,7 +96,7 @@ func TestBucketPut(t *testing.T) {
 			}, nil
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("bucket")
@@ -107,9 +107,9 @@ func TestBucketPut(t *testing.T) {
 	})
 
 	t.Run("KeyNotFound", func(t *testing.T) {
-		var r mock.Registry
+		var b mock.Backend
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
@@ -121,7 +121,7 @@ func TestBucketPut(t *testing.T) {
 			}, nil
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("bucket")
@@ -135,9 +135,9 @@ func TestBucketPut(t *testing.T) {
 
 func TestBucketGet(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		var r mock.Registry
+		var b mock.Backend
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
@@ -151,7 +151,7 @@ func TestBucketGet(t *testing.T) {
 			}, nil
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("bucket")
@@ -166,9 +166,9 @@ func TestBucketGet(t *testing.T) {
 
 func TestBucketDelete(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		var r mock.Registry
+		var b mock.Backend
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
@@ -179,7 +179,7 @@ func TestBucketDelete(t *testing.T) {
 			}, nil
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("bucket")
@@ -192,9 +192,9 @@ func TestBucketDelete(t *testing.T) {
 
 func TestBucketList(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		var r mock.Registry
+		var b mock.Backend
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
+		b.BucketFn = func(name string) (lobby.Bucket, error) {
 			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
@@ -212,7 +212,7 @@ func TestBucketList(t *testing.T) {
 			}, nil
 		}
 
-		backend, cleanup := newBackend(t, &r)
+		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
 		bucket, err := backend.Bucket("bucket")

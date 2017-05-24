@@ -9,15 +9,26 @@ import (
 )
 
 // NewServer returns a configured gRPC server.
-func NewServer(r lobby.Registry) lobby.Server {
+func NewServer(services ...func(*grpc.Server)) lobby.Server {
 	g := grpc.NewServer()
-	bs := newBucketService(r)
-	rs := newRegistryService(r)
 
-	proto.RegisterBucketServiceServer(g, bs)
-	proto.RegisterRegistryServiceServer(g, rs)
+	for _, s := range services {
+		s(g)
+	}
 
 	return &server{srv: g}
+}
+
+func WithBucketService(b lobby.Backend) func(*grpc.Server) {
+	return func(g *grpc.Server) {
+		proto.RegisterBucketServiceServer(g, newBucketService(b))
+	}
+}
+
+func WithRegistryService(r lobby.Registry) func(*grpc.Server) {
+	return func(g *grpc.Server) {
+		proto.RegisterRegistryServiceServer(g, newRegistryService(r))
+	}
 }
 
 type server struct {

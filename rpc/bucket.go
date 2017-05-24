@@ -12,16 +12,16 @@ import (
 	"golang.org/x/net/context"
 )
 
-func newBucketService(r lobby.Registry) *bucketService {
+func newBucketService(b lobby.Backend) *bucketService {
 	return &bucketService{
-		registry: r,
-		logger:   log.New(os.Stderr, "", log.LstdFlags),
+		backend: b,
+		logger:  log.New(os.Stderr, "", log.LstdFlags),
 	}
 }
 
 type bucketService struct {
-	registry lobby.Registry
-	logger   *log.Logger
+	backend lobby.Backend
+	logger  *log.Logger
 }
 
 // Put an item in the bucket.
@@ -45,7 +45,7 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 			return newError(err, s.logger)
 		}
 
-		b, err := s.registry.Bucket(newItem.Bucket)
+		b, err := s.backend.Bucket(newItem.Bucket)
 		if err != nil {
 			return newError(err, s.logger)
 		}
@@ -64,7 +64,7 @@ func (s *bucketService) Get(ctx context.Context, key *proto.Key) (*proto.Item, e
 		return nil, newError(err, s.logger)
 	}
 
-	b, err := s.registry.Bucket(key.Bucket)
+	b, err := s.backend.Bucket(key.Bucket)
 	if err != nil {
 		return nil, newError(err, s.logger)
 	}
@@ -86,7 +86,7 @@ func (s *bucketService) Delete(ctx context.Context, key *proto.Key) (*proto.Empt
 		return nil, newError(err, s.logger)
 	}
 
-	b, err := s.registry.Bucket(key.Bucket)
+	b, err := s.backend.Bucket(key.Bucket)
 	if err != nil {
 		return nil, newError(err, s.logger)
 	}
@@ -105,7 +105,7 @@ func (s *bucketService) List(page *proto.Page, stream proto.BucketService_ListSe
 		return newError(err, s.logger)
 	}
 
-	b, err := s.registry.Bucket(page.Bucket)
+	b, err := s.backend.Bucket(page.Bucket)
 	if err != nil {
 		return newError(err, s.logger)
 	}

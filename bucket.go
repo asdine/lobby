@@ -40,12 +40,10 @@ type Backend interface {
 
 // A Registry manages the buckets, their configuration and their associated Backend.
 type Registry interface {
+	Backend
+
 	// Register a backend under the given name.
 	RegisterBackend(name string, backend Backend)
 	// Create a bucket and register it to the Registry.
 	Create(backendName, bucketName string) error
-	// Fetch a bucket directly from the associated Backend.
-	Bucket(name string) (Bucket, error)
-	// Close the registry connection.
-	Close() error
 }
