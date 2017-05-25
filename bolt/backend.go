@@ -7,7 +7,6 @@ import (
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	"github.com/boltdb/bolt"
-	"github.com/pkg/errors"
 )
 
 var _ lobby.Backend = new(Backend)
@@ -25,7 +24,7 @@ func NewBackend(path string) (*Backend, error) {
 	)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Can't open database")
+		return nil, err
 	}
 
 	return &Backend{

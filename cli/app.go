@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/asdine/lobby"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 )
 
 func newApp() *app {
@@ -23,6 +24,7 @@ func newApp() *app {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defaultConfigDir := path.Join(home, ".config/lobby")
 
 	c := cli.NewApp()
 	c.Name = "lobby"
@@ -32,10 +34,23 @@ func newApp() *app {
 		cli.StringFlag{
 			Name:        "config-dir",
 			Usage:       "Path to a directory to read and store Lobby configuration",
-			Destination: &a.configDir,
-			Value:       path.Join(home, ".config/lobby"),
+			Destination: &a.ConfigDir,
+			Value:       defaultConfigDir,
+		},
+		cli.StringFlag{
+			Name:        "data-dir",
+			Usage:       "Path to a directory to read and store Lobby data",
+			Destination: &a.DataDir,
+			Value:       path.Join(defaultConfigDir, "data"),
+		},
+		cli.StringFlag{
+			Name:        "socket-dir",
+			Usage:       "Path to a directory to read and store Lobby sockets",
+			Destination: &a.SocketDir,
+			Value:       path.Join(defaultConfigDir, "sockets"),
 		},
 	}
+
 	a.App = c
 	return &a
 }
@@ -46,26 +61,41 @@ type app struct {
 	in        io.Reader
 	out       io.Writer
 	registry  lobby.Registry
-	configDir string
+	ConfigDir string
+	DataDir   string
+	SocketDir string
 }
 
 func (a *app) init(c *cli.Context) error {
-	err := a.initConfigDir()
-	if err != nil {
-		return err
+	paths := []string{
+		a.ConfigDir,
+		a.DataDir,
+		a.SocketDir,
+	}
+
+	for _, path := range paths {
+		err := initDir(path)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (a *app) initConfigDir() error {
-	fi, err := os.Stat(a.configDir)
+func initDir(path string) error {
+	fi, err := os.Stat(path)
 	if err != nil {
-		return os.Mkdir(a.configDir, 0755)
+		err = os.Mkdir(path, 0755)
+		if err != nil {
+			return errors.Wrapf(err, "Can't create directory %s", path)
+		}
+
+		return nil
 	}
 
 	if !fi.Mode().IsDir() {
-		return errors.New("Config directory must be a valid directory")
+		return fmt.Errorf("'%s' is not a valid directory", path)
 	}
 
 	return nil

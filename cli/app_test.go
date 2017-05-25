@@ -28,13 +28,18 @@ func TestAppConfigDir(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range testCases {
+		configDir := test["dir"].(string)
+		dataDir := path.Join(configDir, "data")
+		socketDir := path.Join(configDir, "sockets")
 		var out bytes.Buffer
 		a := app{
 			out:       &out,
-			configDir: test["dir"].(string),
+			ConfigDir: configDir,
+			DataDir:   dataDir,
+			SocketDir: socketDir,
 		}
 
-		err = a.initConfigDir()
+		err = a.init(nil)
 		require.Equal(t, test["error"].(bool), err != nil)
 	}
 }
