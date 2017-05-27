@@ -7,11 +7,10 @@ import (
 	"os"
 	"path"
 
-	cli "gopkg.in/urfave/cli.v1"
-
 	"github.com/asdine/lobby"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 func newApp() *app {
@@ -29,7 +28,6 @@ func newApp() *app {
 	c := cli.NewApp()
 	c.Name = "lobby"
 	c.Version = lobby.Version
-	c.Before = a.init
 	c.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config-dir",
@@ -49,6 +47,21 @@ func newApp() *app {
 			Destination: &a.SocketDir,
 			Value:       path.Join(defaultConfigDir, "sockets"),
 		},
+		cli.StringFlag{
+			Name:        "plugin-dir",
+			Usage:       "Path to a directory to read Lobby plugins",
+			Destination: &a.PluginDir,
+		},
+		cli.StringSliceFlag{
+			Name:  "plugin",
+			Usage: "Name of the plugin to load",
+		},
+	}
+
+	c.Before = func(c *cli.Context) error {
+		a.Plugins = c.StringSlice("plugins")
+
+		return a.init()
 	}
 
 	a.App = c
@@ -64,9 +77,11 @@ type app struct {
 	ConfigDir string
 	DataDir   string
 	SocketDir string
+	PluginDir string
+	Plugins   []string
 }
 
-func (a *app) init(c *cli.Context) error {
+func (a *app) init() error {
 	paths := []string{
 		a.ConfigDir,
 		a.DataDir,
