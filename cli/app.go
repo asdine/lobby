@@ -31,21 +31,9 @@ func newApp() *app {
 	c.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "config-dir",
-			Usage:       "Path to a directory to read and store Lobby configuration",
+			Usage:       "Path to a directory to read and store Lobby configuration and data",
 			Destination: &a.ConfigDir,
 			Value:       defaultConfigDir,
-		},
-		cli.StringFlag{
-			Name:        "data-dir",
-			Usage:       "Path to a directory to read and store Lobby data",
-			Destination: &a.DataDir,
-			Value:       path.Join(defaultConfigDir, "data"),
-		},
-		cli.StringFlag{
-			Name:        "socket-dir",
-			Usage:       "Path to a directory to read and store Lobby sockets",
-			Destination: &a.SocketDir,
-			Value:       path.Join(defaultConfigDir, "sockets"),
 		},
 		cli.StringFlag{
 			Name:        "plugin-dir",
@@ -59,8 +47,9 @@ func newApp() *app {
 	}
 
 	c.Before = func(c *cli.Context) error {
-		a.Plugins = c.StringSlice("plugins")
-
+		a.Plugins = c.StringSlice("plugin")
+		a.DataDir = path.Join(defaultConfigDir, "data")
+		a.SocketDir = path.Join(defaultConfigDir, "sockets")
 		return a.init()
 	}
 
