@@ -57,7 +57,7 @@ type Bucket struct {
 func (b *Bucket) Put(key string, value []byte) (*lobby.Item, error) {
 	stream, err := b.client.Put(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, errFromGRPC(err)
 	}
 
 	err = stream.Send(&proto.NewItem{

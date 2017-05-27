@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"google.golang.org/grpc"
+
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/rpc/proto"
 	"github.com/asdine/lobby/validation"
@@ -58,4 +60,64 @@ func (s *registryService) Status(ctx context.Context, bucket *proto.Bucket) (*pr
 	return &proto.BucketStatus{
 		Exists: exists,
 	}, nil
+}
+
+var _ lobby.Registry = new(Registry)
+
+// NewRegistry returns a gRPC Registry. It is used to communicate with external Registries.
+func NewRegistry(conn *grpc.ClientConn) (*Registry, error) {
+	client := proto.NewRegistryServiceClient(conn)
+
+	backend, err := NewBackend(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Registry{
+		Backend: backend,
+		conn:    conn,
+		client:  client,
+	}, nil
+}
+
+// Registry is a gRPC Registry.
+type Registry struct {
+	*Backend
+
+	conn   *grpc.ClientConn
+	client proto.RegistryServiceClient
+}
+
+// RegisterBackend should never be called on this type.
+func (s *Registry) RegisterBackend(_ string, _ lobby.Backend) {
+	panic("RegisterBackend should not be called on this type")
+}
+
+// Create a bucket and register it to the Registry.
+func (s *Registry) Create(backendName, bucketName string) error {
+	_, err := s.client.Create(context.Background(), &proto.NewBucket{Name: bucketName, Backend: backendName})
+	if err != nil {
+		return errFromGRPC(err)
+	}
+
+	return nil
+}
+
+// Bucket returns the bucket associated with the given id.
+func (s *Registry) Bucket(name string) (lobby.Bucket, error) {
+	status, err := s.client.Status(context.Background(), &proto.Bucket{Name: name})
+	if err != nil {
+		return nil, errFromGRPC(err)
+	}
+
+	if !status.Exists {
+		return nil, lobby.ErrBucketNotFound
+	}
+
+	return s.Backend.Bucket(name)
+}
+
+// Close the connexion to the Registry.
+func (s *Registry) Close() error {
+	return s.conn.Close()
 }
