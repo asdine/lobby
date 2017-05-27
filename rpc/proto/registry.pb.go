@@ -18,8 +18,10 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 type NewBucket struct {
+	// Bucket name.
 	// @inject_tag: valid:"required"
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty" valid:"required"`
+	// Backend used by this bucket.
 	// @inject_tag: valid:"required"
 	Backend string `protobuf:"bytes,2,opt,name=backend" json:"backend,omitempty" valid:"required"`
 }
@@ -43,8 +45,53 @@ func (m *NewBucket) GetBackend() string {
 	return ""
 }
 
+type Bucket struct {
+	// Bucket name.
+	// @inject_tag: valid:"required"
+	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty" valid:"required"`
+	// Backend used by this bucket.
+	Backend string `protobuf:"bytes,2,opt,name=backend" json:"backend,omitempty" `
+}
+
+func (m *Bucket) Reset()                    { *m = Bucket{} }
+func (m *Bucket) String() string            { return proto1.CompactTextString(m) }
+func (*Bucket) ProtoMessage()               {}
+func (*Bucket) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+
+func (m *Bucket) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Bucket) GetBackend() string {
+	if m != nil {
+		return m.Backend
+	}
+	return ""
+}
+
+type BucketStatus struct {
+	Exists bool `protobuf:"varint,1,opt,name=exists" json:"exists,omitempty"`
+}
+
+func (m *BucketStatus) Reset()                    { *m = BucketStatus{} }
+func (m *BucketStatus) String() string            { return proto1.CompactTextString(m) }
+func (*BucketStatus) ProtoMessage()               {}
+func (*BucketStatus) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+
+func (m *BucketStatus) GetExists() bool {
+	if m != nil {
+		return m.Exists
+	}
+	return false
+}
+
 func init() {
 	proto1.RegisterType((*NewBucket)(nil), "proto.NewBucket")
+	proto1.RegisterType((*Bucket)(nil), "proto.Bucket")
+	proto1.RegisterType((*BucketStatus)(nil), "proto.BucketStatus")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -59,6 +106,7 @@ const _ = grpc.SupportPackageIsVersion4
 
 type RegistryServiceClient interface {
 	Create(ctx context.Context, in *NewBucket, opts ...grpc.CallOption) (*Empty, error)
+	Status(ctx context.Context, in *Bucket, opts ...grpc.CallOption) (*BucketStatus, error)
 }
 
 type registryServiceClient struct {
@@ -78,10 +126,20 @@ func (c *registryServiceClient) Create(ctx context.Context, in *NewBucket, opts 
 	return out, nil
 }
 
+func (c *registryServiceClient) Status(ctx context.Context, in *Bucket, opts ...grpc.CallOption) (*BucketStatus, error) {
+	out := new(BucketStatus)
+	err := grpc.Invoke(ctx, "/proto.RegistryService/Status", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for RegistryService service
 
 type RegistryServiceServer interface {
 	Create(context.Context, *NewBucket) (*Empty, error)
+	Status(context.Context, *Bucket) (*BucketStatus, error)
 }
 
 func RegisterRegistryServiceServer(s *grpc.Server, srv RegistryServiceServer) {
@@ -106,6 +164,24 @@ func _RegistryService_Create_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Bucket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).Status(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.RegistryService/Status",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).Status(ctx, req.(*Bucket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _RegistryService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.RegistryService",
 	HandlerType: (*RegistryServiceServer)(nil),
@@ -113,6 +189,10 @@ var _RegistryService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _RegistryService_Create_Handler,
+		},
+		{
+			MethodName: "Status",
+			Handler:    _RegistryService_Status_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -122,15 +202,18 @@ var _RegistryService_serviceDesc = grpc.ServiceDesc{
 func init() { proto1.RegisterFile("registry.proto", fileDescriptor1) }
 
 var fileDescriptor1 = []byte{
-	// 146 bytes of a gzipped FileDescriptorProto
+	// 197 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2b, 0x4a, 0x4d, 0xcf,
 	0x2c, 0x2e, 0x29, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x52, 0xdc,
 	0x25, 0x95, 0x05, 0xa9, 0xc5, 0x10, 0x31, 0x25, 0x4b, 0x2e, 0x4e, 0xbf, 0xd4, 0x72, 0xa7, 0xd2,
 	0xe4, 0xec, 0xd4, 0x12, 0x21, 0x21, 0x2e, 0x96, 0xbc, 0xc4, 0xdc, 0x54, 0x09, 0x46, 0x05, 0x46,
 	0x0d, 0xce, 0x20, 0x30, 0x5b, 0x48, 0x82, 0x8b, 0x3d, 0x29, 0x31, 0x39, 0x3b, 0x35, 0x2f, 0x45,
-	0x82, 0x09, 0x2c, 0x0c, 0xe3, 0x1a, 0xd9, 0x72, 0xf1, 0x07, 0x41, 0x2d, 0x08, 0x4e, 0x2d, 0x2a,
-	0xcb, 0x4c, 0x4e, 0x15, 0xd2, 0xe2, 0x62, 0x73, 0x2e, 0x4a, 0x4d, 0x2c, 0x49, 0x15, 0x12, 0x80,
-	0x98, 0xaf, 0x07, 0x37, 0x5c, 0x8a, 0x07, 0x2a, 0xe2, 0x9a, 0x5b, 0x50, 0x52, 0xa9, 0xc4, 0x90,
-	0xc4, 0x06, 0xe6, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x11, 0x1b, 0xff, 0x5f, 0xa6, 0x00,
-	0x00, 0x00,
+	0x82, 0x09, 0x2c, 0x0c, 0xe3, 0x2a, 0x99, 0x71, 0xb1, 0x91, 0xa5, 0x4f, 0x8d, 0x8b, 0x07, 0xa2,
+	0x2f, 0xb8, 0x24, 0xb1, 0xa4, 0xb4, 0x58, 0x48, 0x8c, 0x8b, 0x2d, 0xb5, 0x22, 0xb3, 0xb8, 0xa4,
+	0x18, 0xac, 0x9f, 0x23, 0x08, 0xca, 0x33, 0xca, 0xe5, 0xe2, 0x0f, 0x82, 0x7a, 0x20, 0x38, 0xb5,
+	0xa8, 0x2c, 0x33, 0x39, 0x55, 0x48, 0x8b, 0x8b, 0xcd, 0xb9, 0x28, 0x35, 0xb1, 0x24, 0x55, 0x48,
+	0x00, 0xe2, 0x7e, 0x3d, 0xb8, 0xe3, 0xa5, 0x78, 0xa0, 0x22, 0xae, 0xb9, 0x05, 0x25, 0x95, 0x4a,
+	0x0c, 0x42, 0x7a, 0x5c, 0x6c, 0x50, 0x0b, 0x78, 0xa1, 0x32, 0x50, 0x85, 0xc2, 0x28, 0x5c, 0x88,
+	0x1a, 0x25, 0x86, 0x24, 0x36, 0xb0, 0xa8, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x8d, 0x02, 0x84,
+	0x65, 0x36, 0x01, 0x00, 0x00,
 }

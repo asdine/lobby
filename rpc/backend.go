@@ -12,12 +12,7 @@ import (
 var _ lobby.Backend = new(Backend)
 
 // NewBackend returns a gRPC backend. It is used to communicate with external backends.
-func NewBackend(addr string) (*Backend, error) {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-
+func NewBackend(conn *grpc.ClientConn) (*Backend, error) {
 	client := proto.NewBucketServiceClient(conn)
 
 	return &Backend{

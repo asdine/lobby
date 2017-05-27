@@ -36,3 +36,26 @@ func (s *registryService) Create(ctx context.Context, newBucket *proto.NewBucket
 
 	return new(proto.Empty), nil
 }
+
+// Exists check a bucket in the registry.
+func (s *registryService) Status(ctx context.Context, bucket *proto.Bucket) (*proto.BucketStatus, error) {
+	err := validation.Validate(bucket)
+	if err != nil {
+		return nil, newError(err, s.logger)
+	}
+
+	var exists bool
+
+	_, err = s.registry.Bucket(bucket.Name)
+	if err != nil {
+		if err != lobby.ErrBucketNotFound {
+			return nil, newError(err, s.logger)
+		}
+	} else {
+		exists = true
+	}
+
+	return &proto.BucketStatus{
+		Exists: exists,
+	}, nil
+}

@@ -16,6 +16,8 @@ It has these top-level messages:
 	Key
 	Item
 	NewBucket
+	Bucket
+	BucketStatus
 	Empty
 */
 package proto

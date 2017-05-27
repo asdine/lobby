@@ -6,11 +6,28 @@ import "types.proto";
 
 service RegistryService {
   rpc Create (NewBucket) returns (Empty) {}
+  rpc Status (Bucket) returns (BucketStatus) {}
 }
 
 message NewBucket {
+  // Bucket name.
   // @inject_tag: valid:"required"
   string name = 1;
+
+  // Backend used by this bucket.
   // @inject_tag: valid:"required"
   string backend = 2;
+}
+
+message Bucket {
+  // Bucket name.
+  // @inject_tag: valid:"required"
+  string name = 1;
+
+  // Backend used by this bucket.
+  string backend = 2;
+}
+
+message BucketStatus {
+  bool exists = 1;
 }

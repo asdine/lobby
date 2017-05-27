@@ -6,6 +6,8 @@ import (
 	"net"
 	"testing"
 
+	"google.golang.org/grpc"
+
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/mock"
 	"github.com/asdine/lobby/rpc"
@@ -23,7 +25,10 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 		srv.Serve(l)
 	}()
 
-	backend, err := rpc.NewBackend(l.Addr().String())
+	conn, err := grpc.Dial(l.Addr().String(), grpc.WithInsecure())
+	require.NoError(t, err)
+
+	backend, err := rpc.NewBackend(conn)
 	require.NoError(t, err)
 
 	return backend, func() {

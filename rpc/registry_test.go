@@ -105,3 +105,73 @@ func TestRegistryServerCreate(t *testing.T) {
 		require.Equal(t, codes.Internal, grpc.Code(err))
 	})
 }
+
+func TestRegistryServerStatus(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return new(mock.Bucket), nil
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewRegistryServiceClient(conn)
+
+		status, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
+		require.NoError(t, err)
+		require.True(t, status.Exists)
+	})
+
+	t.Run("EmptyFields", func(t *testing.T) {
+		var r mock.Registry
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+		client := proto.NewRegistryServiceClient(conn)
+
+		_, err := client.Status(context.Background(), new(proto.Bucket))
+		require.Error(t, err)
+		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return nil, lobby.ErrBucketNotFound
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewRegistryServiceClient(conn)
+
+		status, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
+		require.NoError(t, err)
+		require.False(t, status.Exists)
+	})
+
+	t.Run("InternalError", func(t *testing.T) {
+		var r mock.Registry
+
+		r.BucketFn = func(name string) (lobby.Bucket, error) {
+			require.Equal(t, "bucket", name)
+
+			return nil, errors.New("something unexpected happened !")
+		}
+
+		conn, cleanup := newServer(t, &r)
+		defer cleanup()
+
+		client := proto.NewRegistryServiceClient(conn)
+
+		_, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
+		require.Error(t, err)
+		require.Equal(t, codes.Internal, grpc.Code(err))
+	})
+}
