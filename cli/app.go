@@ -94,12 +94,7 @@ type app struct {
 }
 
 func (a *app) init() error {
-	err := a.initDirectories()
-	if err != nil {
-		return err
-	}
-
-	return a.loadPlugins()
+	return a.initDirectories()
 }
 
 func (a *app) initDirectories() error {
@@ -137,7 +132,7 @@ func initDir(path string) error {
 	return nil
 }
 
-func (a *app) loadPlugins() error {
+func (a *app) loadBackendPlugins() error {
 	var err error
 	a.Backends = make([]plugin.Backend, len(a.backendList))
 
@@ -148,6 +143,11 @@ func (a *app) loadPlugins() error {
 		}
 	}
 
+	return nil
+}
+
+func (a *app) loadServerPlugins() error {
+	var err error
 	a.Servers = make([]plugin.Plugin, len(a.serverList))
 
 	for i, name := range a.serverList {
@@ -178,7 +178,7 @@ func (a *app) closePlugins() error {
 	return nil
 }
 
-func (a *app) runServers(servers map[net.Listener]lobby.Server) error {
+func (a *app) runServers(servers map[net.Listener]lobby.Server, beforeStop ...func() error) error {
 	var wg sync.WaitGroup
 
 	for l, srv := range servers {
@@ -195,6 +195,13 @@ func (a *app) runServers(servers map[net.Listener]lobby.Server) error {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	<-c
+	for _, fn := range beforeStop {
+		err := fn()
+		if err != nil {
+			return err
+		}
+	}
+
 	var lastErr error
 	for _, srv := range servers {
 		if err := srv.Stop(); err != nil {

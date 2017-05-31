@@ -48,7 +48,6 @@ func (b *backend) Backend() (lobby.Backend, error) {
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			time.Sleep(100 * time.Millisecond)
 			return net.DialTimeout("unix", b.socketPath, timeout)
 		}),
 	)
@@ -68,8 +67,19 @@ func LoadBackend(name, cmdPath, configDir string) (Backend, error) {
 		return nil, err
 	}
 
+	socketPath := path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name))
+	var i int
+	for i < 5 {
+		if _, err := os.Stat(socketPath); !os.IsNotExist(err) {
+			break
+		}
+
+		i++
+		time.Sleep(10 * time.Millisecond)
+	}
+
 	return &backend{
-		socketPath: path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name)),
+		socketPath: socketPath,
 		plugin: &plugin{
 			name:    name,
 			process: cmd.Process,

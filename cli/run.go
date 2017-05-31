@@ -1,12 +1,8 @@
 package cli
 
 import (
-	"io/ioutil"
-	"log"
 	"net"
 	"path"
-
-	"google.golang.org/grpc/grpclog"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
@@ -36,16 +32,19 @@ type runCmd struct {
 }
 
 func (s *runCmd) run(_ *cli.Context) error {
-	grpclog.SetLogger(log.New(ioutil.Discard, "", 0))
-
 	return s.runMainServer()
 }
 
 func (s *runCmd) runMainServer() error {
+	err := s.app.loadBackendPlugins()
+	if err != nil {
+		return err
+	}
+
 	dataPath := path.Join(s.app.DataDir, "bolt")
 	registryPath := path.Join(dataPath, "registry.db")
 
-	err := initDir(dataPath)
+	err = initDir(dataPath)
 	if err != nil {
 		return err
 	}
@@ -71,17 +70,22 @@ func (s *runCmd) runMainServer() error {
 	if err != nil {
 		return err
 	}
-	defer l.Close()
 
 	// listening on unix socket
 	lsock, err := net.Listen("unix", path.Join(s.app.SocketDir, "lobby.sock"))
 	if err != nil {
 		return err
 	}
-	defer lsock.Close()
+
+	err = s.app.loadServerPlugins()
+	if err != nil {
+		return err
+	}
 
 	return s.app.runServers(map[net.Listener]lobby.Server{
 		l:     srv,
 		lsock: srv,
+	}, func() error {
+		return reg.Close()
 	})
 }
