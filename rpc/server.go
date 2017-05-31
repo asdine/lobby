@@ -35,6 +35,10 @@ type server struct {
 	srv *grpc.Server
 }
 
+func (s *server) Name() string {
+	return "gRPC"
+}
+
 func (s *server) Serve(l net.Listener) error {
 	return s.srv.Serve(l)
 }

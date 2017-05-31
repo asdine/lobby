@@ -18,12 +18,23 @@ import (
 
 const maxBodySize = 1024 * 1024
 
+// NewServer returns an http lobby server.
+func NewServer(handler http.Handler) lobby.Server {
+	return &Server{
+		Server: &http.Server{
+			Handler: handler,
+		},
+	}
+}
+
 // Server wraps an HTTP server.
 type Server struct {
-	http.Server
+	*http.Server
+}
 
-	// Handler to serve.
-	Handler http.Handler
+// Name of the server.
+func (s *Server) Name() string {
+	return "http"
 }
 
 // Stop gracefully stops the server.
@@ -33,32 +44,24 @@ func (s *Server) Stop() error {
 	return s.Server.Shutdown(ctx)
 }
 
-// NewServeMux instantiates a new ServeMux.
-func NewServeMux() *ServeMux {
-	return &ServeMux{
-		ServeMux: http.NewServeMux(),
-	}
+type wrapper struct {
+	handler http.Handler
+	logger  *log.Logger
 }
 
-// ServeMux is a wrapper around a http.Handler.
-type ServeMux struct {
-	*http.ServeMux
-}
-
-// ServeHTTP delegates a request to the underlying ServeMux.
-func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP delegates a request to the underlying handler.
+func (s *wrapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	rw := newResponseWriter(w)
 
 	if r.ContentLength > maxBodySize {
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
-
 	} else {
-		s.ServeMux.ServeHTTP(rw, r)
+		s.handler.ServeHTTP(rw, r)
 	}
 
-	log.Printf(
+	s.logger.Printf(
 		"%s %s %s %d %d %s",
 		clientIP(r),
 		r.Method,
@@ -131,7 +134,7 @@ func NewHandler(r lobby.Registry) http.Handler {
 	router.GET("/v1/b/:bucket/:key", h.getItem)
 	router.DELETE("/v1/b/:bucket/:key", h.deleteItem)
 	router.GET("/v1/b/:bucket", h.listItems)
-	return router
+	return &wrapper{handler: router, logger: h.logger}
 }
 
 // Handler is the main http handler.

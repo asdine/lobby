@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/signal"
 	"path"
-	"sync"
-	"syscall"
+	"time"
+
+	"google.golang.org/grpc"
 
 	cli "gopkg.in/urfave/cli.v1"
 
@@ -45,42 +45,50 @@ func (p *Plugin) RunAsBackend(fn func() (lobby.Backend, error)) error {
 		}
 		defer backend.Close()
 
-		return p.backendAction(backend)
+		l, err := net.Listen("unix", path.Join(p.SocketDir, fmt.Sprintf("%s.sock", p.Name)))
+		if err != nil {
+			return err
+		}
+		defer l.Close()
+
+		srv := rpc.NewServer(rpc.WithBucketService(backend))
+
+		return p.app.runServers(map[net.Listener]lobby.Server{
+			l: srv,
+		})
 	}
 
 	return p.Run(os.Args)
 }
 
-func (p *Plugin) backendAction(backend lobby.Backend) error {
-	var wg sync.WaitGroup
+// RunAsServer runs the plugin as a lobby server.
+func (p *Plugin) RunAsServer(fn func(lobby.Registry) (net.Listener, lobby.Server, error)) error {
+	p.Action = func(c *cli.Context) error {
+		conn, err := grpc.Dial("",
+			grpc.WithInsecure(),
+			grpc.WithBlock(),
+			grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
+				return net.DialTimeout("unix", path.Join(p.SocketDir, "lobby.sock"), timeout)
+			}),
+		)
+		if err != nil {
+			return err
+		}
+		reg, err := rpc.NewRegistry(conn)
+		if err != nil {
+			return err
+		}
 
-	l, err := net.Listen("unix", path.Join(p.SocketDir, fmt.Sprintf("%s.sock", p.Name)))
-	if err != nil {
-		return err
+		l, srv, err := fn(reg)
+		if err != nil {
+			return err
+		}
+		defer l.Close()
+
+		return p.app.runServers(map[net.Listener]lobby.Server{
+			l: srv,
+		})
 	}
-	defer l.Close()
 
-	server := rpc.NewServer(rpc.WithBucketService(backend))
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		server.Serve(l)
-	}()
-
-	c := make(chan os.Signal, 1)
-
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
-	<-c
-	fmt.Fprintf(p.out, "\nStopping servers...")
-	err = server.Stop()
-	if err != nil {
-		fmt.Fprintf(p.out, " Error: %s\n", err.Error())
-	} else {
-		fmt.Fprintf(p.out, " OK\n")
-	}
-
-	wg.Wait()
-	return nil
+	return p.Run(os.Args)
 }

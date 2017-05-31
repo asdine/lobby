@@ -82,7 +82,7 @@ func TestRegistryServerCreate(t *testing.T) {
 
 		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
 		require.Error(t, err)
-		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
+		require.Equal(t, codes.NotFound, grpc.Code(err))
 	})
 
 	t.Run("InternalError", func(t *testing.T) {

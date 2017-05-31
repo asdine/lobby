@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"bytes"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -15,36 +15,41 @@ import (
 )
 
 type Plugin interface {
-	Backend() (lobby.Backend, error)
+	Name() string
 	Close() error
 }
 
-func Load(name, cmdPath, configDir, dataDir string) (Plugin, error) {
-	cmd := exec.Command(cmdPath, "--config-dir", configDir, "--data-dir", dataDir)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Start()
-	if err != nil {
-		return nil, err
-	}
+type Backend interface {
+	Plugin
 
-	return &plugin{
-		process:    cmd.Process,
-		socketPath: path.Join(configDir, "sockets"),
-	}, nil
+	Backend() (lobby.Backend, error)
 }
 
 type plugin struct {
-	process    *os.Process
+	name    string
+	process *os.Process
+}
+
+func (p *plugin) Name() string {
+	return p.name
+}
+
+func (p *plugin) Close() error {
+	return p.process.Kill()
+}
+
+type backend struct {
+	*plugin
 	socketPath string
 }
 
-func (p *plugin) Backend() (lobby.Backend, error) {
+func (b *backend) Backend() (lobby.Backend, error) {
 	conn, err := grpc.Dial("",
 		grpc.WithInsecure(),
+		grpc.WithBlock(),
 		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			sock, err := net.DialTimeout("unix", p.socketPath, timeout)
-			return sock, err
+			time.Sleep(100 * time.Millisecond)
+			return net.DialTimeout("unix", b.socketPath, timeout)
 		}),
 	)
 	if err != nil {
@@ -54,6 +59,34 @@ func (p *plugin) Backend() (lobby.Backend, error) {
 	return rpc.NewBackend(conn)
 }
 
-func (p *plugin) Close() error {
-	return p.process.Kill()
+func LoadBackend(name, cmdPath, configDir string) (Backend, error) {
+	cmd := exec.Command(cmdPath, "--config-dir", configDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return &backend{
+		socketPath: path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name)),
+		plugin: &plugin{
+			name:    name,
+			process: cmd.Process,
+		},
+	}, nil
+}
+
+func LoadServer(name, cmdPath, configDir string) (Plugin, error) {
+	cmd := exec.Command(cmdPath, "--config-dir", configDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return &plugin{
+		process: cmd.Process,
+	}, nil
 }

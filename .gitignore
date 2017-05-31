@@ -34,3 +34,4 @@ vendor/
 .DS_Store
 
 lobby-bolt
+lobby-http
