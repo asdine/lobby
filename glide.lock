@@ -1,10 +1,10 @@
 hash: 0c9fbf5452c13ccae86e3bb3adb1dc41d7521bd5172c3b052ef2c53c4732012e
-updated: 2017-05-25T11:15:14.330741626+02:00
+updated: 2017-06-01T23:10:48.036389914+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/asdine/storm
-  version: e8518cc1200f320e508639491f9390b9c7c37970
+  version: 2da548c16156b3197728372bff5614033084aff5
   subpackages:
   - codec
   - codec/json
@@ -14,13 +14,6 @@ imports:
   - q
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
-- name: github.com/emirpasic/gods
-  version: f6c17b524822278a87e3b3bd809fec33b51f5b46
-  subpackages:
-  - containers
-  - trees
-  - trees/redblacktree
-  - utils
 - name: github.com/golang/protobuf
   version: fec3b39b059c0f88fa6b20f5ed012b1aa203a8b4
   subpackages:
