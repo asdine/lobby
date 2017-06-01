@@ -82,7 +82,7 @@ func NewRegistry(conn *grpc.ClientConn) (*Registry, error) {
 
 // Registry is a gRPC Registry.
 type Registry struct {
-	*Backend
+	lobby.Backend
 
 	conn   *grpc.ClientConn
 	client proto.RegistryServiceClient
