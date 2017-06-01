@@ -14,11 +14,15 @@ import (
 	"github.com/asdine/lobby/rpc"
 )
 
+var execCommand = exec.Command
+
+// Plugin is a generic lobby plugin.
 type Plugin interface {
 	Name() string
 	Close() error
 }
 
+// Backend is a backend plugin.
 type Backend interface {
 	Plugin
 
@@ -58,8 +62,9 @@ func (b *backend) Backend() (lobby.Backend, error) {
 	return rpc.NewBackend(conn)
 }
 
+// LoadBackend loads a backend plugin.
 func LoadBackend(name, cmdPath, configDir string) (Backend, error) {
-	cmd := exec.Command(cmdPath, "--config-dir", configDir)
+	cmd := execCommand(cmdPath, "--config-dir", configDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
@@ -87,8 +92,9 @@ func LoadBackend(name, cmdPath, configDir string) (Backend, error) {
 	}, nil
 }
 
+// LoadServer loads a server plugin.
 func LoadServer(name, cmdPath, configDir string) (Plugin, error) {
-	cmd := exec.Command(cmdPath, "--config-dir", configDir)
+	cmd := execCommand(cmdPath, "--config-dir", configDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
@@ -97,6 +103,7 @@ func LoadServer(name, cmdPath, configDir string) (Plugin, error) {
 	}
 
 	return &plugin{
+		name:    name,
 		process: cmd.Process,
 	}, nil
 }
