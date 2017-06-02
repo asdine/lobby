@@ -43,17 +43,27 @@ func (s *runCmd) runMainServer() error {
 
 	dataPath := path.Join(s.app.DataDir, "bolt")
 	registryPath := path.Join(dataPath, "registry.db")
+	backendPath := path.Join(dataPath, "backend.db")
 
 	err = initDir(dataPath)
 	if err != nil {
 		return err
 	}
 
+	// Creating default registry.
 	reg, err := bolt.NewRegistry(registryPath)
 	if err != nil {
 		return err
 	}
 
+	// Creating default backend.
+	bck, err := bolt.NewBackend(backendPath)
+	if err != nil {
+		return err
+	}
+	reg.RegisterBackend("bolt", bck)
+
+	// Loading backends from plugins.
 	for _, p := range s.app.Backends {
 		bck, err := p.Backend()
 		if err != nil {
@@ -86,6 +96,11 @@ func (s *runCmd) runMainServer() error {
 		l:     srv,
 		lsock: srv,
 	}, func() error {
+		err := bck.Close()
+		if err != nil {
+			return err
+		}
+
 		return reg.Close()
 	})
 }
