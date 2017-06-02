@@ -33,5 +33,5 @@ plugin-server:
 	go build -o $(NAME)-$(PLUGIN) ./plugin/server/$(PLUGIN) 
 
 plugins:
-	make plugin-backend PLUGIN=bolt
+	make plugin-backend PLUGIN=mongo
 	make plugin-server PLUGIN=http

@@ -35,3 +35,4 @@ vendor/
 
 lobby-bolt
 lobby-http
+lobby-mongo
