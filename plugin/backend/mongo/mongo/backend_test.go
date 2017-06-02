@@ -23,7 +23,7 @@ func newBackend(t errorHandler) (*Backend, func()) {
 	}
 
 	return bck, func() {
-		err := bck.session.DB("").DropDatabase()
+		_, err := bck.session.DB("").C(colItems).RemoveAll(nil)
 		if err != nil {
 			t.Error(err)
 		}

@@ -30,7 +30,7 @@ func ensureIndexes(db *mgo.Database) error {
 	col := db.C(colItems)
 
 	index := mgo.Index{
-		Key:    []string{"key"},
+		Key:    []string{"bucket", "key"},
 		Unique: true,
 		Sparse: true,
 	}
@@ -45,7 +45,7 @@ type Backend struct {
 
 // Bucket returns the bucket associated with the given id.
 func (s *Backend) Bucket(name string) (lobby.Bucket, error) {
-	return NewBucket(s.session.Clone()), nil
+	return NewBucket(s.session.Copy(), name), nil
 }
 
 // Close MongoDB connection.

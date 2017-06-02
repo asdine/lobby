@@ -1,6 +1,8 @@
 package mongo
 
 import (
+	"encoding/json"
+
 	"github.com/asdine/lobby"
 	"github.com/pkg/errors"
 	mgo "gopkg.in/mgo.v2"
@@ -10,30 +12,41 @@ import (
 const colItems = "items"
 
 type item struct {
-	ID    string   `bson:"_id"`
-	Key   string   `bson:"key"`
-	Value bson.Raw `bson:"value"`
+	ID     string      `bson:"_id,omitempty"`
+	Bucket string      `bson:"bucket"`
+	Key    string      `bson:"key"`
+	Value  interface{} `bson:"value"`
 }
 
 var _ lobby.Bucket = new(Bucket)
 
 // NewBucket returns a MongoDB Bucket.
-func NewBucket(session *mgo.Session) *Bucket {
+func NewBucket(session *mgo.Session, name string) *Bucket {
 	return &Bucket{
 		session: session,
+		name:    name,
 	}
 }
 
 // Bucket is a MongoDB implementation of a bucket.
 type Bucket struct {
 	session *mgo.Session
+	name    string
 }
 
 // Put value to the bucket. Returns an Item.
 func (b *Bucket) Put(key string, value []byte) (*lobby.Item, error) {
 	col := b.session.DB("").C(colItems)
 
-	_, err := col.Upsert(bson.M{"key": key}, &item{Key: key, Value: bson.Raw{Data: value}})
+	var raw interface{}
+	err := json.Unmarshal(value, &raw)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal json")
+	}
+
+	_, err = col.Upsert(
+		bson.M{"bucket": b.name, "key": key},
+		bson.M{"$set": &item{Key: key, Bucket: b.name, Value: raw}})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to insert of update")
 	}
@@ -49,7 +62,7 @@ func (b *Bucket) Get(key string) (*lobby.Item, error) {
 	var i item
 
 	col := b.session.DB("").C(colItems)
-	err := col.Find(bson.M{"key": key}).One(&i)
+	err := col.Find(bson.M{"bucket": b.name, "key": key}).One(&i)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, lobby.ErrKeyNotFound
@@ -58,16 +71,21 @@ func (b *Bucket) Get(key string) (*lobby.Item, error) {
 		return nil, errors.Wrap(err, "failed to fetch item")
 	}
 
+	value, err := json.Marshal(i.Value)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal value into json")
+	}
+
 	return &lobby.Item{
 		Key:   i.Key,
-		Value: i.Value.Data,
+		Value: value,
 	}, nil
 }
 
 // Delete item from the bucket
 func (b *Bucket) Delete(key string) error {
 	col := b.session.DB("").C(colItems)
-	err := col.Remove(bson.M{"key": key})
+	err := col.Remove(bson.M{"bucket": b.name, "key": key})
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return lobby.ErrKeyNotFound
@@ -79,21 +97,22 @@ func (b *Bucket) Delete(key string) error {
 	return nil
 }
 
-// Page returns a list of items
+// Page returns a list of items.
 func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
-	var skip int
 	var list []item
 
 	if page <= 0 {
 		return nil, nil
 	}
 
+	col := b.session.DB("").C(colItems)
+
+	query := col.Find(bson.M{"bucket": b.name}).Sort("_id")
 	if perPage >= 0 {
-		skip = (page - 1) * perPage
+		query = query.Skip((page - 1) * perPage).Limit(perPage)
 	}
 
-	col := b.session.DB("").C(colItems)
-	err := col.Find(nil).Skip(skip).Limit(perPage).Sort("_id").All(&list)
+	err := query.All(&list)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch items")
 	}
@@ -101,7 +120,11 @@ func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
 	items := make([]lobby.Item, len(list))
 	for i := range list {
 		items[i].Key = list[i].Key
-		items[i].Value = list[i].Value.Data
+		value, err := json.Marshal(list[i].Value)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal value into json")
+		}
+		items[i].Value = value
 	}
 	return items, nil
 }
