@@ -19,12 +19,14 @@ func NewServer(services ...func(*grpc.Server)) lobby.Server {
 	return &server{srv: g}
 }
 
+// WithBucketService enables the BucketService.
 func WithBucketService(b lobby.Backend) func(*grpc.Server) {
 	return func(g *grpc.Server) {
 		proto.RegisterBucketServiceServer(g, newBucketService(b))
 	}
 }
 
+// WithRegistryService enables the RegistryService.
 func WithRegistryService(r lobby.Registry) func(*grpc.Server) {
 	return func(g *grpc.Server) {
 		proto.RegisterRegistryServiceServer(g, newRegistryService(r))
