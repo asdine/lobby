@@ -1,13 +1,11 @@
 package lobby
 
-import "errors"
-
 // Errors.
-var (
-	ErrBackendNotFound     = errors.New("backend not found")
-	ErrKeyNotFound         = errors.New("key not found")
-	ErrBucketNotFound      = errors.New("bucket not found")
-	ErrBucketAlreadyExists = errors.New("bucket already exists")
+const (
+	ErrBackendNotFound     = Error("backend not found")
+	ErrKeyNotFound         = Error("key not found")
+	ErrBucketNotFound      = Error("bucket not found")
+	ErrBucketAlreadyExists = Error("bucket already exists")
 )
 
 // An Item is a key value pair saved in a bucket.
