@@ -74,7 +74,7 @@ func LoadBackend(name, cmdPath, configDir string) (Backend, error) {
 
 	socketPath := path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name))
 	var i int
-	for i < 5 {
+	for i < 10 {
 		if _, err := os.Stat(socketPath); !os.IsNotExist(err) {
 			break
 		}

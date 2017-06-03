@@ -2,15 +2,15 @@ package cli
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"path"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 // NewPlugin returns a lobby plugin CLI application.
@@ -54,7 +54,7 @@ func (p *Plugin) RunAsBackend(fn func() (lobby.Backend, error)) error {
 
 		srv := rpc.NewServer(rpc.WithBucketService(backend))
 
-		return runServers(p.out, map[net.Listener]lobby.Server{
+		return runServers(ioutil.Discard, map[net.Listener]lobby.Server{
 			l: srv,
 		})
 	}
