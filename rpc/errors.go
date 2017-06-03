@@ -30,14 +30,14 @@ func newError(err error, logger *log.Logger) error {
 	case err == lobby.ErrBucketAlreadyExists:
 		code = codes.AlreadyExists
 	default:
-		code = codes.Internal
+		code = codes.Unknown
 	}
 
 	// Log error.
 	logger.Printf("grpc error: %s (code=%s)", err, code.String())
 
 	// Hide error from client if it is internal.
-	if code == codes.Internal {
+	if code == codes.Unknown {
 		err = ErrInternal
 	}
 

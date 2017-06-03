@@ -137,7 +137,7 @@ func TestBucketServerPut(t *testing.T) {
 
 		_, err = stream.CloseAndRecv()
 		require.Error(t, err)
-		require.Equal(t, codes.Internal, grpc.Code(err))
+		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
 }
 
@@ -248,7 +248,7 @@ func TestBucketServerGet(t *testing.T) {
 
 		_, err := client.Get(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
 		require.Error(t, err)
-		require.Equal(t, codes.Internal, grpc.Code(err))
+		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
 }
 
@@ -354,7 +354,7 @@ func TestBucketServerDelete(t *testing.T) {
 
 		_, err := client.Delete(context.Background(), &proto.Key{Bucket: "bucket", Key: "unknown"})
 		require.Error(t, err)
-		require.Equal(t, codes.Internal, grpc.Code(err))
+		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
 }
 
@@ -494,6 +494,6 @@ func TestBucketServerList(t *testing.T) {
 
 		_, err = stream.Recv()
 		require.Error(t, err)
-		require.Equal(t, codes.Internal, grpc.Code(err))
+		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
 }

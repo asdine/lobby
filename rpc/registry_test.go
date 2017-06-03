@@ -106,7 +106,7 @@ func TestRegistryServerCreate(t *testing.T) {
 
 		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
 		require.Error(t, err)
-		require.Equal(t, codes.Internal, grpc.Code(err))
+		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
 }
 
@@ -176,7 +176,7 @@ func TestRegistryServerStatus(t *testing.T) {
 
 		_, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
 		require.Error(t, err)
-		require.Equal(t, codes.Internal, grpc.Code(err))
+		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
 }
 
@@ -232,7 +232,7 @@ func TestRegistryCreate(t *testing.T) {
 			lobby.ErrKeyNotFound:         lobby.ErrKeyNotFound,
 			lobby.ErrBackendNotFound:     lobby.ErrBackendNotFound,
 			lobby.ErrBucketNotFound:      lobby.ErrBucketNotFound,
-			errors.New("unexpected"):     status.Error(codes.Internal, rpc.ErrInternal.Error()),
+			errors.New("unexpected"):     status.Error(codes.Unknown, rpc.ErrInternal.Error()),
 		}
 
 		for returnedErr, expectedErr := range testCases {
@@ -280,7 +280,7 @@ func TestRegistryBucket(t *testing.T) {
 			lobby.ErrKeyNotFound:         lobby.ErrKeyNotFound,
 			lobby.ErrBackendNotFound:     lobby.ErrBackendNotFound,
 			lobby.ErrBucketNotFound:      lobby.ErrBucketNotFound,
-			errors.New("unexpected"):     status.Error(codes.Internal, rpc.ErrInternal.Error()),
+			errors.New("unexpected"):     status.Error(codes.Unknown, rpc.ErrInternal.Error()),
 		}
 
 		for returnedErr, expectedErr := range testCases {
