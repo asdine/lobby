@@ -31,7 +31,8 @@ func newApp() *app {
 	}
 
 	cmd := cobra.Command{
-		Use: "lobby",
+		Use:          "lobby",
+		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			a.DataDir = path.Join(defaultConfigDir, "data")
 			a.SocketDir = path.Join(defaultConfigDir, "sockets")
