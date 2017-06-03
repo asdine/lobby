@@ -54,7 +54,7 @@ func (p *Plugin) RunAsBackend(fn func() (lobby.Backend, error)) error {
 
 		srv := rpc.NewServer(rpc.WithBucketService(backend))
 
-		return p.app.runServers(map[net.Listener]lobby.Server{
+		return runServers(p.out, map[net.Listener]lobby.Server{
 			l: srv,
 		})
 	}
@@ -86,7 +86,7 @@ func (p *Plugin) RunAsServer(fn func(lobby.Registry) (net.Listener, lobby.Server
 		}
 		defer l.Close()
 
-		return p.app.runServers(map[net.Listener]lobby.Server{
+		return runServers(p.out, map[net.Listener]lobby.Server{
 			l: srv,
 		})
 	}

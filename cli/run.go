@@ -1,11 +1,18 @@
 package cli
 
 import (
+	"fmt"
+	"io"
 	"net"
+	"os"
+	"os/signal"
 	"path"
+	"sync"
+	"syscall"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
+	"github.com/asdine/lobby/plugin"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 )
@@ -20,27 +27,83 @@ func newRunCmd(a *app) *cobra.Command {
 	cmd := cobra.Command{
 		Use:  "run",
 		RunE: r.run,
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return r.closePlugins()
+		},
 	}
+
+	cmd.Flags().StringSliceVar(&r.backendList, "backend", nil, "Name of the backend to use")
+	cmd.Flags().StringSliceVar(&r.serverList, "server", nil, "Name of the server to run")
 
 	return &cmd
 }
 
 type runCmd struct {
-	app     *app
-	mainSrv lobby.Server
+	app         *app
+	mainSrv     lobby.Server
+	backends    []plugin.Backend
+	servers     []plugin.Plugin
+	backendList []string
+	serverList  []string
 }
 
-func (s *runCmd) run(cmd *cobra.Command, args []string) error {
-	return s.runMainServer()
+func (r *runCmd) run(cmd *cobra.Command, args []string) error {
+	return r.runMainServer()
 }
 
-func (s *runCmd) runMainServer() error {
-	err := s.app.loadBackendPlugins()
+func (r *runCmd) loadBackendPlugins() error {
+	var err error
+	r.backends = make([]plugin.Backend, len(r.backendList))
+
+	for i, name := range r.backendList {
+		r.backends[i], err = plugin.LoadBackend(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *runCmd) loadServerPlugins() error {
+	var err error
+	r.servers = make([]plugin.Plugin, len(r.serverList))
+
+	for i, name := range r.serverList {
+		r.servers[i], err = plugin.LoadServer(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *runCmd) closePlugins() error {
+	for _, p := range r.servers {
+		err := p.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, p := range r.backends {
+		err := p.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *runCmd) runMainServer() error {
+	err := r.loadBackendPlugins()
 	if err != nil {
 		return err
 	}
 
-	dataPath := path.Join(s.app.DataDir, "bolt")
+	dataPath := path.Join(r.app.DataDir, "bolt")
 	registryPath := path.Join(dataPath, "registry.db")
 	backendPath := path.Join(dataPath, "backend.db")
 
@@ -63,7 +126,7 @@ func (s *runCmd) runMainServer() error {
 	reg.RegisterBackend("bolt", bck)
 
 	// Loading backends from plugins.
-	for _, p := range s.app.Backends {
+	for _, p := range r.backends {
 		bck, err := p.Backend()
 		if err != nil {
 			return err
@@ -81,17 +144,17 @@ func (s *runCmd) runMainServer() error {
 	}
 
 	// listening on unix socket
-	lsock, err := net.Listen("unix", path.Join(s.app.SocketDir, "lobby.sock"))
+	lsock, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
 	if err != nil {
 		return err
 	}
 
-	err = s.app.loadServerPlugins()
+	err = r.loadServerPlugins()
 	if err != nil {
 		return err
 	}
 
-	return s.app.runServers(map[net.Listener]lobby.Server{
+	return runServers(r.app.out, map[net.Listener]lobby.Server{
 		l:     srv,
 		lsock: srv,
 	}, func() error {
@@ -102,4 +165,39 @@ func (s *runCmd) runMainServer() error {
 
 		return reg.Close()
 	})
+}
+
+func runServers(out io.Writer, servers map[net.Listener]lobby.Server, beforeStop ...func() error) error {
+	var wg sync.WaitGroup
+
+	for l, srv := range servers {
+		wg.Add(1)
+		go func(l net.Listener, srv lobby.Server) {
+			defer wg.Done()
+			fmt.Fprintf(out, "Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
+			srv.Serve(l)
+		}(l, srv)
+	}
+
+	c := make(chan os.Signal, 1)
+
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	<-c
+	for _, fn := range beforeStop {
+		err := fn()
+		if err != nil {
+			return err
+		}
+	}
+
+	var lastErr error
+	for _, srv := range servers {
+		if err := srv.Stop(); err != nil {
+			lastErr = err
+		}
+	}
+
+	wg.Wait()
+	return lastErr
 }
