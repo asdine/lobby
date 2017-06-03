@@ -95,7 +95,11 @@ func (r *Registry) Bucket(name string) (lobby.Bucket, error) {
 		return nil, errors.Wrapf(err, "failed to fetch bucket %s", name)
 	}
 
-	backend := r.backends[bucket.Backend]
+	backend, ok := r.backends[bucket.Backend]
+	if !ok {
+		return nil, lobby.ErrBucketNotFound
+	}
+
 	return backend.Bucket(name)
 }
 
