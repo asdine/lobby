@@ -8,10 +8,10 @@ import (
 	"path"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/rpc"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 )
 
 var execCommand = exec.Command
@@ -73,14 +73,24 @@ func LoadBackend(name, cmdPath, configDir string) (Backend, error) {
 	}
 
 	socketPath := path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name))
-	var i int
-	for i < 10 {
-		if _, err := os.Stat(socketPath); !os.IsNotExist(err) {
-			break
-		}
+	c := time.Tick(10 * time.Millisecond)
+	timeout := time.After(5 * time.Second)
 
-		i++
-		time.Sleep(10 * time.Millisecond)
+Loop:
+	for {
+		select {
+		case <-c:
+			if _, err := os.Stat(socketPath); !os.IsNotExist(err) {
+				break Loop
+			}
+		case <-timeout:
+			err := cmd.Process.Kill()
+			if err != nil {
+				return nil, errors.Wrapf(err, "plugin %s load time exceeded: failed to kill process", name)
+			}
+
+			return nil, errors.Errorf("plugin %s load time exceeded", name)
+		}
 	}
 
 	return &backend{
