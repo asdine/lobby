@@ -8,16 +8,30 @@ import:
   - codec/protobuf
 - package: github.com/boltdb/bolt
   version: ^1.3.0
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
 - package: github.com/julienschmidt/httprouter
   version: ^1.1.0
+- package: github.com/mitchellh/go-homedir
 - package: github.com/pkg/errors
   version: ^0.8.0
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  version: ^1.3.0
+  subpackages:
+  - codes
+  - status
+- package: gopkg.in/mgo.v2
+  subpackages:
+  - bson
 - package: gopkg.in/urfave/cli.v1
   version: ^1.19.1
-- package: github.com/mitchellh/go-homedir
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4
   subpackages:
-  - require
   - assert
+  - require

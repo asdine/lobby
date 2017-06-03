@@ -1,5 +1,5 @@
-hash: 0c9fbf5452c13ccae86e3bb3adb1dc41d7521bd5172c3b052ef2c53c4732012e
-updated: 2017-06-01T23:10:48.036389914+02:00
+hash: 2ca4e365b3f1d36b2480f162da0e7ffb5b6e95036af654ea653494a9a2f14431
+updated: 2017-06-03T15:02:29.781462303+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -66,6 +66,13 @@ imports:
   - status
   - tap
   - transport
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
 - name: gopkg.in/urfave/cli.v1
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 testImports:
