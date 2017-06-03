@@ -3,25 +3,25 @@ package cli
 import (
 	"fmt"
 	"net"
-	"os"
 	"path"
 	"time"
 
 	"google.golang.org/grpc"
 
-	cli "gopkg.in/urfave/cli.v1"
-
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/rpc"
+	"github.com/spf13/cobra"
 )
 
 // NewPlugin returns a lobby plugin CLI application.
 func NewPlugin(name string) *Plugin {
+	a := newApp()
+	a.Command.Use = fmt.Sprintf("lobby-%s", name)
+	a.Command.Short = fmt.Sprintf("%s plugin", name)
 	plugin := Plugin{
-		app: newApp(),
+		app:  a,
+		name: name,
 	}
-	plugin.Name = name
-	plugin.Usage = fmt.Sprintf("%s plugin", name)
 
 	return &plugin
 }
@@ -29,12 +29,13 @@ func NewPlugin(name string) *Plugin {
 // Plugin command.
 type Plugin struct {
 	*app
+	name string
 }
 
 // RunAsBackend runs the plugin as a lobby backend.
 func (p *Plugin) RunAsBackend(fn func() (lobby.Backend, error)) error {
-	p.Action = func(c *cli.Context) error {
-		err := initDir(path.Join(p.DataDir, p.Name))
+	p.Command.RunE = func(cmd *cobra.Command, args []string) error {
+		err := initDir(path.Join(p.app.DataDir, p.name))
 		if err != nil {
 			return err
 		}
@@ -45,7 +46,7 @@ func (p *Plugin) RunAsBackend(fn func() (lobby.Backend, error)) error {
 		}
 		defer backend.Close()
 
-		l, err := net.Listen("unix", path.Join(p.SocketDir, fmt.Sprintf("%s.sock", p.Name)))
+		l, err := net.Listen("unix", path.Join(p.SocketDir, fmt.Sprintf("%s.sock", p.name)))
 		if err != nil {
 			return err
 		}
@@ -58,12 +59,12 @@ func (p *Plugin) RunAsBackend(fn func() (lobby.Backend, error)) error {
 		})
 	}
 
-	return p.Run(os.Args)
+	return p.Command.Execute()
 }
 
 // RunAsServer runs the plugin as a lobby server.
 func (p *Plugin) RunAsServer(fn func(lobby.Registry) (net.Listener, lobby.Server, error)) error {
-	p.Action = func(c *cli.Context) error {
+	p.Command.RunE = func(cmd *cobra.Command, args []string) error {
 		conn, err := grpc.Dial("",
 			grpc.WithInsecure(),
 			grpc.WithBlock(),
@@ -90,5 +91,5 @@ func (p *Plugin) RunAsServer(fn func(lobby.Registry) (net.Listener, lobby.Server
 		})
 	}
 
-	return p.Run(os.Args)
+	return p.Command.Execute()
 }

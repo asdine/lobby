@@ -7,23 +7,22 @@ import (
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
 	"github.com/asdine/lobby/rpc"
-	cli "gopkg.in/urfave/cli.v1"
+	"github.com/spf13/cobra"
 )
 
 const (
 	defaultAddr = ":5656"
 )
 
-func newRunCmd(a *app) cli.Command {
-	cmd := runCmd{
-		app: a,
+func newRunCmd(a *app) *cobra.Command {
+	r := runCmd{app: a}
+
+	cmd := cobra.Command{
+		Use:  "run",
+		RunE: r.run,
 	}
 
-	return cli.Command{
-		Name:   "run",
-		Usage:  "Run Lobby",
-		Action: cmd.run,
-	}
+	return &cmd
 }
 
 type runCmd struct {
@@ -31,7 +30,7 @@ type runCmd struct {
 	mainSrv lobby.Server
 }
 
-func (s *runCmd) run(_ *cli.Context) error {
+func (s *runCmd) run(cmd *cobra.Command, args []string) error {
 	return s.runMainServer()
 }
 

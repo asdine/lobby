@@ -15,7 +15,7 @@ import (
 	"github.com/asdine/lobby/plugin"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
-	cli "gopkg.in/urfave/cli.v1"
+	"github.com/spf13/cobra"
 )
 
 func newApp() *app {
@@ -35,50 +35,29 @@ func newApp() *app {
 		log.Fatal(err)
 	}
 
-	c := cli.NewApp()
-	c.Name = "lobby"
-	c.Version = lobby.Version
-	c.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:        "config-dir",
-			Usage:       "Path to a directory to read and store Lobby configuration and data",
-			Destination: &a.ConfigDir,
-			Value:       defaultConfigDir,
+	cmd := cobra.Command{
+		Use: "lobby",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			a.DataDir = path.Join(defaultConfigDir, "data")
+			a.SocketDir = path.Join(defaultConfigDir, "sockets")
+			return a.init()
 		},
-		cli.StringFlag{
-			Name:        "plugin-dir",
-			Usage:       "Path to a directory to read Lobby plugins",
-			Destination: &a.PluginDir,
-			Value:       defaultPluginDir,
-		},
-		cli.StringSliceFlag{
-			Name:  "backend",
-			Usage: "Name of the backend to use",
-		},
-		cli.StringSliceFlag{
-			Name:  "server",
-			Usage: "Name of the server to run",
+		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+			return a.closePlugins()
 		},
 	}
 
-	c.Before = func(c *cli.Context) error {
-		a.backendList = c.StringSlice("backend")
-		a.serverList = c.StringSlice("server")
-		a.DataDir = path.Join(defaultConfigDir, "data")
-		a.SocketDir = path.Join(defaultConfigDir, "sockets")
-		return a.init()
-	}
+	cmd.PersistentFlags().StringVar(&a.ConfigDir, "config-dir", defaultConfigDir, "Path to a directory to read and store Lobby configuration and data")
+	cmd.PersistentFlags().StringVar(&a.PluginDir, "plugin-dir", defaultPluginDir, "Path to a directory to read Lobby plugins")
+	cmd.PersistentFlags().StringSliceVar(&a.backendList, "backend", nil, "Name of the backend to use")
+	cmd.PersistentFlags().StringSliceVar(&a.serverList, "server", nil, "Name of the server to run")
 
-	c.After = func(c *cli.Context) error {
-		return a.closePlugins()
-	}
-
-	a.App = c
+	a.Command = &cmd
 	return &a
 }
 
 type app struct {
-	*cli.App
+	*cobra.Command
 
 	in          io.Reader
 	out         io.Writer

@@ -1,5 +1,5 @@
-hash: 2ca4e365b3f1d36b2480f162da0e7ffb5b6e95036af654ea653494a9a2f14431
-updated: 2017-06-03T15:02:29.781462303+02:00
+hash: c4b81a3607cf34e00752a3edc0d06a391ba1258c454bfb4412444245cfcd4a7c
+updated: 2017-06-03T15:45:20.635868205+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -19,12 +19,18 @@ imports:
   subpackages:
   - proto
   - ptypes/any
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/spf13/cobra
+  version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
+- name: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: golang.org/x/net
   version: 0d772244c73d752bbe0c729ff997a09d6a6fdaf1
   subpackages:
@@ -73,8 +79,6 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
-- name: gopkg.in/urfave/cli.v1
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9

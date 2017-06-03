@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/asdine/lobby/cli"
 )
@@ -10,7 +9,7 @@ import (
 func main() {
 	cmd := cli.New()
 
-	if err := cmd.Run(os.Args); err != nil {
+	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
 }

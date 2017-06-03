@@ -1,12 +1,10 @@
 package cli
 
-import cli "gopkg.in/urfave/cli.v1"
+import "github.com/spf13/cobra"
 
 // New returns the lobby CLI application.
-func New() *cli.App {
+func New() *cobra.Command {
 	a := newApp()
-	a.App.Commands = []cli.Command{
-		newRunCmd(a),
-	}
-	return a.App
+	a.AddCommand(newRunCmd(a))
+	return a.Command
 }
