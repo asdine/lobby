@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"os"
 
@@ -11,22 +12,39 @@ import (
 
 const defaultAddr = ":5657"
 
-func main() {
-	plugin := cli.NewPlugin("http")
+var (
+	srv  lobby.Server
+	addr string
+)
 
-	addr := os.Getenv("HTTP_ADDR")
+func init() {
+	addr = os.Getenv("HTTP_ADDR")
 	if addr == "" {
 		addr = defaultAddr
 	}
+}
 
-	plugin.RunAsServer(func(reg lobby.Registry) (net.Listener, lobby.Server, error) {
-		l, err := net.Listen("tcp", addr)
-		if err != nil {
-			return nil, nil, err
-		}
+// Name of the plugin
+const Name = "http"
 
-		srv := http.NewServer(http.NewHandler(reg))
+// Start plugin
+func Start(reg lobby.Registry) error {
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
 
-		return l, srv, nil
-	})
+	fmt.Printf("Listening http requests on %s\n", l.Addr())
+	srv = http.NewServer(http.NewHandler(reg))
+
+	return srv.Serve(l)
+}
+
+// Stop plugin
+func Stop() error {
+	return srv.Stop()
+}
+
+func main() {
+	cli.RunPlugin(Name, Start, Stop)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/asdine/lobby"
@@ -10,15 +11,24 @@ import (
 
 const defaultURI = "mongodb://localhost:27017/lobby"
 
-func main() {
-	plugin := cli.NewPlugin("mongo")
+// Name of the plugin
+const Name = "mongo"
 
+// Backend creates a MongoDB backend.
+func Backend() (lobby.Backend, error) {
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
 		uri = defaultURI
 	}
 
-	plugin.RunAsBackend(func() (lobby.Backend, error) {
-		return mongo.NewBackend(uri)
-	})
+	return mongo.NewBackend(uri)
+}
+
+func main() {
+	backend, err := Backend()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cli.RunBackend(Name, backend)
 }

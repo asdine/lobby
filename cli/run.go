@@ -12,7 +12,6 @@ import (
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
-	"github.com/asdine/lobby/plugin"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 )
@@ -41,8 +40,8 @@ func newRunCmd(a *app) *cobra.Command {
 type runCmd struct {
 	app         *app
 	mainSrv     lobby.Server
-	backends    []plugin.Backend
-	servers     []plugin.Plugin
+	plugins     []lobby.Plugin
+	backends    map[string]lobby.Backend
 	backendList []string
 	serverList  []string
 }
@@ -52,42 +51,36 @@ func (r *runCmd) run(cmd *cobra.Command, args []string) error {
 }
 
 func (r *runCmd) loadBackendPlugins() error {
-	var err error
-	r.backends = make([]plugin.Backend, len(r.backendList))
+	r.backends = make(map[string]lobby.Backend)
 
-	for i, name := range r.backendList {
-		r.backends[i], err = plugin.LoadBackend(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
+	for _, name := range r.backendList {
+		bck, plg, err := rpc.LoadBackendPlugin(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
 		if err != nil {
 			return err
 		}
+
+		r.backends[name] = bck
+		r.plugins = append(r.plugins, plg)
 	}
 
 	return nil
 }
 
 func (r *runCmd) loadServerPlugins() error {
-	var err error
-	r.servers = make([]plugin.Plugin, len(r.serverList))
-
-	for i, name := range r.serverList {
-		r.servers[i], err = plugin.LoadServer(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
+	for _, name := range r.serverList {
+		plg, err := rpc.LoadPlugin(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
 		if err != nil {
 			return err
 		}
+
+		r.plugins = append(r.plugins, plg)
 	}
 
 	return nil
 }
 
 func (r *runCmd) closePlugins() error {
-	for _, p := range r.servers {
-		err := p.Close()
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, p := range r.backends {
+	for _, p := range r.plugins {
 		err := p.Close()
 		if err != nil {
 			return err
@@ -126,13 +119,8 @@ func (r *runCmd) runMainServer() error {
 	reg.RegisterBackend("bolt", bck)
 
 	// Loading backends from plugins.
-	for _, p := range r.backends {
-		bck, err := p.Backend()
-		if err != nil {
-			return err
-		}
-
-		reg.RegisterBackend(p.Name(), bck)
+	for name, bck := range r.backends {
+		reg.RegisterBackend(name, bck)
 	}
 
 	srv := rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg))
@@ -184,6 +172,7 @@ func runServers(out io.Writer, servers map[net.Listener]lobby.Server, beforeStop
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	<-c
+	fmt.Fprintf(out, "\nStopping servers...")
 	for _, fn := range beforeStop {
 		err := fn()
 		if err != nil {
@@ -199,5 +188,9 @@ func runServers(out io.Writer, servers map[net.Listener]lobby.Server, beforeStop
 	}
 
 	wg.Wait()
+	if lastErr == nil {
+		fmt.Fprintf(out, " OK\n")
+	}
+
 	return lastErr
 }

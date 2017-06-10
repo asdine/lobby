@@ -1,4 +1,4 @@
-package plugin
+package rpc
 
 import (
 	"fmt"
@@ -73,11 +73,12 @@ func TestLoadBackend(t *testing.T) {
 	err = os.Mkdir(path.Join(dir, "sockets"), 0755)
 	require.NoError(t, err)
 
-	bck, err := LoadBackend("backend", "/fake/command", dir)
+	bck, plg, err := LoadBackendPlugin("backend", "/fake/command", dir)
 	require.NoError(t, err)
-	require.Equal(t, "backend", bck.Name())
-	require.Equal(t, path.Join(dir, "sockets", "backend.sock"), bck.(*backend).socketPath)
+	require.Equal(t, "backend", plg.Name())
 	err = bck.Close()
+	require.NoError(t, err)
+	err = plg.Close()
 	require.NoError(t, err)
 }
 
@@ -91,7 +92,7 @@ func TestLoadServer(t *testing.T) {
 	err = os.Mkdir(path.Join(dir, "sockets"), 0755)
 	require.NoError(t, err)
 
-	plg, err := LoadServer("server", "/fake/command", dir)
+	plg, err := LoadPlugin("server", "/fake/command", dir)
 	require.NoError(t, err)
 	require.Equal(t, "server", plg.Name())
 	err = plg.Close()
