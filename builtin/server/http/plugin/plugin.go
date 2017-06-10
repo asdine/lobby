@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/builtin/server/http"
 	"github.com/asdine/lobby/cli"
-	"github.com/asdine/lobby/plugin/server/http"
 )
 
 const defaultAddr = ":5657"
