@@ -9,7 +9,7 @@ import (
 )
 
 func TestBucketPut(t *testing.T) {
-	backend, cleanup := newBackend(t)
+	backend, cleanup := getBackend(t)
 	defer cleanup()
 
 	b, err := backend.Bucket("1a")
@@ -33,7 +33,7 @@ func TestBucketPut(t *testing.T) {
 }
 
 func TestBucketGet(t *testing.T) {
-	backend, cleanup := newBackend(t)
+	backend, cleanup := getBackend(t)
 	defer cleanup()
 
 	b1, err := backend.Bucket("b1")
@@ -68,7 +68,7 @@ func TestBucketGet(t *testing.T) {
 }
 
 func TestBucketDelete(t *testing.T) {
-	backend, cleanup := newBackend(t)
+	backend, cleanup := getBackend(t)
 	defer cleanup()
 
 	b, err := backend.Bucket("a")
@@ -92,7 +92,7 @@ func TestBucketDelete(t *testing.T) {
 }
 
 func TestBucketPage(t *testing.T) {
-	backend, cleanup := newBackend(t)
+	backend, cleanup := getBackend(t)
 	defer cleanup()
 
 	b, err := backend.Bucket("a")
