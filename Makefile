@@ -27,10 +27,10 @@ gen:
 	go generate $(PACKAGES)
 
 plugin-backend:
-	go build -o $(NAME)-$(PLUGIN) ./plugin/backend/$(PLUGIN)
+	go build -o $(NAME)-$(PLUGIN) ./plugin/backend/$(PLUGIN)/plugin
 
 plugin-server:
-	go build -o $(NAME)-$(PLUGIN) ./plugin/server/$(PLUGIN) 
+	go build -o $(NAME)-$(PLUGIN) ./plugin/server/$(PLUGIN)/plugin
 
 plugins:
 	make plugin-backend PLUGIN=mongo
