@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -24,8 +25,9 @@ func newRunCmd(a *app) *cobra.Command {
 	r := runCmd{app: a}
 
 	cmd := cobra.Command{
-		Use:  "run",
-		RunE: r.run,
+		Use:   "run",
+		Short: "Run the lobby server",
+		RunE:  r.run,
 		PostRunE: func(cmd *cobra.Command, args []string) error {
 			return r.closePlugins()
 		},
@@ -47,7 +49,74 @@ type runCmd struct {
 }
 
 func (r *runCmd) run(cmd *cobra.Command, args []string) error {
-	return r.runMainServer()
+	err := r.runMainServer()
+	if err != nil {
+		if err := r.closePlugins(); err != nil {
+			log.Print(err)
+		}
+	}
+	return err
+}
+
+func (r *runCmd) runMainServer() error {
+	err := r.loadBackendPlugins()
+	if err != nil {
+		return err
+	}
+
+	dataPath := path.Join(r.app.DataDir, "bolt")
+	registryPath := path.Join(dataPath, "registry.db")
+	backendPath := path.Join(dataPath, "backend.db")
+
+	err = initDir(dataPath)
+	if err != nil {
+		return err
+	}
+
+	// Creating default registry.
+	reg, err := bolt.NewRegistry(registryPath)
+	if err != nil {
+		return err
+	}
+	defer reg.Close()
+
+	// Creating default backend.
+	bck, err := bolt.NewBackend(backendPath)
+	if err != nil {
+		return err
+	}
+	reg.RegisterBackend("bolt", bck)
+
+	// Loading backends from plugins.
+	for name, bck := range r.backends {
+		reg.RegisterBackend(name, bck)
+	}
+
+	// listening on specific port
+	l, err := net.Listen("tcp", defaultAddr)
+	if err != nil {
+		return err
+	}
+	defer l.Close()
+
+	// listening on unix socket
+	lsock, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
+	if err != nil {
+		return err
+	}
+	defer lsock.Close()
+
+	err = r.loadServerPlugins()
+	if err != nil {
+		return err
+	}
+
+	srv := rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg))
+
+	return runServers(r.app.out, map[net.Listener]lobby.Server{
+		l:     srv,
+		lsock: srv,
+	})
 }
 
 func (r *runCmd) loadBackendPlugins() error {
@@ -88,71 +157,6 @@ func (r *runCmd) closePlugins() error {
 	}
 
 	return nil
-}
-
-func (r *runCmd) runMainServer() error {
-	err := r.loadBackendPlugins()
-	if err != nil {
-		return err
-	}
-
-	dataPath := path.Join(r.app.DataDir, "bolt")
-	registryPath := path.Join(dataPath, "registry.db")
-	backendPath := path.Join(dataPath, "backend.db")
-
-	err = initDir(dataPath)
-	if err != nil {
-		return err
-	}
-
-	// Creating default registry.
-	reg, err := bolt.NewRegistry(registryPath)
-	if err != nil {
-		return err
-	}
-
-	// Creating default backend.
-	bck, err := bolt.NewBackend(backendPath)
-	if err != nil {
-		return err
-	}
-	reg.RegisterBackend("bolt", bck)
-
-	// Loading backends from plugins.
-	for name, bck := range r.backends {
-		reg.RegisterBackend(name, bck)
-	}
-
-	srv := rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg))
-
-	// listening on specific port
-	l, err := net.Listen("tcp", defaultAddr)
-	if err != nil {
-		return err
-	}
-
-	// listening on unix socket
-	lsock, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
-	if err != nil {
-		return err
-	}
-
-	err = r.loadServerPlugins()
-	if err != nil {
-		return err
-	}
-
-	return runServers(r.app.out, map[net.Listener]lobby.Server{
-		l:     srv,
-		lsock: srv,
-	}, func() error {
-		err := bck.Close()
-		if err != nil {
-			return err
-		}
-
-		return reg.Close()
-	})
 }
 
 func runServers(out io.Writer, servers map[net.Listener]lobby.Server, beforeStop ...func() error) error {

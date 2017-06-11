@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"syscall"
 	"time"
 
 	"github.com/asdine/lobby"
@@ -25,7 +26,11 @@ func (p *process) Name() string {
 }
 
 func (p *process) Close() error {
-	return p.Kill()
+	go func() {
+		p.Signal(syscall.SIGTERM)
+	}()
+	_, err := p.Wait()
+	return err
 }
 
 // LoadPlugin loads a plugin.
@@ -33,6 +38,10 @@ func LoadPlugin(name, cmdPath, configDir string) (lobby.Plugin, error) {
 	cmd := execCommand(cmdPath, "--config-dir", configDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true,
+		Pgid:    0,
+	}
 	err := cmd.Start()
 	if err != nil {
 		return nil, err
