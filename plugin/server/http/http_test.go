@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/asdine/lobby"
-	lobbyHttp "github.com/asdine/lobby/builtin/server/http"
 	"github.com/asdine/lobby/mock"
+	lobbyHttp "github.com/asdine/lobby/plugin/server/http"
 	"github.com/stretchr/testify/require"
 )
 

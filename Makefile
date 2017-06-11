@@ -28,11 +28,11 @@ gen:
 
 plugin-backend:
 	mkdir -p ./bin
-	go build -o ./bin/$(NAME)-$(PLUGIN) ./builtin/backend/$(PLUGIN)/plugin
+	go build -o ./bin/$(NAME)-$(PLUGIN) ./plugin/backend/$(PLUGIN)/plugin
 
 plugin-server:
 	mkdir -p ./bin
-	go build -o ./bin/$(NAME)-$(PLUGIN) ./builtin/server/$(PLUGIN)/plugin
+	go build -o ./bin/$(NAME)-$(PLUGIN) ./plugin/server/$(PLUGIN)/plugin
 
 plugins:
 	make plugin-backend PLUGIN=mongo

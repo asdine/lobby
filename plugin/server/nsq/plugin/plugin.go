@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/asdine/lobby"
-	lobbynsq "github.com/asdine/lobby/builtin/server/nsq"
 	"github.com/asdine/lobby/cli"
+	lobbynsq "github.com/asdine/lobby/plugin/server/nsq"
 	nsq "github.com/nsqio/go-nsq"
 )
 
