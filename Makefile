@@ -37,3 +37,4 @@ plugin-server:
 plugins:
 	make plugin-backend PLUGIN=mongo
 	make plugin-server PLUGIN=http
+	make plugin-server PLUGIN=nsq

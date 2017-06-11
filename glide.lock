@@ -1,5 +1,5 @@
-hash: c1efde575dff050665eb40e3c72fc9f21e2bc5d8be2c4d20bf24c673f057ce80
-updated: 2017-06-11T01:26:22.338179384+02:00
+hash: ba5d17dfd67f354f4b17ab966a1c3d742dd26f693fbdb427addba001ef4fd204
+updated: 2017-06-11T14:32:14.501671208+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -14,16 +14,12 @@ imports:
   - q
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
-- name: github.com/cpuguy83/go-md2man
-  version: 71acacd42f85e5e82f70a55327789582a5200a90
-  subpackages:
-  - md2man
 - name: github.com/gogo/protobuf
-  version: e18d7aa8f8c624c915db340349aad4c49b10d173
+  version: 100ba4e885062801d56799d78530b73b178a78f3
   subpackages:
   - proto
 - name: github.com/golang/protobuf
-  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
+  version: 5a0f697c9ed9d68fef0116532c6e05cfeae00e55
   subpackages:
   - proto
   - ptypes/any
@@ -39,30 +35,35 @@ imports:
   version: 973bf9a2952ff7e38071ae8392b73e4418503059
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
-- name: github.com/russross/blackfriday
-  version: 300106c228d52c8941d4b3de6054a6062a86dda3
-- name: github.com/shurcooL/sanitized_anchor_name
-  version: 10ef21a441db47d8b13ebcc5fd2310f636973c77
 - name: github.com/spf13/cobra
-  version: 1c44ec8d3f1552cac48999f9306da23c4d8a288b
+  version: d7cfb134748502f60bc1797cd26fcc3e4eb4b927
 - name: github.com/spf13/pflag
-  version: 08b1a584251b5b62f458943640fc8ebd4d50aaa5
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: golang.org/x/net
-  version: 6acef71eb69611914f7a30939ea9f6e194c78172
+  version: 1a68b1313cf4ad7778376e82641197b60c02f65c
   subpackages:
   - context
   - context/ctxhttp
   - http2
   - http2/hpack
+  - idna
   - internal/timeseries
+  - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 9c60d1c508f5134d1ca726b4641db998f2523357
+  version: 0b25a408a50076fbbcae6b7ac0ea5fbb0b085e79
   subpackages:
   - unix
   - windows
+- name: golang.org/x/text
+  version: 210eee5cf7323015d097341bcf7166130d001cd8
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
 - name: google.golang.org/genproto
-  version: bb3573be0c484136831138976d444b8754777aff
+  version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
