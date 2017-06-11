@@ -37,8 +37,8 @@ func (p *process) Close() error {
 func LoadPlugin(name, cmdPath, configDir string) (lobby.Plugin, error) {
 	cmd := execCommand(cmdPath, "--config-dir", configDir)
 	prefix := fmt.Sprintf("[%s]\t", name)
-	cmd.Stdout = newPrefixWriter(prefix, os.Stdout)
-	cmd.Stderr = newPrefixWriter(prefix, os.Stderr)
+	cmd.Stdout = lobby.NewPrefixWriter(prefix, os.Stdout)
+	cmd.Stderr = lobby.NewPrefixWriter(prefix, os.Stderr)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 		Pgid:    0,

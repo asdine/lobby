@@ -23,6 +23,7 @@ const (
 
 func newRunCmd(a *app) *cobra.Command {
 	r := runCmd{app: a}
+	a.out = lobby.NewPrefixWriter(fmt.Sprintf("[lobby]\t"), a.out)
 
 	cmd := cobra.Command{
 		Use:   "run",
