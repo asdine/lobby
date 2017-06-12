@@ -18,6 +18,7 @@ var execCommand = exec.Command
 
 type process struct {
 	*os.Process
+	conn *grpc.ClientConn
 	name string
 }
 
@@ -26,6 +27,13 @@ func (p *process) Name() string {
 }
 
 func (p *process) Close() error {
+	if p.conn != nil {
+		err := p.conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+
 	go func() {
 		p.Signal(syscall.SIGTERM)
 	}()
@@ -93,6 +101,7 @@ Loop:
 		return nil, nil, err
 	}
 
+	plugin.(*process).conn = conn
 	bck, err := NewBackend(conn)
 	if err != nil {
 		return nil, nil, err

@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -17,10 +16,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultAddr = ":5656"
-)
-
 func newRunCmd(a *app) *cobra.Command {
 	r := runCmd{app: a}
 	a.out = lobby.NewPrefixWriter(fmt.Sprintf("[lobby]\t"), a.out)
@@ -29,9 +24,6 @@ func newRunCmd(a *app) *cobra.Command {
 		Use:   "run",
 		Short: "Run the lobby server",
 		RunE:  r.run,
-		PostRunE: func(cmd *cobra.Command, args []string) error {
-			return r.closePlugins()
-		},
 	}
 
 	cmd.Flags().StringSliceVar(&r.backendList, "backend", nil, "Name of the backend to use")
@@ -44,7 +36,6 @@ type runCmd struct {
 	app         *app
 	mainSrv     lobby.Server
 	plugins     []lobby.Plugin
-	backends    map[string]lobby.Backend
 	backendList []string
 	serverList  []string
 }
@@ -60,16 +51,11 @@ func (r *runCmd) run(cmd *cobra.Command, args []string) error {
 }
 
 func (r *runCmd) runMainServer() error {
-	err := r.loadBackendPlugins()
-	if err != nil {
-		return err
-	}
-
 	dataPath := path.Join(r.app.DataDir, "bolt")
 	registryPath := path.Join(dataPath, "registry.db")
 	backendPath := path.Join(dataPath, "backend.db")
 
-	err = initDir(dataPath)
+	err := initDir(dataPath)
 	if err != nil {
 		return err
 	}
@@ -88,48 +74,64 @@ func (r *runCmd) runMainServer() error {
 	}
 	reg.RegisterBackend("bolt", bck)
 
-	// Loading backends from plugins.
-	for name, bck := range r.backends {
-		reg.RegisterBackend(name, bck)
-	}
-
-	// listening on specific port
-	l, err := net.Listen("tcp", defaultAddr)
-	if err != nil {
-		return err
-	}
-	defer l.Close()
-
-	// listening on unix socket
-	lsock, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
-	if err != nil {
-		return err
-	}
-	defer lsock.Close()
-
-	err = r.loadServerPlugins()
+	wg, srv, err := r.runServer(reg)
 	if err != nil {
 		return err
 	}
 
-	srv := rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg))
+	err = r.loadPlugins(reg)
+	if err != nil {
+		if err := r.closePlugins(); err != nil {
+			log.Print(err)
+		}
 
-	return runServers(r.app.out, map[net.Listener]lobby.Server{
-		l:     srv,
-		lsock: srv,
-	})
+		if err := srv.Stop(); err != nil {
+			log.Print(err)
+		}
+
+		wg.Wait()
+		return err
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+
+	fmt.Fprintf(r.app.out, "Stopping plugins...")
+	if err := r.closePlugins(); err != nil {
+		fmt.Fprintf(r.app.out, " Error: %s\n", err.Error())
+	} else {
+		fmt.Fprintf(r.app.out, " OK\n")
+	}
+
+	fmt.Fprintf(r.app.out, "Stopping servers...")
+	if err := srv.Stop(); err != nil {
+		fmt.Fprintf(r.app.out, " Error: %s\n", err.Error())
+	} else {
+		fmt.Fprintf(r.app.out, " OK\n")
+	}
+
+	wg.Wait()
+	return nil
 }
 
-func (r *runCmd) loadBackendPlugins() error {
-	r.backends = make(map[string]lobby.Backend)
+func (r *runCmd) loadPlugins(reg lobby.Registry) error {
+	err := r.loadBackendPlugins(reg)
+	if err != nil {
+		return err
+	}
 
+	return r.loadServerPlugins()
+}
+
+func (r *runCmd) loadBackendPlugins(reg lobby.Registry) error {
 	for _, name := range r.backendList {
 		bck, plg, err := rpc.LoadBackendPlugin(name, path.Join(r.app.PluginDir, fmt.Sprintf("lobby-%s", name)), r.app.ConfigDir)
 		if err != nil {
 			return err
 		}
 
-		r.backends[name] = bck
+		reg.RegisterBackend(name, bck)
 		r.plugins = append(r.plugins, plg)
 	}
 
@@ -160,42 +162,23 @@ func (r *runCmd) closePlugins() error {
 	return nil
 }
 
-func runServers(out io.Writer, servers map[net.Listener]lobby.Server, beforeStop ...func() error) error {
+func (r *runCmd) runServer(reg lobby.Registry) (*sync.WaitGroup, lobby.Server, error) {
 	var wg sync.WaitGroup
 
-	for l, srv := range servers {
-		wg.Add(1)
-		go func(l net.Listener, srv lobby.Server) {
-			defer wg.Done()
-			fmt.Fprintf(out, "Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
-			srv.Serve(l)
-		}(l, srv)
+	// listening on unix socket
+	l, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
+	if err != nil {
+		return nil, nil, err
 	}
 
-	c := make(chan os.Signal, 1)
+	srv := rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg))
 
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	wg.Add(1)
+	go func(l net.Listener, srv lobby.Server) {
+		defer wg.Done()
+		fmt.Fprintf(r.app.out, "Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
+		srv.Serve(l)
+	}(l, srv)
 
-	<-c
-	fmt.Fprintf(out, "\nStopping servers...")
-	for _, fn := range beforeStop {
-		err := fn()
-		if err != nil {
-			return err
-		}
-	}
-
-	var lastErr error
-	for _, srv := range servers {
-		if err := srv.Stop(); err != nil {
-			lastErr = err
-		}
-	}
-
-	wg.Wait()
-	if lastErr == nil {
-		fmt.Fprintf(out, " OK\n")
-	}
-
-	return lastErr
+	return &wg, srv, nil
 }
