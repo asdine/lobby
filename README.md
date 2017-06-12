@@ -1,5 +1,8 @@
 # Lobby
 
+[![GoDoc](https://godoc.org/github.com/asdine/lobby?status.svg)](https://godoc.org/github.com/asdine/lobby)
+[![Go Report Card](https://goreportcard.com/badge/github.com/asdine/lobby)](https://goreportcard.com/report/github.com/asdine/lobby)
+
 Lobby is an open-source pluggable platform for data delivery.
 
 ## Overview
