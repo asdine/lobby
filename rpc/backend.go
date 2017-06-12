@@ -32,9 +32,9 @@ func (s *Backend) Bucket(name string) (lobby.Bucket, error) {
 	return NewBucket(name, s.client), nil
 }
 
-// Close the connexion to the backend.
+// Close does nothing.
 func (s *Backend) Close() error {
-	return s.conn.Close()
+	return nil
 }
 
 var _ lobby.Bucket = new(Bucket)

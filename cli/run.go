@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -41,13 +40,7 @@ type runCmd struct {
 }
 
 func (r *runCmd) run(cmd *cobra.Command, args []string) error {
-	err := r.runMainServer()
-	if err != nil {
-		if err := r.closePlugins(); err != nil {
-			log.Print(err)
-		}
-	}
-	return err
+	return r.runMainServer()
 }
 
 func (r *runCmd) runMainServer() error {
@@ -60,6 +53,12 @@ func (r *runCmd) runMainServer() error {
 		return err
 	}
 
+	// Creating default backend.
+	bck, err := bolt.NewBackend(backendPath)
+	if err != nil {
+		return err
+	}
+
 	// Creating default registry.
 	reg, err := bolt.NewRegistry(registryPath)
 	if err != nil {
@@ -67,11 +66,6 @@ func (r *runCmd) runMainServer() error {
 	}
 	defer reg.Close()
 
-	// Creating default backend.
-	bck, err := bolt.NewBackend(backendPath)
-	if err != nil {
-		return err
-	}
 	reg.RegisterBackend("bolt", bck)
 
 	wg, srv, err := r.runServer(reg)
@@ -81,14 +75,7 @@ func (r *runCmd) runMainServer() error {
 
 	err = r.loadPlugins(reg)
 	if err != nil {
-		if err := r.closePlugins(); err != nil {
-			log.Print(err)
-		}
-
-		if err := srv.Stop(); err != nil {
-			log.Print(err)
-		}
-
+		r.closeAll(srv)
 		wg.Wait()
 		return err
 	}
@@ -96,7 +83,14 @@ func (r *runCmd) runMainServer() error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
+	fmt.Println()
 
+	r.closeAll(srv)
+	wg.Wait()
+	return nil
+}
+
+func (r *runCmd) closeAll(srv lobby.Server) {
 	fmt.Fprintf(r.app.out, "Stopping plugins...")
 	if err := r.closePlugins(); err != nil {
 		fmt.Fprintf(r.app.out, " Error: %s\n", err.Error())
@@ -110,9 +104,6 @@ func (r *runCmd) runMainServer() error {
 	} else {
 		fmt.Fprintf(r.app.out, " OK\n")
 	}
-
-	wg.Wait()
-	return nil
 }
 
 func (r *runCmd) loadPlugins(reg lobby.Registry) error {
