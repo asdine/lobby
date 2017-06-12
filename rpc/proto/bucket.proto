@@ -12,8 +12,6 @@ service BucketService {
   rpc Get (Key) returns (Item) {}
   // Delete an item
   rpc Delete (Key) returns (Empty) {}
-  // List the bucket content
-  rpc List (Page) returns (stream Item) {}
 }
 
 // NewItem is used to put an item in a bucket.
@@ -31,13 +29,6 @@ message NewItem {
 message PutSummary {
   // The number of items received.
   int32 item_count = 1;
-}
-
-message Page {
-  // @inject_tag: valid:"required"
-  string bucket = 1;
-  int32 page = 2;
-  int32 perPage = 3;
 }
 
 message Key {

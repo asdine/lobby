@@ -15,9 +15,6 @@ type Bucket struct {
 	DeleteFn      func(key string) error
 	DeleteInvoked int
 
-	PageFn      func(page int, perPage int) ([]lobby.Item, error)
-	PageInvoked int
-
 	CloseFn      func() error
 	CloseInvoked int
 }
@@ -53,17 +50,6 @@ func (b *Bucket) Delete(key string) error {
 	}
 
 	return nil
-}
-
-// Page runs PageFn and increments PageInvoked when invoked.
-func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
-	b.PageInvoked++
-
-	if b.PageFn != nil {
-		return b.PageFn(page, perPage)
-	}
-
-	return nil, nil
 }
 
 // Close runs CloseFn and increments CloseInvoked when invoked.

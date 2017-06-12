@@ -97,38 +97,6 @@ func (b *Bucket) Delete(key string) error {
 	return nil
 }
 
-// Page returns a list of items.
-func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
-	var list []item
-
-	if page <= 0 {
-		return nil, nil
-	}
-
-	col := b.session.DB("").C(colItems)
-
-	query := col.Find(bson.M{"bucket": b.name}).Sort("_id")
-	if perPage >= 0 {
-		query = query.Skip((page - 1) * perPage).Limit(perPage)
-	}
-
-	err := query.All(&list)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch items")
-	}
-
-	items := make([]lobby.Item, len(list))
-	for i := range list {
-		items[i].Key = list[i].Key
-		value, err := json.Marshal(list[i].Value)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal value into json")
-		}
-		items[i].Value = value
-	}
-	return items, nil
-}
-
 // Close the bucket session
 func (b *Bucket) Close() error {
 	b.session.Close()

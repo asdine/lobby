@@ -22,8 +22,6 @@ type Bucket interface {
 	Get(key string) (*Item, error)
 	// Delete an item from the bucket.
 	Delete(key string) error
-	// Get the paginated list of items.
-	Page(page int, perPage int) ([]Item, error)
 	// Close the bucket. Can be used to close sessions if required.
 	Close() error
 }

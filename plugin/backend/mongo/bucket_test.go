@@ -1,7 +1,6 @@
 package mongo
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/asdine/lobby"
@@ -89,61 +88,4 @@ func TestBucketDelete(t *testing.T) {
 
 	err = b.Close()
 	require.NoError(t, err)
-}
-
-func TestBucketPage(t *testing.T) {
-	backend, cleanup := getBackend(t)
-	defer cleanup()
-
-	b, err := backend.Bucket("a")
-	require.NoError(t, err)
-	defer b.Close()
-
-	for i := 0; i < 20; i++ {
-		_, err := b.Put(fmt.Sprintf("%d", i), []byte(`"Value"`))
-		require.NoError(t, err)
-	}
-
-	list, err := b.Page(0, 0)
-	require.NoError(t, err)
-	require.Len(t, list, 0)
-
-	list, err = b.Page(0, 10)
-	require.NoError(t, err)
-	require.Len(t, list, 0)
-
-	list, err = b.Page(1, 5)
-	require.NoError(t, err)
-	require.Len(t, list, 5)
-	require.Equal(t, "0", list[0].Key)
-	require.Equal(t, "4", list[4].Key)
-
-	list, err = b.Page(1, 25)
-	require.NoError(t, err)
-	require.Len(t, list, 20)
-	require.Equal(t, "0", list[0].Key)
-	require.Equal(t, "19", list[19].Key)
-
-	list, err = b.Page(2, 5)
-	require.NoError(t, err)
-	require.Len(t, list, 5)
-	require.Equal(t, "5", list[0].Key)
-	require.Equal(t, "9", list[4].Key)
-
-	list, err = b.Page(2, 15)
-	require.NoError(t, err)
-	require.Len(t, list, 5)
-	require.Equal(t, "15", list[0].Key)
-	require.Equal(t, "19", list[4].Key)
-
-	list, err = b.Page(3, 15)
-	require.NoError(t, err)
-	require.Len(t, list, 0)
-
-	// all
-	list, err = b.Page(1, -1)
-	require.NoError(t, err)
-	require.Len(t, list, 20)
-	require.Equal(t, "0", list[0].Key)
-	require.Equal(t, "19", list[19].Key)
 }

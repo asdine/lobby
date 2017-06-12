@@ -111,32 +111,6 @@ func (b *Bucket) Delete(key string) error {
 	return nil
 }
 
-// Page returns a list of items
-func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
-	var skip int
-	var list []internal.Item
-
-	if page <= 0 {
-		return nil, nil
-	}
-
-	if perPage >= 0 {
-		skip = (page - 1) * perPage
-	}
-
-	err := b.node.All(&list, storm.Skip(skip), storm.Limit(perPage))
-	if err != nil {
-		return nil, errors.Wrap(err, "boltdb.bucket.Page failed to fetch items")
-	}
-
-	items := make([]lobby.Item, len(list))
-	for i := range list {
-		items[i].Key = list[i].Key
-		items[i].Value = list[i].Value
-	}
-	return items, nil
-}
-
 // Close the bucket session
 func (b *Bucket) Close() error {
 	return nil

@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"io"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/rpc/proto"
@@ -103,35 +102,6 @@ func (b *Bucket) Delete(key string) error {
 	}
 
 	return nil
-}
-
-// Page returns a list of items
-func (b *Bucket) Page(page int, perPage int) ([]lobby.Item, error) {
-	stream, err := b.client.List(context.Background(), &proto.Page{
-		Bucket:  b.name,
-		Page:    int32(page),
-		PerPage: int32(perPage),
-	})
-	if err != nil {
-		return nil, errFromGRPC(err)
-	}
-
-	var items []lobby.Item
-	for {
-		item, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, errFromGRPC(err)
-		}
-		items = append(items, lobby.Item{
-			Key:   item.Key,
-			Value: item.Value,
-		})
-	}
-
-	return items, nil
 }
 
 // Close the bucket session.

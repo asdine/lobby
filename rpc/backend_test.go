@@ -2,7 +2,6 @@ package rpc_test
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"testing"
 
@@ -192,39 +191,5 @@ func TestBucketDelete(t *testing.T) {
 
 		err = bucket.Delete("key")
 		require.NoError(t, err)
-	})
-}
-
-func TestBucketList(t *testing.T) {
-	t.Run("OK", func(t *testing.T) {
-		var b mock.Backend
-
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
-
-			return &mock.Bucket{
-				PageFn: func(page, perPage int) ([]lobby.Item, error) {
-					require.Equal(t, 10, page)
-					require.Equal(t, 30, perPage)
-
-					items := make([]lobby.Item, 5)
-					for i := 0; i < 5; i++ {
-						items[i].Key = fmt.Sprintf("key%d", i+1)
-						items[i].Value = []byte(fmt.Sprintf(`"value%d"`, i+1))
-					}
-					return items, nil
-				},
-			}, nil
-		}
-
-		backend, cleanup := newBackend(t, &b)
-		defer cleanup()
-
-		bucket, err := backend.Bucket("bucket")
-		require.NoError(t, err)
-
-		items, err := bucket.Page(10, 30)
-		require.NoError(t, err)
-		require.Len(t, items, 5)
 	})
 }
