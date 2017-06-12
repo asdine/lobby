@@ -98,7 +98,7 @@ func (r *runCmd) closeAll(srv lobby.Server) {
 		fmt.Fprintf(r.app.out, " OK\n")
 	}
 
-	fmt.Fprintf(r.app.out, "Stopping servers...")
+	fmt.Fprintf(r.app.out, "Stopping lobby...")
 	if err := srv.Stop(); err != nil {
 		fmt.Fprintf(r.app.out, " Error: %s\n", err.Error())
 	} else {
