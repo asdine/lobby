@@ -1,6 +1,7 @@
 # Lobby
 
 [![GoDoc](https://godoc.org/github.com/asdine/lobby?status.svg)](https://godoc.org/github.com/asdine/lobby)
+[![Build Status](https://travis-ci.org/asdine/lobby.svg)](https://travis-ci.org/asdine/lobby)
 [![Go Report Card](https://goreportcard.com/badge/github.com/asdine/lobby)](https://goreportcard.com/report/github.com/asdine/lobby)
 
 Lobby is an open-source pluggable platform for data delivery.
@@ -48,7 +49,7 @@ lobby run --server=http --server=nsq --backend=mongo --backend=redis
 
 The previous command adds an HTTP server, an NSQ consumer, a MongoDB and a Redis backend.
 
-```
+```raw
 +------+                    +-----------+
 | HTTP +-+                +-+  MONGODB  |
 +------+ |                | +-----------+
@@ -79,7 +80,8 @@ Once the bucket is created, data can sent and fetched.
 The following command will put the key `blue` in the `colors` bucket. Data can be of any type, Lobby will always turn it into valid JSON if it's not already the case.
 
 ```sh
-curl -X PUT -d 'There is no blue without yellow and without orange.' http://localhost:5657/v1/b/colors/blue
+curl -X PUT -d 'There is no blue without yellow and without orange.' \
+                                  http://localhost:5657/v1/b/colors/blue
 ```
 
 Getting a key will always output valid JSON:

@@ -15,10 +15,10 @@ install:
 	glide install
 
 test:
-	go test -v -cover $(PACKAGES)
+	go test -v -cover -timeout=1m $(PACKAGES) 
 
 testrace:
-	go test -v -race -cover $(PACKAGES)
+	go test -v -race -cover -timeout=1m $(PACKAGES)
 
 bench:
 	go test -run=NONE -bench=. -benchmem $(PACKAGES)
