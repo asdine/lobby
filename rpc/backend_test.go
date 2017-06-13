@@ -24,7 +24,7 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 		srv.Serve(l)
 	}()
 
-	conn, err := grpc.Dial(l.Addr().String(), grpc.WithInsecure())
+	conn, err := grpc.Dial(l.Addr().String(), grpc.WithInsecure(), grpc.WithBlock())
 	require.NoError(t, err)
 
 	backend, err := rpc.NewBackend(conn)
