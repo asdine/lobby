@@ -3,6 +3,7 @@ package rpc_test
 import (
 	"errors"
 	"net"
+	"sync"
 	"testing"
 
 	"google.golang.org/grpc"
@@ -15,12 +16,15 @@ import (
 )
 
 func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
-	l, err := net.Listen("tcp", ":")
+	l, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
 	srv := rpc.NewServer(rpc.WithBucketService(b))
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		srv.Serve(l)
 	}()
 
@@ -31,8 +35,11 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 	require.NoError(t, err)
 
 	return backend, func() {
-		backend.Close()
+		err := conn.Close()
+		require.NoError(t, err)
+
 		srv.Stop()
+		wg.Wait()
 	}
 }
 

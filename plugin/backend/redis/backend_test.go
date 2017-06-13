@@ -38,6 +38,7 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	bck.Close()
 	if err := pool.Purge(resource); err != nil {
 		log.Fatalf("Could not purge resource: %s", err)
 	}
