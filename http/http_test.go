@@ -173,7 +173,7 @@ func TestSaveItem(t *testing.T) {
 			return &mock.Bucket{
 				PutFn: func(key string, value []byte) (*lobby.Item, error) {
 					require.Equal(t, "key", key)
-					require.Equal(t, []byte(`"hello"`), value)
+					require.Equal(t, []byte(`hello`), value)
 
 					return &lobby.Item{
 						Key:   key,

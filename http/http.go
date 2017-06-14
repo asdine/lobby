@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
-	ljson "github.com/asdine/lobby/json"
 	"github.com/asdine/lobby/validation"
 	"github.com/julienschmidt/httprouter"
 )
@@ -175,12 +175,18 @@ func (h *handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	data := ljson.ToValidJSONFromReader(r.Body)
-	if len(data) == 0 {
-		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		writeError(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 	defer r.Body.Close()
+
+	if len(bytes.TrimSpace(buf.Bytes())) == 0 {
+		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
+		return
+	}
 
 	b, err := h.registry.Bucket(ps.ByName("bucket"))
 	if err != nil {
@@ -193,7 +199,7 @@ func (h *handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	item, err := b.Put(ps.ByName("key"), data)
+	item, err := b.Put(ps.ByName("key"), buf.Bytes())
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
