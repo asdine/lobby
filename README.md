@@ -19,7 +19,7 @@ It provides several key features:
 
 ### Bucket
 
-Lobby uses a concept of **Bucket** to store and fetch data. Each bucket is associated with a specific backend and provide an unified API to read, write and delete values.
+Lobby uses a concept of **Bucket** to store and fetch data. Each bucket is associated to a specific backend and provide an unified API to read, write and delete values.
 
 ### Backend
 
@@ -29,7 +29,7 @@ By default, Lobby is shipped with a builtin BoltDB backend and provides MongoDB 
 ### Entrypoints
 
 Lobby can run multiple servers at the same time, each providing a different entrypoint to manipulate buckets. Those entrypoints can create and manipulate all or part of Lobby's buckets.
-By default, Lobby runs a gRPC server which is the main communication system, also used to communicate with plugins. The HTTP and NSQ are provided as plugins.
+By default, Lobby runs a gRPC server which is the main communication system, also used to communicate with plugins and an HTTP server. NSQ is provided as plugin.
 
 ## Usage
 
@@ -39,15 +39,15 @@ Running Lobby:
 lobby run
 ```
 
-The previous command runs the gRPC server and BoltDB backend. This is not really useful, Lobby is much more powerful with plugins.
+The previous command runs the gRPC server, the HTTP server and the BoltDB backend.
 
 To run Lobby with plugins:
 
 ```sh
-lobby run --server=http --server=nsq --backend=mongo --backend=redis
+lobby run --server=nsq --backend=mongo --backend=redis
 ```
 
-The previous command adds an HTTP server, an NSQ consumer, a MongoDB and a Redis backend.
+The previous command adds a NSQ consumer, a MongoDB and a Redis backend.
 
 ```raw
 +------+                    +-----------+
@@ -77,16 +77,16 @@ curl -X POST -d '{"name": "colors"}' http://localhost:5657/v1/buckets/mongo
 
 Once the bucket is created, data can sent and fetched.
 
-The following command will put the key `blue` in the `colors` bucket. Data can be of any type, Lobby will always turn it into valid JSON if it's not already the case.
+The following command will put the key `blue` in the `colors` bucket.
 
 ```sh
 curl -X PUT -d 'There is no blue without yellow and without orange.' \
                                   http://localhost:5657/v1/b/colors/blue
 ```
 
-Getting a key will always output valid JSON:
+To get a key:
 
 ```sh
 $ curl http://localhost:5657/v1/b/colors/blue
-"There is no blue without yellow and without orange."
+There is no blue without yellow and without orange.
 ```
