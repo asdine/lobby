@@ -3,8 +3,12 @@ package rpc_test
 import (
 	"context"
 	"errors"
+	"io/ioutil"
 	"net"
+	"os"
+	"path"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -181,7 +185,11 @@ func TestRegistryServerStatus(t *testing.T) {
 }
 
 func newRegistry(t *testing.T, r lobby.Registry) (*rpc.Registry, func()) {
-	l, err := net.Listen("tcp", ":")
+	dir, err := ioutil.TempDir("", "lobby")
+	require.NoError(t, err)
+
+	socketPath := path.Join(dir, "lobby.sock")
+	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
 	srv := rpc.NewServer(rpc.WithBucketService(r), rpc.WithRegistryService(r))
@@ -190,7 +198,13 @@ func newRegistry(t *testing.T, r lobby.Registry) (*rpc.Registry, func()) {
 		srv.Serve(l)
 	}()
 
-	conn, err := grpc.Dial(l.Addr().String(), grpc.WithInsecure())
+	conn, err := grpc.Dial("",
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
+			return net.DialTimeout("unix", socketPath, timeout)
+		}),
+	)
 	require.NoError(t, err)
 
 	reg, err := rpc.NewRegistry(conn)
@@ -200,6 +214,7 @@ func newRegistry(t *testing.T, r lobby.Registry) (*rpc.Registry, func()) {
 	return reg, func() {
 		reg.Close()
 		srv.Stop()
+		os.RemoveAll(dir)
 	}
 }
 
