@@ -9,6 +9,7 @@ import (
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/mock"
 	"github.com/asdine/lobby/rpc/proto"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -20,12 +21,12 @@ func TestBucketServerPut(t *testing.T) {
 
 		var i int
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				PutFn: func(key string, value []byte) (*lobby.Item, error) {
-					require.Equal(t, fmt.Sprintf("key%d", i+1), key)
-					require.Equal(t, fmt.Sprintf(`"value%d"`, i+1), string(value))
+					assert.Equal(t, fmt.Sprintf("key%d", i+1), key)
+					assert.Equal(t, fmt.Sprintf("value%d", i+1), string(value))
 					i++
 					return &lobby.Item{
 						Key:   key,
@@ -79,7 +80,7 @@ func TestBucketServerPut(t *testing.T) {
 	t.Run("BucketNotFound", func(t *testing.T) {
 		var r mock.Registry
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "unknown", name)
+			assert.Equal(t, "unknown", name)
 			return nil, lobby.ErrBucketNotFound
 		}
 
@@ -107,12 +108,12 @@ func TestBucketServerPut(t *testing.T) {
 	t.Run("InternalError", func(t *testing.T) {
 		var r mock.Registry
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				PutFn: func(key string, data []byte) (*lobby.Item, error) {
-					require.Equal(t, "hello", key)
-					require.Equal(t, `"value"`, string(data))
+					assert.Equal(t, "hello", key)
+					assert.Equal(t, "value", string(data))
 					return nil, errors.New("something unexpected happened !")
 				},
 			}, nil
@@ -145,11 +146,11 @@ func TestBucketServerGet(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				GetFn: func(key string) (*lobby.Item, error) {
-					require.Equal(t, "hello", key)
+					assert.Equal(t, "hello", key)
 
 					return &lobby.Item{
 						Key:   key,
@@ -185,7 +186,7 @@ func TestBucketServerGet(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "unknown", name)
+			assert.Equal(t, "unknown", name)
 
 			return nil, lobby.ErrBucketNotFound
 		}
@@ -204,11 +205,11 @@ func TestBucketServerGet(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				GetFn: func(key string) (*lobby.Item, error) {
-					require.Equal(t, "unknown", key)
+					assert.Equal(t, "unknown", key)
 
 					return nil, lobby.ErrKeyNotFound
 				},
@@ -229,11 +230,11 @@ func TestBucketServerGet(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				GetFn: func(key string) (*lobby.Item, error) {
-					require.Equal(t, "unknown", key)
+					assert.Equal(t, "unknown", key)
 
 					return nil, errors.New("something unexpected happened !")
 				},
@@ -256,11 +257,11 @@ func TestBucketServerDelete(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				DeleteFn: func(key string) error {
-					require.Equal(t, "hello", key)
+					assert.Equal(t, "hello", key)
 
 					return nil
 				},
@@ -291,7 +292,7 @@ func TestBucketServerDelete(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "unknown", name)
+			assert.Equal(t, "unknown", name)
 
 			return nil, lobby.ErrBucketNotFound
 		}
@@ -310,11 +311,11 @@ func TestBucketServerDelete(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				DeleteFn: func(key string) error {
-					require.Equal(t, "unknown", key)
+					assert.Equal(t, "unknown", key)
 
 					return lobby.ErrKeyNotFound
 				},
@@ -335,11 +336,11 @@ func TestBucketServerDelete(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return &mock.Bucket{
 				DeleteFn: func(key string) error {
-					require.Equal(t, "unknown", key)
+					assert.Equal(t, "unknown", key)
 
 					return errors.New("something unexpected happened !")
 				},

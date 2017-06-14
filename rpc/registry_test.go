@@ -23,8 +23,8 @@ func TestRegistryServerCreate(t *testing.T) {
 		var r mock.Registry
 
 		r.CreateFn = func(backendName, bucketName string) error {
-			require.Equal(t, "backend", backendName)
-			require.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "backend", backendName)
+			assert.Equal(t, "bucket", bucketName)
 
 			return nil
 		}
@@ -53,8 +53,8 @@ func TestRegistryServerCreate(t *testing.T) {
 		var r mock.Registry
 
 		r.CreateFn = func(backendName, bucketName string) error {
-			require.Equal(t, "backend", backendName)
-			require.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "backend", backendName)
+			assert.Equal(t, "bucket", bucketName)
 
 			return lobby.ErrBucketAlreadyExists
 		}
@@ -73,8 +73,8 @@ func TestRegistryServerCreate(t *testing.T) {
 		var r mock.Registry
 
 		r.CreateFn = func(backendName, bucketName string) error {
-			require.Equal(t, "backend", backendName)
-			require.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "backend", backendName)
+			assert.Equal(t, "bucket", bucketName)
 
 			return lobby.ErrBackendNotFound
 		}
@@ -93,8 +93,8 @@ func TestRegistryServerCreate(t *testing.T) {
 		var r mock.Registry
 
 		r.CreateFn = func(backendName, bucketName string) error {
-			require.Equal(t, "backend", backendName)
-			require.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "backend", backendName)
+			assert.Equal(t, "bucket", bucketName)
 
 			return errors.New("something unexpected happened !")
 		}
@@ -115,7 +115,7 @@ func TestRegistryServerStatus(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return new(mock.Bucket), nil
 		}
@@ -145,7 +145,7 @@ func TestRegistryServerStatus(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return nil, lobby.ErrBucketNotFound
 		}
@@ -164,7 +164,7 @@ func TestRegistryServerStatus(t *testing.T) {
 		var r mock.Registry
 
 		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+			assert.Equal(t, "bucket", name)
 
 			return nil, errors.New("something unexpected happened !")
 		}

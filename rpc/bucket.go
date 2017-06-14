@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/json"
 	"github.com/asdine/lobby/rpc/proto"
 	"github.com/asdine/lobby/validation"
 	"golang.org/x/net/context"
@@ -50,8 +49,7 @@ func (s *bucketService) Put(stream proto.BucketService_PutServer) error {
 			return newError(err, s.logger)
 		}
 
-		data := json.ToValidJSONFromBytes(newItem.Item.Value)
-		_, err = b.Put(newItem.Item.Key, data)
+		_, err = b.Put(newItem.Item.Key, newItem.Item.Value)
 		if err != nil {
 			return newError(err, s.logger)
 		}
