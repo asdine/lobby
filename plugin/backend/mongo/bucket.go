@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/asdine/lobby"
+	ljson "github.com/asdine/lobby/json"
 	"github.com/pkg/errors"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -39,9 +40,15 @@ func (b *Bucket) Put(key string, value []byte) (*lobby.Item, error) {
 	col := b.session.DB("").C(colItems)
 
 	var raw interface{}
-	err := json.Unmarshal(value, &raw)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal json")
+
+	valid, err := ljson.ValidateBytes(value)
+	if err == nil {
+		err := json.Unmarshal(valid, &raw)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal json")
+		}
+	} else {
+		raw = value
 	}
 
 	_, err = col.Upsert(
@@ -71,9 +78,12 @@ func (b *Bucket) Get(key string) (*lobby.Item, error) {
 		return nil, errors.Wrap(err, "failed to fetch item")
 	}
 
-	value, err := json.Marshal(i.Value)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal value into json")
+	value, ok := i.Value.([]byte)
+	if !ok {
+		value, err = json.Marshal(i.Value)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal value into json")
+		}
 	}
 
 	return &lobby.Item{

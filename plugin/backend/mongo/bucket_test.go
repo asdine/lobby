@@ -14,18 +14,18 @@ func TestBucketPut(t *testing.T) {
 	b, err := backend.Bucket("1a")
 	require.NoError(t, err)
 
-	i1, err := b.Put("2a", []byte(`"Value"`))
+	i1, err := b.Put("2a", []byte("Value"))
 	require.NoError(t, err)
 	require.Equal(t, "2a", i1.Key)
-	require.Equal(t, []byte(`"Value"`), i1.Value)
+	require.Equal(t, []byte("Value"), i1.Value)
 
 	i2, err := b.Get("2a")
 	require.NoError(t, err)
 	require.Equal(t, *i1, *i2)
 
-	j, err := b.Put("2a", []byte(`"New Value"`))
+	j, err := b.Put("2a", []byte("10"))
 	require.NoError(t, err)
-	require.Equal(t, []byte(`"New Value"`), j.Value)
+	require.Equal(t, []byte("10"), j.Value)
 
 	err = b.Close()
 	require.NoError(t, err)
@@ -40,9 +40,9 @@ func TestBucketGet(t *testing.T) {
 	b2, err := backend.Bucket("b2")
 	require.NoError(t, err)
 
-	i1, err := b1.Put("id", []byte(`"Value1"`))
+	i1, err := b1.Put("id", []byte("Value1"))
 	require.NoError(t, err)
-	i2, err := b2.Put("id", []byte(`"Value2"`))
+	i2, err := b2.Put("id", []byte("10"))
 	require.NoError(t, err)
 
 	j1, err := b1.Get(i1.Key)
@@ -53,7 +53,7 @@ func TestBucketGet(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, i2.Value, j2.Value)
 
-	i2, err = b2.Put("some id", []byte(`"Value2"`))
+	i2, err = b2.Put("some id", []byte("10"))
 	require.NoError(t, err)
 
 	_, err = b1.Get("some id")
@@ -73,7 +73,7 @@ func TestBucketDelete(t *testing.T) {
 	b, err := backend.Bucket("a")
 	require.NoError(t, err)
 
-	i, err := b.Put("id", []byte(`"Value"`))
+	i, err := b.Put("id", []byte("Value"))
 	require.NoError(t, err)
 
 	_, err = b.Get(i.Key)
