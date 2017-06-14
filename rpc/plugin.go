@@ -44,7 +44,7 @@ func (p *process) Close() error {
 // LoadPlugin loads a plugin.
 func LoadPlugin(name, cmdPath, configDir string) (lobby.Plugin, error) {
 	cmd := execCommand(cmdPath, "--config-dir", configDir)
-	prefix := fmt.Sprintf("[%s]\t", name)
+	prefix := fmt.Sprintf("[%s] ", name)
 	cmd.Stdout = lobby.NewPrefixWriter(prefix, os.Stdout)
 	cmd.Stderr = lobby.NewPrefixWriter(prefix, os.Stderr)
 	cmd.SysProcAttr = &syscall.SysProcAttr{

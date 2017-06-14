@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -11,13 +12,17 @@ import (
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
+	"github.com/asdine/lobby/http"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 )
 
 func newRunCmd(a *app) *cobra.Command {
-	r := runCmd{app: a}
-	a.out = lobby.NewPrefixWriter(fmt.Sprintf("[lobby]\t"), a.out)
+	r := runCmd{
+		app:    a,
+		stdout: log.New(os.Stderr, "[lobby] ", 0),
+		stderr: log.New(os.Stderr, "[lobby] ", log.LstdFlags),
+	}
 
 	cmd := cobra.Command{
 		Use:   "run",
@@ -33,6 +38,8 @@ func newRunCmd(a *app) *cobra.Command {
 
 type runCmd struct {
 	app         *app
+	stdout      *log.Logger
+	stderr      *log.Logger
 	mainSrv     lobby.Server
 	plugins     []lobby.Plugin
 	backendList []string
@@ -68,15 +75,14 @@ func (r *runCmd) runMainServer() error {
 
 	reg.RegisterBackend("bolt", bck)
 
-	wg, srv, err := r.runServer(reg)
+	quit, err := r.runAllServers(reg)
 	if err != nil {
 		return err
 	}
 
 	err = r.loadPlugins(reg)
 	if err != nil {
-		r.closeAll(srv)
-		wg.Wait()
+		r.closeAll(quit)
 		return err
 	}
 
@@ -85,25 +91,22 @@ func (r *runCmd) runMainServer() error {
 	<-c
 	fmt.Println()
 
-	r.closeAll(srv)
-	wg.Wait()
+	r.closeAll(quit)
 	return nil
 }
 
-func (r *runCmd) closeAll(srv lobby.Server) {
-	fmt.Fprintf(r.app.out, "Stopping plugins...")
+func (r *runCmd) closeAll(quit chan struct{}) {
+	r.stdout.Printf("Shutting down plugins")
 	if err := r.closePlugins(); err != nil {
-		fmt.Fprintf(r.app.out, " Error: %s\n", err.Error())
-	} else {
-		fmt.Fprintf(r.app.out, " OK\n")
+		r.stdout.Printf("Error while stopping plugins: %s\n", err.Error())
 	}
 
-	fmt.Fprintf(r.app.out, "Stopping lobby...")
-	if err := srv.Stop(); err != nil {
-		fmt.Fprintf(r.app.out, " Error: %s\n", err.Error())
-	} else {
-		fmt.Fprintf(r.app.out, " OK\n")
-	}
+	r.stdout.Printf("Shutting down Lobby")
+	// Sending message to stop servers
+	quit <- struct{}{}
+	// Waiting for servers to stop
+	<-quit
+	r.stdout.Printf("Shutting down complete\n")
 }
 
 func (r *runCmd) loadPlugins(reg lobby.Registry) error {
@@ -153,23 +156,63 @@ func (r *runCmd) closePlugins() error {
 	return nil
 }
 
-func (r *runCmd) runServer(reg lobby.Registry) (*sync.WaitGroup, lobby.Server, error) {
-	var wg sync.WaitGroup
-
-	// listening on unix socket
-	l, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
+func (r *runCmd) runAllServers(reg lobby.Registry) (chan struct{}, error) {
+	// gRPC: listening on unix socket
+	lsock, err := net.Listen("unix", path.Join(r.app.SocketDir, "lobby.sock"))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	srv := rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg))
+	// gRPC: listening on port
+	// tmp: harcoded port
+	lgRPC, err := net.Listen("tcp", ":5656")
+	if err != nil {
+		return nil, err
+	}
 
-	wg.Add(1)
-	go func(l net.Listener, srv lobby.Server) {
-		defer wg.Done()
-		fmt.Fprintf(r.app.out, "Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
-		srv.Serve(l)
-	}(l, srv)
+	// http: listening on port
+	// tmp: harcoded port
+	lhttp, err := net.Listen("tcp", ":5657")
+	if err != nil {
+		return nil, err
+	}
 
-	return &wg, srv, nil
+	quit := r.runServers(map[net.Listener]lobby.Server{
+		lsock: rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg)),
+		lgRPC: rpc.NewServer(rpc.WithBucketService(reg), rpc.WithRegistryService(reg)),
+		lhttp: http.NewServer(http.NewHandler(reg, log.New(os.Stderr, "[http] ", log.LstdFlags))),
+	})
+
+	return quit, nil
+}
+
+func (r *runCmd) runServers(servers map[net.Listener]lobby.Server) chan struct{} {
+	var wg sync.WaitGroup
+	quit := make(chan struct{})
+
+	for l, srv := range servers {
+		wg.Add(1)
+		go func(l net.Listener, srv lobby.Server) {
+			defer wg.Done()
+			log.New(os.Stderr, fmt.Sprintf("[%s] ", srv.Name()), 0).Printf("Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
+			_ = srv.Serve(l)
+		}(l, srv)
+	}
+
+	go func() {
+		<-quit
+
+		for _, srv := range servers {
+			err := srv.Stop()
+			if err != nil {
+				// TODO: return all errors in a separate chan
+				r.stderr.Print(err)
+			}
+		}
+
+		wg.Wait()
+		quit <- struct{}{}
+	}()
+
+	return quit
 }

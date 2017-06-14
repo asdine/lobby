@@ -2,22 +2,17 @@ package cli
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path"
 
-	"github.com/asdine/lobby"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func newApp() *app {
-	a := app{
-		in:  os.Stdin,
-		out: os.Stdout,
-	}
+	var a app
 
 	home, err := homedir.Dir()
 	if err != nil {
@@ -50,9 +45,6 @@ func newApp() *app {
 type app struct {
 	*cobra.Command
 
-	in        io.Reader
-	out       io.Writer
-	registry  lobby.Registry
 	ConfigDir string
 	DataDir   string
 	SocketDir string

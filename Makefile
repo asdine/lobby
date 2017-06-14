@@ -3,7 +3,7 @@ PACKAGES  := $(shell glide novendor)
 
 .PHONY: all $(NAME) deps install test testrace bench gen plugin-backend plugin-server plugins
 
-all: $(NAME) plugins
+all: $(NAME)
 
 $(NAME):
 	go install ./cmd/$@
@@ -37,5 +37,4 @@ plugin-server:
 plugins:
 	make plugin-backend PLUGIN=mongo
 	make plugin-backend PLUGIN=redis
-	make plugin-server PLUGIN=http
 	make plugin-server PLUGIN=nsq

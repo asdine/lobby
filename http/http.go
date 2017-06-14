@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -119,12 +118,12 @@ func writeRawJSON(w http.ResponseWriter, v []byte, status int, logger *log.Logge
 }
 
 // NewHandler instantiates a configured Handler.
-func NewHandler(r lobby.Registry) http.Handler {
+func NewHandler(r lobby.Registry, logger *log.Logger) http.Handler {
 	router := httprouter.New()
 
 	h := handler{
 		registry: r,
-		logger:   log.New(os.Stderr, "", log.LstdFlags),
+		logger:   logger,
 		router:   router,
 	}
 

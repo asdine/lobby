@@ -3,21 +3,23 @@ package http_test
 import (
 	"bytes"
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/asdine/lobby"
+	lobbyHttp "github.com/asdine/lobby/http"
 	"github.com/asdine/lobby/mock"
-	lobbyHttp "github.com/asdine/lobby/plugin/server/http"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateBucket(t *testing.T) {
 	t.Run("EmptyBody", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", bytes.NewReader([]byte(nil)))
@@ -27,7 +29,7 @@ func TestCreateBucket(t *testing.T) {
 
 	t.Run("InvalidJSON", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", strings.NewReader(`hello`))
@@ -37,7 +39,7 @@ func TestCreateBucket(t *testing.T) {
 
 	t.Run("ValidationError", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", strings.NewReader(`{"name": "   "}`))
@@ -55,7 +57,7 @@ func TestCreateBucket(t *testing.T) {
 			return lobby.ErrBackendNotFound
 		}
 
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", strings.NewReader(`{"name": "   bucket   "}`))
@@ -73,7 +75,7 @@ func TestCreateBucket(t *testing.T) {
 			return lobby.ErrBucketAlreadyExists
 		}
 
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", strings.NewReader(`{"name": "   bucket   "}`))
@@ -91,7 +93,7 @@ func TestCreateBucket(t *testing.T) {
 			return errors.New("something unexpected happened !")
 		}
 
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", strings.NewReader(`{"name": "   bucket   "}`))
@@ -109,7 +111,7 @@ func TestCreateBucket(t *testing.T) {
 			return nil
 		}
 
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/buckets/backend", strings.NewReader(`{"name": "   bucket   "}`))
@@ -121,7 +123,7 @@ func TestCreateBucket(t *testing.T) {
 func TestSaveItem(t *testing.T) {
 	t.Run("EmptyBody", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("PUT", "/v1/b/bucket/key", bytes.NewReader([]byte(nil)))
@@ -131,7 +133,7 @@ func TestSaveItem(t *testing.T) {
 
 	t.Run("BucketNotFound", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -147,7 +149,7 @@ func TestSaveItem(t *testing.T) {
 
 	t.Run("InternalError", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -163,7 +165,7 @@ func TestSaveItem(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -191,7 +193,7 @@ func TestSaveItem(t *testing.T) {
 func TestGetItem(t *testing.T) {
 	t.Run("BucketNotFound", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -207,7 +209,7 @@ func TestGetItem(t *testing.T) {
 
 	t.Run("KeyNotFound", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -229,7 +231,7 @@ func TestGetItem(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -257,7 +259,7 @@ func TestGetItem(t *testing.T) {
 func TestDeleteItem(t *testing.T) {
 	t.Run("BucketNotFound", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -273,7 +275,7 @@ func TestDeleteItem(t *testing.T) {
 
 	t.Run("KeyNotFound", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
@@ -295,7 +297,7 @@ func TestDeleteItem(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry)
+		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, "", log.LstdFlags))
 
 		registry.BucketFn = func(name string) (lobby.Bucket, error) {
 			require.Equal(t, "bucket", name)
