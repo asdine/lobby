@@ -71,10 +71,6 @@ func RunBackend(name string, bck lobby.Backend) error {
 	a.Command.Short = fmt.Sprintf("%s plugin", name)
 	a.Command.RunE = func(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
-		err := initDir(path.Join(a.DataDir, name))
-		if err != nil {
-			return err
-		}
 
 		defer bck.Close()
 

@@ -20,7 +20,7 @@ func newApp() *app {
 	}
 	defaultConfigDir := path.Join(home, ".config/lobby")
 
-	defaultPluginDir, err := os.Getwd()
+	a.PluginDir, err = os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,8 +35,8 @@ func newApp() *app {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&a.ConfigDir, "config-dir", defaultConfigDir, "Path to a directory to read and store Lobby configuration and data")
-	cmd.PersistentFlags().StringVar(&a.PluginDir, "plugin-dir", defaultPluginDir, "Path to a directory to read Lobby plugins")
+	cmd.PersistentFlags().StringVarP(&a.ConfigDir, "config-dir", "c", defaultConfigDir, "Location of Lobby configuration files")
+	cmd.PersistentFlags().StringVar(&a.PluginDir, "plugin-dir", ".", "Location of plugins")
 
 	a.Command = &cmd
 	return &a
