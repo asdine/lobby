@@ -3,51 +3,81 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestApp(t *testing.T) {
-	app := NewApp()
+	t.Run("SetupError", func(t *testing.T) {
+		app := NewApp()
 
-	app.bootstrap = func(ctx context.Context, app *App) {
-		for i := 0; i < 10; i++ {
-			app.errc <- fmt.Errorf("error %d", i)
-		}
+		app.setup.steps = []step{func(ctx context.Context, app *App) error {
+			return errors.New("setup error")
+		}}
 
-		close(app.errc)
-	}
+		app.teardown.steps = []step{func(ctx context.Context, app *App) error {
+			return errors.New("teardown error")
+		}}
 
-	err := app.Run(context.Background())
-	errs := err.(Errors)
-	require.Len(t, errs, 10)
-}
+		err := app.Run(context.Background())
+		errs := err.(Errors)
+		assert.Len(t, errs, 2)
+	})
 
-func testBootstrap(ctx context.Context, t *testing.T, app *App, b *bootstrapper) []error {
-	var wg sync.WaitGroup
+	t.Run("Goroutine error", func(t *testing.T) {
+		app := NewApp()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		b.bootstrap(ctx, app)
-	}()
+		app.setup.steps = []step{func(ctx context.Context, app *App) error {
+			app.wg.Add(1)
+			go func() {
+				defer app.wg.Done()
 
-	var errs []error
-	for err := range b.errc {
-		errs = append(errs, err)
-	}
+				app.errc <- errors.New("goroutine error")
+			}()
+			return nil
+		}}
 
-	wg.Wait()
-	return errs
+		err := app.Run(context.Background())
+		errs := err.(Errors)
+		require.Len(t, errs, 1)
+		require.EqualError(t, errs[0], "goroutine error")
+	})
+
+	t.Run("Cancel", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		app := NewApp()
+		quit := make(chan struct{})
+
+		app.setup.steps = []step{func(ctx context.Context, app *App) error {
+			app.wg.Add(1)
+			go func() {
+				defer app.wg.Done()
+
+				<-quit
+			}()
+
+			cancel()
+			return nil
+		}}
+
+		app.teardown.steps = []step{func(ctx context.Context, app *App) error {
+			quit <- struct{}{}
+
+			return nil
+		}}
+
+		err := app.Run(ctx)
+		require.NoError(t, err)
+	})
 }
 
 func TestBootstrap(t *testing.T) {
 	t.Run("Cancelation", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		b := newBootstrapper([]step{
+
+		s := newSetup([]step{
 			func(ctx context.Context, app *App) error {
 				cancel()
 				return nil
@@ -58,13 +88,12 @@ func TestBootstrap(t *testing.T) {
 			},
 		})
 
-		errs := testBootstrap(ctx, t, nil, b)
-		require.Len(t, errs, 1)
-		require.Equal(t, context.Canceled, errs[0])
+		err := s.setup(ctx, nil)
+		require.Equal(t, context.Canceled, err)
 	})
 
 	t.Run("ReturnOnError", func(t *testing.T) {
-		b := newBootstrapper([]step{
+		s := newSetup([]step{
 			func(ctx context.Context, app *App) error {
 				return nil
 			},
@@ -77,13 +106,12 @@ func TestBootstrap(t *testing.T) {
 			},
 		})
 
-		errs := testBootstrap(context.Background(), t, nil, b)
-		require.Len(t, errs, 1)
-		require.EqualError(t, errs[0], "unexpected error")
+		err := s.setup(context.Background(), nil)
+		require.EqualError(t, err, "unexpected error")
 	})
 
 	t.Run("OK", func(t *testing.T) {
-		b := newBootstrapper([]step{
+		s := newSetup([]step{
 			func(ctx context.Context, app *App) error {
 				return nil
 			},
@@ -91,7 +119,8 @@ func TestBootstrap(t *testing.T) {
 				return nil
 			},
 		})
-		errs := testBootstrap(context.Background(), t, nil, b)
-		require.Nil(t, errs)
+
+		err := s.setup(context.Background(), nil)
+		require.NoError(t, err)
 	})
 }
