@@ -39,8 +39,8 @@ func (s steps) setup(ctx context.Context, app *App) error {
 func (s steps) teardown(ctx context.Context, app *App) []error {
 	var errs []error
 
-	for _, step := range s {
-		err := step.teardown(ctx, app)
+	for i := len(s) - 1; i >= 0; i-- {
+		err := s[i].teardown(ctx, app)
 		if err != nil {
 			errs = append(errs, err)
 		}

@@ -78,6 +78,34 @@ func TestSteps(t *testing.T) {
 		require.EqualError(t, err, "unexpected error")
 	})
 
+	t.Run("ErrorsOnTeardown", func(t *testing.T) {
+		s := steps([]step{
+			&mockStep{
+				teardownFn: func(ctx context.Context, app *App) error {
+					return errors.New("3")
+				},
+			},
+			&mockStep{
+				teardownFn: func(ctx context.Context, app *App) error {
+					return errors.New("2")
+				},
+			},
+			&mockStep{
+				teardownFn: func(ctx context.Context, app *App) error {
+					return errors.New("1")
+				},
+			},
+		})
+
+		err := s.setup(context.Background(), nil)
+		require.NoError(t, err)
+		errs := s.teardown(context.Background(), nil)
+		require.Len(t, errs, 3)
+		require.EqualError(t, errs[0], "1")
+		require.EqualError(t, errs[1], "2")
+		require.EqualError(t, errs[2], "3")
+	})
+
 	t.Run("OK", func(t *testing.T) {
 		s := steps([]step{
 			&mockStep{
