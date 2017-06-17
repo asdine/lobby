@@ -9,17 +9,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type mockStep struct {
+	setupFn    func(ctx context.Context, app *App) error
+	teardownFn func(ctx context.Context, app *App) error
+}
+
+func (s *mockStep) setup(ctx context.Context, app *App) error {
+	if s.setupFn != nil {
+		return s.setupFn(ctx, app)
+	}
+
+	return nil
+}
+
+func (s *mockStep) teardown(ctx context.Context, app *App) error {
+	if s.teardownFn != nil {
+		return s.teardownFn(ctx, app)
+	}
+
+	return nil
+}
+
 func TestApp(t *testing.T) {
 	t.Run("SetupError", func(t *testing.T) {
 		app := NewApp()
 
-		app.setup.steps = []step{func(ctx context.Context, app *App) error {
-			return errors.New("setup error")
-		}}
+		m := mockStep{
+			setupFn: func(ctx context.Context, app *App) error {
+				return errors.New("setup error")
+			},
+			teardownFn: func(ctx context.Context, app *App) error {
+				return errors.New("teardown error")
+			},
+		}
 
-		app.teardown.steps = []step{func(ctx context.Context, app *App) error {
-			return errors.New("teardown error")
-		}}
+		app.steps = []step{&m}
 
 		err := app.Run(context.Background())
 		errs := err.(Errors)
@@ -29,15 +53,22 @@ func TestApp(t *testing.T) {
 	t.Run("Goroutine error", func(t *testing.T) {
 		app := NewApp()
 
-		app.setup.steps = []step{func(ctx context.Context, app *App) error {
-			app.wg.Add(1)
-			go func() {
-				defer app.wg.Done()
+		m := mockStep{
+			setupFn: func(ctx context.Context, app *App) error {
+				app.wg.Add(1)
+				go func() {
+					defer app.wg.Done()
 
-				app.errc <- errors.New("goroutine error")
-			}()
-			return nil
-		}}
+					app.errc <- errors.New("goroutine error")
+				}()
+				return nil
+			},
+			teardownFn: func(ctx context.Context, app *App) error {
+				return nil
+			},
+		}
+
+		app.steps = []step{&m}
 
 		err := app.Run(context.Background())
 		errs := err.(Errors)
@@ -50,77 +81,28 @@ func TestApp(t *testing.T) {
 		app := NewApp()
 		quit := make(chan struct{})
 
-		app.setup.steps = []step{func(ctx context.Context, app *App) error {
-			app.wg.Add(1)
-			go func() {
-				defer app.wg.Done()
+		m := mockStep{
+			setupFn: func(ctx context.Context, app *App) error {
+				app.wg.Add(1)
+				go func() {
+					defer app.wg.Done()
 
-				<-quit
-			}()
+					<-quit
+				}()
 
-			cancel()
-			return nil
-		}}
-
-		app.teardown.steps = []step{func(ctx context.Context, app *App) error {
-			quit <- struct{}{}
-
-			return nil
-		}}
-
-		err := app.Run(ctx)
-		require.NoError(t, err)
-	})
-}
-
-func TestBootstrap(t *testing.T) {
-	t.Run("Cancelation", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-
-		s := newSetup([]step{
-			func(ctx context.Context, app *App) error {
 				cancel()
 				return nil
 			},
-			func(ctx context.Context, app *App) error {
-				t.Error("Should not be called")
+			teardownFn: func(ctx context.Context, app *App) error {
+				quit <- struct{}{}
+
 				return nil
 			},
-		})
+		}
 
-		err := s.setup(ctx, nil)
-		require.Equal(t, context.Canceled, err)
-	})
+		app.steps = []step{&m}
 
-	t.Run("ReturnOnError", func(t *testing.T) {
-		s := newSetup([]step{
-			func(ctx context.Context, app *App) error {
-				return nil
-			},
-			func(ctx context.Context, app *App) error {
-				return errors.New("unexpected error")
-			},
-			func(ctx context.Context, app *App) error {
-				t.Error("Should not be called")
-				return nil
-			},
-		})
-
-		err := s.setup(context.Background(), nil)
-		require.EqualError(t, err, "unexpected error")
-	})
-
-	t.Run("OK", func(t *testing.T) {
-		s := newSetup([]step{
-			func(ctx context.Context, app *App) error {
-				return nil
-			},
-			func(ctx context.Context, app *App) error {
-				return nil
-			},
-		})
-
-		err := s.setup(context.Background(), nil)
+		err := app.Run(ctx)
 		require.NoError(t, err)
 	})
 }

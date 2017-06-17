@@ -14,6 +14,14 @@ type Paths struct {
 }
 
 func (p *Paths) Create() error {
+	if p.ConfigDir == "" {
+		return errors.New("unspecified config directory")
+	}
+
+	if p.SocketDir == "" {
+		return errors.New("unspecified socket directory")
+	}
+
 	paths := []string{
 		p.ConfigDir,
 		p.SocketDir,

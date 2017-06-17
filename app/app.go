@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"sync"
+
+	"github.com/asdine/lobby"
 )
 
 type Options struct {
@@ -14,10 +16,10 @@ type Options struct {
 type App struct {
 	Options  Options
 	Logger   *log.Logger
-	setup    *setup
-	teardown *teardown
 	wg       sync.WaitGroup
 	errc     chan error
+	registry lobby.Registry
+	steps    steps
 }
 
 func NewApp() *App {
@@ -26,12 +28,10 @@ func NewApp() *App {
 		errc:   make(chan error),
 	}
 
-	setupFns := []step{
-		stepCreateDir,
+	app.steps = []step{
+		new(directoriesStep),
+		new(registryStep),
 	}
-
-	app.setup = newSetup(setupFns)
-	app.teardown = newTeardown(nil)
 
 	return &app
 }
@@ -39,7 +39,7 @@ func NewApp() *App {
 func (a *App) Run(ctx context.Context) error {
 	var errs Errors
 
-	err := a.setup.setup(ctx, a)
+	err := a.steps.setup(ctx, a)
 	if err != nil && err != context.Canceled {
 		errs = append(errs, err)
 	}
@@ -68,7 +68,7 @@ func (a *App) Run(ctx context.Context) error {
 		errsC <- errs
 	}()
 
-	closeErrs := a.teardown.teardown(ctx, a)
+	closeErrs := a.steps.teardown(ctx, a)
 	if len(closeErrs) != 0 {
 		errs = append(errs, closeErrs...)
 	}
@@ -81,59 +81,4 @@ func (a *App) Run(ctx context.Context) error {
 		return errs
 	}
 	return nil
-}
-
-type step func(context.Context, *App) error
-
-func stepCreateDir(ctx context.Context, app *App) error {
-	return app.Options.Paths.Create()
-}
-
-func newSetup(steps []step) *setup {
-	return &setup{
-		steps: steps,
-	}
-}
-
-type setup struct {
-	steps []step
-}
-
-func (s *setup) setup(ctx context.Context, app *App) error {
-	for _, fn := range s.steps {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			err := fn(ctx, app)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-type teardown struct {
-	steps []step
-}
-
-func newTeardown(steps []step) *teardown {
-	return &teardown{
-		steps: steps,
-	}
-}
-
-func (t *teardown) teardown(ctx context.Context, app *App) []error {
-	var errs []error
-
-	for _, fn := range t.steps {
-		err := fn(ctx, app)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	return errs
 }

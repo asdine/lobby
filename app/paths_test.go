@@ -45,7 +45,7 @@ func TestPaths(t *testing.T) {
 
 		p := Paths{
 			ConfigDir: path.Join(name, "config"),
-			SocketDir: path.Join(name, "config"),
+			SocketDir: path.Join(name, "config", "sockets"),
 		}
 		err = p.Create()
 		require.Error(t, err)
@@ -58,7 +58,7 @@ func TestPaths(t *testing.T) {
 
 		p := Paths{
 			ConfigDir: path.Join(name, "config"),
-			SocketDir: path.Join(name, "sockets"),
+			SocketDir: path.Join(name, "config", "sockets"),
 		}
 		err = p.Create()
 		require.NoError(t, err)
