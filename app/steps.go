@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -153,7 +154,7 @@ func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
 	return g.runServer(srv, l, app)
 }
 
-func newHttpStep() *httpStep {
+func newHTTPStep() *httpStep {
 	return &httpStep{
 		serverStep: &serverStep{
 			logger: log.New(os.Stderr, "[http] ", log.LstdFlags),
@@ -204,4 +205,83 @@ func (s *serverStep) teardown(ctx context.Context, app *App) error {
 	err := s.srv.Stop()
 	s.srv = nil
 	return err
+}
+
+func newServerPluginsStep() *serverPluginsStep {
+	return &serverPluginsStep{
+		pluginLoader: rpc.LoadPlugin,
+	}
+}
+
+type serverPluginsStep struct {
+	pluginLoader func(string, string, string) (lobby.Plugin, error)
+	plugins      []lobby.Plugin
+}
+
+func (s *serverPluginsStep) setup(ctx context.Context, app *App) error {
+	for _, name := range app.Options.Plugins.Server {
+		plg, err := s.pluginLoader(
+			name,
+			path.Join(app.Options.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
+			app.Options.Paths.ConfigDir,
+		)
+		if err != nil {
+			return err
+		}
+
+		s.plugins = append(s.plugins, plg)
+	}
+
+	return nil
+}
+
+func (s *serverPluginsStep) teardown(ctx context.Context, app *App) error {
+	for _, p := range s.plugins {
+		err := p.Close()
+		if err != nil {
+			app.errc <- err
+		}
+	}
+
+	return nil
+}
+
+func newBackendPluginsStep() *backendPluginsStep {
+	return &backendPluginsStep{
+		pluginLoader: rpc.LoadBackendPlugin,
+	}
+}
+
+type backendPluginsStep struct {
+	pluginLoader func(string, string, string) (lobby.Backend, lobby.Plugin, error)
+	plugins      []lobby.Plugin
+}
+
+func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
+	for _, name := range app.Options.Plugins.Backend {
+		bck, plg, err := s.pluginLoader(
+			name,
+			path.Join(app.Options.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
+			app.Options.Paths.ConfigDir,
+		)
+		if err != nil {
+			return err
+		}
+
+		app.registry.RegisterBackend(name, bck)
+		s.plugins = append(s.plugins, plg)
+	}
+
+	return nil
+}
+
+func (s *backendPluginsStep) teardown(ctx context.Context, app *App) error {
+	for _, p := range s.plugins {
+		err := p.Close()
+		if err != nil {
+			app.errc <- err
+		}
+	}
+
+	return nil
 }

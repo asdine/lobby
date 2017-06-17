@@ -3,11 +3,15 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +20,7 @@ func appHelper(t *testing.T) (*App, func()) {
 	require.NoError(t, err)
 
 	var app App
+	app.errc = make(chan error)
 	app.Options.Paths.ConfigDir = path.Join(dir, "config")
 	app.Options.Paths.SocketDir = path.Join(app.Options.Paths.ConfigDir, "sockets")
 	err = app.Options.Paths.Create()
@@ -106,14 +111,14 @@ func TestRegistryStep(t *testing.T) {
 	require.Nil(t, app.registry)
 }
 
-func TestServers(t *testing.T) {
+func TestServersSteps(t *testing.T) {
 	app, cleanup := appHelper(t)
 	defer cleanup()
 
 	testCases := []step{
 		newGRPCUnixSocketStep(),
 		newGRPCPortStep(),
-		newHttpStep(),
+		newHTTPStep(),
 	}
 
 	for _, s := range testCases {
@@ -125,4 +130,232 @@ func TestServers(t *testing.T) {
 	}
 
 	app.wg.Wait()
+}
+
+func TestServerPluginsSteps(t *testing.T) {
+	t.Run("ErrorsDuringSetup", func(t *testing.T) {
+		app, cleanup := appHelper(t)
+		defer cleanup()
+
+		app.Options.Paths.ConfigDir = "configDir"
+		app.Options.Paths.PluginDir = "pluginDir"
+		app.Options.Plugins.Server = make([]string, 5)
+		for i := 0; i < 5; i++ {
+			app.Options.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
+		}
+
+		s := newServerPluginsStep()
+		var i int
+		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Plugin, error) {
+			i++
+			if i == 3 {
+				return nil, errors.New("unexpected error")
+			}
+
+			return new(mock.Plugin), nil
+		}
+
+		err := s.setup(context.Background(), app)
+		require.Error(t, err)
+		require.Len(t, s.plugins, 2)
+
+		err = s.teardown(context.Background(), app)
+		require.NoError(t, err)
+		for _, p := range s.plugins {
+			require.Equal(t, 1, p.(*mock.Plugin).CloseInvoked)
+		}
+	})
+
+	t.Run("ErrorsDuringTeardown", func(t *testing.T) {
+		app, cleanup := appHelper(t)
+		defer cleanup()
+
+		app.Options.Paths.ConfigDir = "configDir"
+		app.Options.Paths.PluginDir = "pluginDir"
+		app.Options.Plugins.Server = make([]string, 5)
+		for i := 0; i < 5; i++ {
+			app.Options.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
+		}
+
+		s := newServerPluginsStep()
+		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Plugin, error) {
+			return new(mock.Plugin), nil
+		}
+
+		err := s.setup(context.Background(), app)
+		require.NoError(t, err)
+		require.Len(t, s.plugins, 5)
+
+		s.plugins[3].(*mock.Plugin).CloseFn = func() error {
+			return errors.New("unexpected error")
+		}
+
+		c := make(chan struct{})
+
+		go func() {
+			err = s.teardown(context.Background(), app)
+			assert.NoError(t, err)
+			close(c)
+		}()
+
+		require.EqualError(t, <-app.errc, "unexpected error")
+		<-c
+		for i, p := range s.plugins {
+			if i != 3 {
+				require.Equal(t, 1, p.(*mock.Plugin).CloseInvoked)
+			}
+		}
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		app, cleanup := appHelper(t)
+		defer cleanup()
+
+		app.Options.Paths.ConfigDir = "configDir"
+		app.Options.Paths.PluginDir = "pluginDir"
+		app.Options.Plugins.Server = make([]string, 5)
+		for i := 0; i < 5; i++ {
+			app.Options.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
+		}
+
+		s := newServerPluginsStep()
+		var i int
+		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Plugin, error) {
+			require.Equal(t, fmt.Sprintf("plugin%d", i), name)
+			require.Equal(t, fmt.Sprintf("pluginDir/lobby-plugin%d", i), cmdPath)
+			require.Equal(t, "configDir", configDir)
+			i++
+			return new(mock.Plugin), nil
+		}
+
+		err := s.setup(context.Background(), app)
+		require.NoError(t, err)
+		require.Len(t, s.plugins, 5)
+
+		err = s.teardown(context.Background(), app)
+		require.NoError(t, err)
+		for _, p := range s.plugins {
+			require.Equal(t, 1, p.(*mock.Plugin).CloseInvoked)
+		}
+	})
+}
+
+func TestBackendPluginsSteps(t *testing.T) {
+	t.Run("ErrorsDuringSetup", func(t *testing.T) {
+		app, cleanup := appHelper(t)
+		defer cleanup()
+
+		app.Options.Paths.ConfigDir = "configDir"
+		app.Options.Paths.PluginDir = "pluginDir"
+		app.Options.Plugins.Backend = make([]string, 5)
+		var m mock.Registry
+		app.registry = &m
+
+		for i := 0; i < 5; i++ {
+			app.Options.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+		}
+
+		s := newBackendPluginsStep()
+		var i int
+		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+			i++
+			if i == 3 {
+				return nil, nil, errors.New("unexpected error")
+			}
+
+			return new(mock.Backend), new(mock.Plugin), nil
+		}
+
+		err := s.setup(context.Background(), app)
+		require.Error(t, err)
+		require.Len(t, s.plugins, 2)
+		require.Len(t, m.Backends, 2)
+
+		err = s.teardown(context.Background(), app)
+		require.NoError(t, err)
+		for _, p := range s.plugins {
+			require.Equal(t, 1, p.(*mock.Plugin).CloseInvoked)
+		}
+	})
+
+	t.Run("ErrorsDuringTeardown", func(t *testing.T) {
+		app, cleanup := appHelper(t)
+		defer cleanup()
+
+		app.Options.Paths.ConfigDir = "configDir"
+		app.Options.Paths.PluginDir = "pluginDir"
+		app.Options.Plugins.Backend = make([]string, 5)
+		var m mock.Registry
+		app.registry = &m
+
+		for i := 0; i < 5; i++ {
+			app.Options.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+		}
+
+		s := newBackendPluginsStep()
+		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+			return new(mock.Backend), new(mock.Plugin), nil
+		}
+
+		err := s.setup(context.Background(), app)
+		require.NoError(t, err)
+		require.Len(t, s.plugins, 5)
+		require.Len(t, m.Backends, 5)
+
+		s.plugins[3].(*mock.Plugin).CloseFn = func() error {
+			return errors.New("unexpected error")
+		}
+
+		c := make(chan struct{})
+
+		go func() {
+			err = s.teardown(context.Background(), app)
+			assert.NoError(t, err)
+			close(c)
+		}()
+
+		require.EqualError(t, <-app.errc, "unexpected error")
+		<-c
+		for i, p := range s.plugins {
+			if i != 3 {
+				require.Equal(t, 1, p.(*mock.Plugin).CloseInvoked)
+			}
+		}
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		app, cleanup := appHelper(t)
+		defer cleanup()
+
+		app.Options.Paths.ConfigDir = "configDir"
+		app.Options.Paths.PluginDir = "pluginDir"
+		app.Options.Plugins.Backend = make([]string, 5)
+		var m mock.Registry
+		app.registry = &m
+
+		for i := 0; i < 5; i++ {
+			app.Options.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+		}
+
+		s := newBackendPluginsStep()
+		var i int
+		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+			require.Equal(t, fmt.Sprintf("plugin%d", i), name)
+			require.Equal(t, fmt.Sprintf("pluginDir/lobby-plugin%d", i), cmdPath)
+			require.Equal(t, "configDir", configDir)
+			i++
+			return new(mock.Backend), new(mock.Plugin), nil
+		}
+
+		err := s.setup(context.Background(), app)
+		require.NoError(t, err)
+		require.Len(t, s.plugins, 5)
+		require.Len(t, m.Backends, 5)
+
+		err = s.teardown(context.Background(), app)
+		require.NoError(t, err)
+		for _, p := range s.plugins {
+			require.Equal(t, 1, p.(*mock.Plugin).CloseInvoked)
+		}
+	})
 }

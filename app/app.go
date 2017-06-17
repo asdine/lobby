@@ -9,8 +9,14 @@ import (
 	"github.com/asdine/lobby"
 )
 
+type Plugins struct {
+	Backend []string
+	Server  []string
+}
+
 type Options struct {
-	Paths Paths
+	Paths   Paths
+	Plugins Plugins
 }
 
 type App struct {
@@ -31,6 +37,11 @@ func NewApp() *App {
 	app.steps = []step{
 		new(directoriesStep),
 		new(registryStep),
+		newGRPCUnixSocketStep(),
+		newGRPCPortStep(),
+		newHTTPStep(),
+		newBackendPluginsStep(),
+		newServerPluginsStep(),
 	}
 
 	return &app

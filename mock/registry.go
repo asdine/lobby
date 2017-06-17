@@ -14,10 +14,18 @@ type Registry struct {
 
 	CloseFn      func() error
 	CloseInvoked int
+
+	Backends map[string]lobby.Backend
 }
 
-// RegisterBackend does nothing.
-func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {}
+// RegisterBackend saves the backend in the Backends map.
+func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
+	if r.Backends == nil {
+		r.Backends = make(map[string]lobby.Backend)
+	}
+
+	r.Backends[name] = backend
+}
 
 // Create runs CreateFn and increments CreateInvoked when invoked.
 func (r *Registry) Create(backendName, bucketName string) error {
