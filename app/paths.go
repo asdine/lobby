@@ -7,12 +7,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Paths contains directory paths needed by the app.
 type Paths struct {
 	ConfigDir string
 	PluginDir string
 	SocketDir string
 }
 
+// Create the ConfigDir and SocketDir if they don't exist.
 func (p *Paths) Create() error {
 	if p.ConfigDir == "" {
 		return errors.New("unspecified config directory")

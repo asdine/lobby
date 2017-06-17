@@ -9,28 +9,34 @@ import (
 	"github.com/asdine/lobby"
 )
 
+// Plugins contains the list of backend and server plugins.
 type Plugins struct {
 	Backend []string
 	Server  []string
 }
 
+// Options of the application.
 type Options struct {
 	Paths   Paths
 	Plugins Plugins
 }
 
+// App is the main application. It bootstraps all the components
+// and can be gracefully shutdown.
 type App struct {
-	Options  Options
-	Logger   *log.Logger
+	Options Options
+	Logger  *log.Logger
+
 	wg       sync.WaitGroup
 	errc     chan error
 	registry lobby.Registry
 	steps    steps
 }
 
+// NewApp create a configured App.
 func NewApp() *App {
 	app := App{
-		Logger: log.New(os.Stderr, "", log.LstdFlags),
+		Logger: log.New(os.Stderr, "[lobby] ", log.LstdFlags),
 		errc:   make(chan error),
 	}
 
@@ -47,6 +53,7 @@ func NewApp() *App {
 	return &app
 }
 
+// Run all the app components. Can be gracefully shutdown using the provided context.
 func (a *App) Run(ctx context.Context) error {
 	var errs Errors
 

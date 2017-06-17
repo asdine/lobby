@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/app"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -19,17 +20,19 @@ import (
 
 // RunPlugin runs a plugin as a standalone application.
 func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() error) error {
-	a := newApp()
-	a.Command.Use = fmt.Sprintf("lobby-%s", name)
-	a.Command.Short = fmt.Sprintf("%s plugin", name)
-	a.Command.RunE = func(cmd *cobra.Command, args []string) error {
+	app := app.NewApp()
+	cmd := newRootCmd(app)
+
+	cmd.Use = fmt.Sprintf("lobby-%s", name)
+	cmd.Short = fmt.Sprintf("%s plugin", name)
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
 
 		conn, err := grpc.Dial("",
 			grpc.WithInsecure(),
 			grpc.WithBlock(),
 			grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-				return net.DialTimeout("unix", path.Join(a.SocketDir, "lobby.sock"), timeout)
+				return net.DialTimeout("unix", path.Join(app.Options.Paths.SocketDir, "lobby.sock"), timeout)
 			}),
 		)
 		if err != nil {
@@ -61,20 +64,21 @@ func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() er
 		wg.Wait()
 		return nil
 	}
-	return a.Command.Execute()
+	return cmd.Execute()
 }
 
 // RunBackend runs a plugin as a backend.
 func RunBackend(name string, bck lobby.Backend) error {
-	a := newApp()
-	a.Command.Use = fmt.Sprintf("lobby-%s", name)
-	a.Command.Short = fmt.Sprintf("%s plugin", name)
-	a.Command.RunE = func(cmd *cobra.Command, args []string) error {
+	app := app.NewApp()
+	cmd := newRootCmd(app)
+	cmd.Use = fmt.Sprintf("lobby-%s", name)
+	cmd.Short = fmt.Sprintf("%s plugin", name)
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
 
 		defer bck.Close()
 
-		l, err := net.Listen("unix", path.Join(a.SocketDir, fmt.Sprintf("%s.sock", name)))
+		l, err := net.Listen("unix", path.Join(app.Options.Paths.SocketDir, fmt.Sprintf("%s.sock", name)))
 		if err != nil {
 			return err
 		}
@@ -104,5 +108,5 @@ func RunBackend(name string, bck lobby.Backend) error {
 		return nil
 	}
 
-	return a.Command.Execute()
+	return cmd.Execute()
 }
