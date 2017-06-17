@@ -45,7 +45,7 @@ func (a *App) Run(ctx context.Context) error {
 	}
 
 	if err == nil {
-		// block until either an error or a cancel
+		// block until either an error or a cancel happens
 		select {
 		case <-ctx.Done():
 			if err := ctx.Err(); err != context.Canceled {

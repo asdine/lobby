@@ -105,3 +105,24 @@ func TestRegistryStep(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, app.registry)
 }
+
+func TestServers(t *testing.T) {
+	app, cleanup := appHelper(t)
+	defer cleanup()
+
+	testCases := []step{
+		newGRPCUnixSocketStep(),
+		newGRPCPortStep(),
+		newHttpStep(),
+	}
+
+	for _, s := range testCases {
+		err := s.setup(context.Background(), app)
+		require.NoError(t, err)
+
+		err = s.teardown(context.Background(), app)
+		require.NoError(t, err)
+	}
+
+	app.wg.Wait()
+}
