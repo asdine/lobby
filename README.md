@@ -6,6 +6,8 @@
 
 Lobby is an open-source pluggable platform for data delivery.
 
+![Credits @jrmneveu](https://user-images.githubusercontent.com/2102036/27262061-60c8c4ee-544f-11e7-96d7-17464a41fc1d.png)
+
 ## Overview
 
 At the core, Lobby is a framework to assemble network APIs and backends.
@@ -48,24 +50,6 @@ lobby run --server=nsq --backend=mongo --backend=redis
 ```
 
 The previous command adds a NSQ consumer, a MongoDB and a Redis backend.
-
-```raw
-+------+                    +-----------+
-| HTTP +-+                +-+  MONGODB  |
-+------+ |                | +-----------+
-         |                |
-         |   +---------+  |
-         +---+         +--+
-+------+     |         |    +-----------+
-| gRPC +-----+  LOBBY  +----+   REDIS   |
-+------+     |         |    +-----------+
-         +---+         +--+
-         |   +---------+  |
-         |                |
-+------+ |                | +-----------+
-| NSQ  +-+                +-+  BOLTDB   |
-+------+                    +-----------+
-```
 
 Currently, Lobby contains no bucket.
 
