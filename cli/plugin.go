@@ -88,10 +88,7 @@ func RunBackend(name string, bck lobby.Backend) error {
 
 		go func() {
 			defer wg.Done()
-			err := srv.Serve(l)
-			if err != nil {
-				log.Fatal(err)
-			}
+			_ = srv.Serve(l)
 		}()
 
 		ch := make(chan os.Signal, 1)
