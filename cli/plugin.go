@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/app"
+	"github.com/asdine/lobby/cli/app"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"

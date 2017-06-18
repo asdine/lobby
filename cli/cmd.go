@@ -4,7 +4,7 @@ import (
 	"log"
 	"path"
 
-	"github.com/asdine/lobby/app"
+	"github.com/asdine/lobby/cli/app"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )

@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/asdine/lobby/app"
+	"github.com/asdine/lobby/cli/app"
 	"github.com/spf13/cobra"
 )
 
