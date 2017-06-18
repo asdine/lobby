@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -73,7 +74,7 @@ func TestLoadBackend(t *testing.T) {
 	err = os.Mkdir(path.Join(dir, "sockets"), 0755)
 	require.NoError(t, err)
 
-	bck, plg, err := LoadBackendPlugin("backend", "/fake/command", dir)
+	bck, plg, err := LoadBackendPlugin(context.Background(), "backend", "/fake/command", dir)
 	require.NoError(t, err)
 	require.Equal(t, "backend", plg.Name())
 	err = bck.Close()
@@ -92,9 +93,16 @@ func TestLoadServer(t *testing.T) {
 	err = os.Mkdir(path.Join(dir, "sockets"), 0755)
 	require.NoError(t, err)
 
-	plg, err := LoadPlugin("server", "/fake/command", dir)
+	plg, err := LoadPlugin(context.Background(), "server", "/fake/command", dir)
 	require.NoError(t, err)
 	require.Equal(t, "server", plg.Name())
 	err = plg.Close()
 	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err = LoadPlugin(ctx, "server", "/fake/command", dir)
+	require.Error(t, err)
+	require.Equal(t, context.Canceled, err)
 }

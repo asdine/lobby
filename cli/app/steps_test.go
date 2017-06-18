@@ -174,7 +174,7 @@ func TestServerPluginsSteps(t *testing.T) {
 
 		s := newServerPluginsStep()
 		var i int
-		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Plugin, error) {
 			i++
 			if i == 3 {
 				return nil, errors.New("unexpected error")
@@ -206,7 +206,7 @@ func TestServerPluginsSteps(t *testing.T) {
 		}
 
 		s := newServerPluginsStep()
-		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Plugin, error) {
 			return new(mock.Plugin), nil
 		}
 
@@ -248,7 +248,7 @@ func TestServerPluginsSteps(t *testing.T) {
 
 		s := newServerPluginsStep()
 		var i int
-		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Plugin, error) {
 			require.Equal(t, fmt.Sprintf("plugin%d", i), name)
 			require.Equal(t, fmt.Sprintf("pluginDir/lobby-plugin%d", i), cmdPath)
 			require.Equal(t, "configDir", configDir)
@@ -285,7 +285,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		s := newBackendPluginsStep()
 		var i int
-		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
 			i++
 			if i == 3 {
 				return nil, nil, errors.New("unexpected error")
@@ -321,7 +321,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 		}
 
 		s := newBackendPluginsStep()
-		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
 			return new(mock.Backend), new(mock.Plugin), nil
 		}
 
@@ -367,7 +367,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		s := newBackendPluginsStep()
 		var i int
-		s.pluginLoader = func(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
 			require.Equal(t, fmt.Sprintf("plugin%d", i), name)
 			require.Equal(t, fmt.Sprintf("pluginDir/lobby-plugin%d", i), cmdPath)
 			require.Equal(t, "configDir", configDir)

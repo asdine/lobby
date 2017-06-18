@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"time"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
@@ -214,13 +215,17 @@ func newServerPluginsStep() *serverPluginsStep {
 }
 
 type serverPluginsStep struct {
-	pluginLoader func(string, string, string) (lobby.Plugin, error)
+	pluginLoader func(context.Context, string, string, string) (lobby.Plugin, error)
 	plugins      []lobby.Plugin
 }
 
 func (s *serverPluginsStep) setup(ctx context.Context, app *App) error {
 	for _, name := range app.Options.Plugins.Server {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
 		plg, err := s.pluginLoader(
+			ctx,
 			name,
 			path.Join(app.Options.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
 			app.Options.Paths.ConfigDir,
@@ -253,13 +258,17 @@ func newBackendPluginsStep() *backendPluginsStep {
 }
 
 type backendPluginsStep struct {
-	pluginLoader func(string, string, string) (lobby.Backend, lobby.Plugin, error)
+	pluginLoader func(context.Context, string, string, string) (lobby.Backend, lobby.Plugin, error)
 	plugins      []lobby.Plugin
 }
 
 func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
 	for _, name := range app.Options.Plugins.Backend {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
 		bck, plg, err := s.pluginLoader(
+			ctx,
 			name,
 			path.Join(app.Options.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
 			app.Options.Paths.ConfigDir,

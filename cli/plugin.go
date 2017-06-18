@@ -75,6 +75,8 @@ func RunBackend(name string, bck lobby.Backend) error {
 	cmd.Short = fmt.Sprintf("%s plugin", name)
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 
 		defer bck.Close()
 
@@ -90,10 +92,6 @@ func RunBackend(name string, bck lobby.Backend) error {
 			defer wg.Done()
 			_ = srv.Serve(l)
 		}()
-
-		ch := make(chan os.Signal, 1)
-
-		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 
 		<-ch
 		err = srv.Stop()

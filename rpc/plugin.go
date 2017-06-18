@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -32,6 +33,7 @@ func (p *process) Close() error {
 		if err != nil {
 			return err
 		}
+		p.conn = nil
 	}
 
 	go func() {
@@ -42,7 +44,13 @@ func (p *process) Close() error {
 }
 
 // LoadPlugin loads a plugin.
-func LoadPlugin(name, cmdPath, configDir string) (lobby.Plugin, error) {
+func LoadPlugin(ctx context.Context, name, cmdPath, configDir string) (lobby.Plugin, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	cmd := execCommand(cmdPath, "--config-dir", configDir)
 	prefix := fmt.Sprintf("[%s] ", name)
 	cmd.Stdout = lobby.NewPrefixWriter(prefix, os.Stdout)
@@ -63,15 +71,14 @@ func LoadPlugin(name, cmdPath, configDir string) (lobby.Plugin, error) {
 }
 
 // LoadBackendPlugin loads a backend plugin.
-func LoadBackendPlugin(name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
-	plugin, err := LoadPlugin(name, cmdPath, configDir)
+func LoadBackendPlugin(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+	plugin, err := LoadPlugin(ctx, name, cmdPath, configDir)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	socketPath := path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name))
 	c := time.Tick(10 * time.Millisecond)
-	timeout := time.After(5 * time.Second)
 
 Loop:
 	for {
@@ -80,13 +87,13 @@ Loop:
 			if _, err := os.Stat(socketPath); !os.IsNotExist(err) {
 				break Loop
 			}
-		case <-timeout:
+		case <-ctx.Done():
 			err := plugin.Close()
 			if err != nil {
-				return nil, nil, errors.Wrapf(err, "plugin %s load time exceeded: failed to kill process", name)
+				return nil, nil, errors.Wrapf(err, "failed to kill process %s", name)
 			}
 
-			return nil, nil, errors.Errorf("plugin %s load time exceeded", name)
+			return nil, nil, ctx.Err()
 		}
 	}
 
