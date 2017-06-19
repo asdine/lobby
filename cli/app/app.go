@@ -9,23 +9,11 @@ import (
 	"github.com/asdine/lobby"
 )
 
-// Plugins contains the list of backend and server plugins.
-type Plugins struct {
-	Backend []string
-	Server  []string
-}
-
-// Options of the application.
-type Options struct {
-	Paths   Paths
-	Plugins Plugins
-}
-
 // App is the main application. It bootstraps all the components
 // and can be gracefully shutdown.
 type App struct {
-	Options Options
-	Logger  *log.Logger
+	Config Config
+	Logger *log.Logger
 
 	wg       sync.WaitGroup
 	errc     chan error

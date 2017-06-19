@@ -21,9 +21,9 @@ func appHelper(t *testing.T) (*App, func()) {
 
 	var app App
 	app.errc = make(chan error)
-	app.Options.Paths.ConfigDir = path.Join(dir, "config")
-	app.Options.Paths.SocketDir = path.Join(app.Options.Paths.ConfigDir, "sockets")
-	err = app.Options.Paths.Create()
+	app.Config.Paths.ConfigDir = path.Join(dir, "config")
+	app.Config.Paths.SocketDir = path.Join(app.Config.Paths.ConfigDir, "sockets")
+	err = app.Config.Paths.Create()
 	require.NoError(t, err)
 
 	return &app, func() {
@@ -165,11 +165,11 @@ func TestServerPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Options.Paths.ConfigDir = "configDir"
-		app.Options.Paths.PluginDir = "pluginDir"
-		app.Options.Plugins.Server = make([]string, 5)
+		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.PluginDir = "pluginDir"
+		app.Config.Plugins.Server = make([]string, 5)
 		for i := 0; i < 5; i++ {
-			app.Options.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newServerPluginsStep()
@@ -198,11 +198,11 @@ func TestServerPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Options.Paths.ConfigDir = "configDir"
-		app.Options.Paths.PluginDir = "pluginDir"
-		app.Options.Plugins.Server = make([]string, 5)
+		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.PluginDir = "pluginDir"
+		app.Config.Plugins.Server = make([]string, 5)
 		for i := 0; i < 5; i++ {
-			app.Options.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newServerPluginsStep()
@@ -239,11 +239,11 @@ func TestServerPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Options.Paths.ConfigDir = "configDir"
-		app.Options.Paths.PluginDir = "pluginDir"
-		app.Options.Plugins.Server = make([]string, 5)
+		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.PluginDir = "pluginDir"
+		app.Config.Plugins.Server = make([]string, 5)
 		for i := 0; i < 5; i++ {
-			app.Options.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Server[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newServerPluginsStep()
@@ -273,14 +273,14 @@ func TestBackendPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Options.Paths.ConfigDir = "configDir"
-		app.Options.Paths.PluginDir = "pluginDir"
-		app.Options.Plugins.Backend = make([]string, 5)
+		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.PluginDir = "pluginDir"
+		app.Config.Plugins.Backend = make([]string, 5)
 		var m mock.Registry
 		app.registry = &m
 
 		for i := 0; i < 5; i++ {
-			app.Options.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newBackendPluginsStep()
@@ -310,14 +310,14 @@ func TestBackendPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Options.Paths.ConfigDir = "configDir"
-		app.Options.Paths.PluginDir = "pluginDir"
-		app.Options.Plugins.Backend = make([]string, 5)
+		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.PluginDir = "pluginDir"
+		app.Config.Plugins.Backend = make([]string, 5)
 		var m mock.Registry
 		app.registry = &m
 
 		for i := 0; i < 5; i++ {
-			app.Options.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newBackendPluginsStep()
@@ -355,14 +355,14 @@ func TestBackendPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Options.Paths.ConfigDir = "configDir"
-		app.Options.Paths.PluginDir = "pluginDir"
-		app.Options.Plugins.Backend = make([]string, 5)
+		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.PluginDir = "pluginDir"
+		app.Config.Plugins.Backend = make([]string, 5)
 		var m mock.Registry
 		app.registry = &m
 
 		for i := 0; i < 5; i++ {
-			app.Options.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newBackendPluginsStep()

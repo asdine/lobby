@@ -32,7 +32,7 @@ func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() er
 			grpc.WithInsecure(),
 			grpc.WithBlock(),
 			grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-				return net.DialTimeout("unix", path.Join(app.Options.Paths.SocketDir, "lobby.sock"), timeout)
+				return net.DialTimeout("unix", path.Join(app.Config.Paths.SocketDir, "lobby.sock"), timeout)
 			}),
 		)
 		if err != nil {
@@ -80,7 +80,7 @@ func RunBackend(name string, bck lobby.Backend) error {
 
 		defer bck.Close()
 
-		l, err := net.Listen("unix", path.Join(app.Options.Paths.SocketDir, fmt.Sprintf("%s.sock", name)))
+		l, err := net.Listen("unix", path.Join(app.Config.Paths.SocketDir, fmt.Sprintf("%s.sock", name)))
 		if err != nil {
 			return err
 		}

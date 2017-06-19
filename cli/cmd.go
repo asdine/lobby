@@ -2,8 +2,10 @@ package cli
 
 import (
 	"log"
+	"os"
 	"path"
 
+	"github.com/BurntSushi/toml"
 	"github.com/asdine/lobby/cli/app"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -29,13 +31,24 @@ func newRootCmd(app *app.App) *cobra.Command {
 		Use:          "lobby",
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			app.Options.Paths.SocketDir = path.Join(defaultConfigDir, "sockets")
+			configPath := path.Join(app.Config.Paths.ConfigDir, "lobby.toml")
+			f, err := os.Open(configPath)
+			if err == nil {
+				_, err = toml.DecodeReader(f, &app.Config)
+				_ = f.Close()
+				if err != nil {
+					return err
+				}
+			}
+
+			if app.Config.Paths.SocketDir == "" {
+				app.Config.Paths.SocketDir = path.Join(app.Config.Paths.ConfigDir, "sockets")
+			}
 			return nil
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&app.Options.Paths.ConfigDir, "config-dir", "c", defaultConfigDir, "Location of Lobby configuration files")
-	cmd.PersistentFlags().StringVar(&app.Options.Paths.PluginDir, "plugin-dir", ".", "Location of plugins")
+	cmd.PersistentFlags().StringVarP(&app.Config.Paths.ConfigDir, "config-dir", "c", defaultConfigDir, "Location of Lobby configuration files")
 
 	return &cmd
 }

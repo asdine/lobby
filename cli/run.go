@@ -12,9 +12,28 @@ import (
 )
 
 func newRunCmd(app *app.App) *cobra.Command {
+	var backends []string
+	var servers []string
+	var pluginDir string
+
 	cmd := cobra.Command{
 		Use:   "run",
 		Short: "Run the lobby server",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if backends != nil {
+				app.Config.Plugins.Backend = backends
+			}
+
+			if servers != nil {
+				app.Config.Plugins.Server = servers
+			}
+
+			if pluginDir != "" {
+				app.Config.Paths.PluginDir = pluginDir
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -41,8 +60,9 @@ func newRunCmd(app *app.App) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVar(&app.Options.Plugins.Backend, "backend", nil, "Name of the backend to use")
-	cmd.Flags().StringSliceVar(&app.Options.Plugins.Server, "server", nil, "Name of the server to run")
+	cmd.Flags().StringSliceVar(&backends, "backend", nil, "Name of the backend to use")
+	cmd.Flags().StringSliceVar(&servers, "server", nil, "Name of the server to run")
+	cmd.Flags().StringVar(&pluginDir, "plugin-dir", "", "Location of plugins")
 
 	return &cmd
 }

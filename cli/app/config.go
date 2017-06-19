@@ -7,11 +7,23 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Config of the application.
+type Config struct {
+	Paths   Paths
+	Plugins Plugins
+}
+
+// Plugins contains the list of backend and server plugins.
+type Plugins struct {
+	Backend []string
+	Server  []string
+}
+
 // Paths contains directory paths needed by the app.
 type Paths struct {
-	ConfigDir string
-	PluginDir string
-	SocketDir string
+	ConfigDir string `toml:"-"`
+	PluginDir string `toml:"plugin-dir"`
+	SocketDir string `toml:"socket-dir"`
 }
 
 // Create the ConfigDir and SocketDir if they don't exist.

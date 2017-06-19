@@ -53,7 +53,7 @@ func (s steps) teardown(ctx context.Context, app *App) []error {
 type directoriesStep int
 
 func (directoriesStep) setup(ctx context.Context, app *App) error {
-	return app.Options.Paths.Create()
+	return app.Config.Paths.Create()
 }
 
 func (directoriesStep) teardown(ctx context.Context, app *App) error {
@@ -63,7 +63,7 @@ func (directoriesStep) teardown(ctx context.Context, app *App) error {
 type registryStep int
 
 func (registryStep) setup(ctx context.Context, app *App) error {
-	dataPath := path.Join(app.Options.Paths.ConfigDir, "data")
+	dataPath := path.Join(app.Config.Paths.ConfigDir, "data")
 	err := createDir(dataPath)
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ type gRPCUnixSocketStep struct {
 }
 
 func (g *gRPCUnixSocketStep) setup(ctx context.Context, app *App) error {
-	l, err := net.Listen("unix", path.Join(app.Options.Paths.SocketDir, "lobby.sock"))
+	l, err := net.Listen("unix", path.Join(app.Config.Paths.SocketDir, "lobby.sock"))
 	if err != nil {
 		return err
 	}
@@ -220,15 +220,15 @@ type serverPluginsStep struct {
 }
 
 func (s *serverPluginsStep) setup(ctx context.Context, app *App) error {
-	for _, name := range app.Options.Plugins.Server {
+	for _, name := range app.Config.Plugins.Server {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
 		plg, err := s.pluginLoader(
 			ctx,
 			name,
-			path.Join(app.Options.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
-			app.Options.Paths.ConfigDir,
+			path.Join(app.Config.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
+			app.Config.Paths.ConfigDir,
 		)
 		if err != nil {
 			return err
@@ -263,15 +263,15 @@ type backendPluginsStep struct {
 }
 
 func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
-	for _, name := range app.Options.Plugins.Backend {
+	for _, name := range app.Config.Plugins.Backend {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
 		bck, plg, err := s.pluginLoader(
 			ctx,
 			name,
-			path.Join(app.Options.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
-			app.Options.Paths.ConfigDir,
+			path.Join(app.Config.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
+			app.Config.Paths.ConfigDir,
 		)
 		if err != nil {
 			return err
