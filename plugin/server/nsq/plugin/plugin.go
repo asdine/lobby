@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/cli"
@@ -11,9 +10,9 @@ import (
 )
 
 const (
-	defaultNSQLookupAddr = "127.0.0.1:4161"
-	defaultTopic         = "lobby"
-	defaultChannel       = "test"
+	defaultNSQLookupdAddr = "127.0.0.1:4161"
+	defaultTopic          = "lobby"
+	defaultChannel        = "test"
 )
 
 var (
@@ -23,22 +22,16 @@ var (
 	ch      chan struct{}
 )
 
+// Config of the plugin
+type Config struct {
+	NSQLookupdAddr string
+	Topic          string
+	Channel        string
+}
+
+var cfg Config
+
 func init() {
-	addr = os.Getenv("NSQLOOKUPD_ADDR")
-	if addr == "" {
-		addr = defaultNSQLookupAddr
-	}
-
-	topic = os.Getenv("NSQ_TOPIC")
-	if topic == "" {
-		topic = defaultTopic
-	}
-
-	channel = os.Getenv("NSQ_CHANNEL")
-	if channel == "" {
-		channel = defaultChannel
-	}
-
 	ch = make(chan struct{})
 }
 
@@ -47,8 +40,20 @@ const Name = "nsq"
 
 // Start plugin
 func Start(reg lobby.Registry) error {
+	if cfg.NSQLookupdAddr == "" {
+		cfg.NSQLookupdAddr = defaultNSQLookupdAddr
+	}
+
+	if cfg.Topic == "" {
+		cfg.Topic = defaultTopic
+	}
+
+	if cfg.Channel == "" {
+		cfg.Channel = defaultChannel
+	}
+
 	config := nsq.NewConfig()
-	consumer, err := nsq.NewConsumer(topic, channel, config)
+	consumer, err := nsq.NewConsumer(cfg.Topic, cfg.Channel, config)
 	if err != nil {
 		return err
 	}
@@ -78,10 +83,10 @@ func Start(reg lobby.Registry) error {
 
 // Stop plugin
 func Stop() error {
-	ch <- struct{}{}
+	close(ch)
 	return nil
 }
 
 func main() {
-	cli.RunPlugin(Name, Start, Stop)
+	cli.RunPlugin(Name, Start, Stop, &cfg)
 }

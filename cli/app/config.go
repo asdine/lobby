@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 )
 
@@ -17,6 +18,7 @@ type Config struct {
 type Plugins struct {
 	Backend []string
 	Server  []string
+	Config  map[string]toml.Primitive
 }
 
 // Paths contains directory paths needed by the app.

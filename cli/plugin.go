@@ -19,14 +19,26 @@ import (
 )
 
 // RunPlugin runs a plugin as a standalone application.
-func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() error) error {
+func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() error, cfg interface{}) error {
 	app := app.NewApp()
-	cmd := newRootCmd(app)
+	root := newRootCmd(app)
 
-	cmd.Use = fmt.Sprintf("lobby-%s", name)
-	cmd.Short = fmt.Sprintf("%s plugin", name)
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+	root.Use = fmt.Sprintf("lobby-%s", name)
+	root.Short = fmt.Sprintf("%s plugin", name)
+	root.RunE = func(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
+
+		if cfg != nil {
+			if root.cfgMeta.IsDefined("plugins", "config", name) {
+				err := root.cfgMeta.PrimitiveDecode(app.Config.Plugins.Config[name], cfg)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 
 		conn, err := grpc.Dial("",
 			grpc.WithInsecure(),
@@ -51,10 +63,6 @@ func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() er
 			}
 		}()
 
-		ch := make(chan os.Signal, 1)
-
-		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-
 		<-ch
 		err = stopFn()
 		if err != nil {
@@ -64,21 +72,35 @@ func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() er
 		wg.Wait()
 		return nil
 	}
-	return cmd.Execute()
+	return root.Execute()
 }
 
 // RunBackend runs a plugin as a backend.
-func RunBackend(name string, bck lobby.Backend) error {
+func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) error {
 	app := app.NewApp()
-	cmd := newRootCmd(app)
-	cmd.Use = fmt.Sprintf("lobby-%s", name)
-	cmd.Short = fmt.Sprintf("%s plugin", name)
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+	root := newRootCmd(app)
+	root.Use = fmt.Sprintf("lobby-%s", name)
+	root.Short = fmt.Sprintf("%s plugin", name)
+	root.RunE = func(cmd *cobra.Command, args []string) error {
 		var wg sync.WaitGroup
+
+		if cfg != nil {
+			if root.cfgMeta.IsDefined("plugins", "config", name) {
+				err := root.cfgMeta.PrimitiveDecode(app.Config.Plugins.Config[name], cfg)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		bck, err := fn()
+		if err != nil {
+			return err
+		}
+		defer bck.Close()
+
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-
-		defer bck.Close()
 
 		l, err := net.Listen("unix", path.Join(app.Config.Paths.SocketDir, fmt.Sprintf("%s.sock", name)))
 		if err != nil {
@@ -103,5 +125,5 @@ func RunBackend(name string, bck lobby.Backend) error {
 		return nil
 	}
 
-	return cmd.Execute()
+	return root.Execute()
 }

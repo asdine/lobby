@@ -16,16 +16,18 @@ func New() *cobra.Command {
 	app := app.NewApp()
 	cmd := newRootCmd(app)
 	cmd.AddCommand(newRunCmd(app))
-	return cmd
+	return cmd.Command
 }
 
-func newRootCmd(app *app.App) *cobra.Command {
+func newRootCmd(app *app.App) *rootCmd {
 	home, err := homedir.Dir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defaultConfigDir := path.Join(home, ".config/lobby")
+
+	var cfgMeta toml.MetaData
 
 	cmd := cobra.Command{
 		Use:          "lobby",
@@ -34,7 +36,7 @@ func newRootCmd(app *app.App) *cobra.Command {
 			configPath := path.Join(app.Config.Paths.ConfigDir, "lobby.toml")
 			f, err := os.Open(configPath)
 			if err == nil {
-				_, err = toml.DecodeReader(f, &app.Config)
+				cfgMeta, err = toml.DecodeReader(f, &app.Config)
 				_ = f.Close()
 				if err != nil {
 					return err
@@ -50,5 +52,13 @@ func newRootCmd(app *app.App) *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&app.Config.Paths.ConfigDir, "config-dir", "c", defaultConfigDir, "Location of Lobby configuration files")
 
-	return &cmd
+	return &rootCmd{
+		Command: &cmd,
+		cfgMeta: &cfgMeta,
+	}
+}
+
+type rootCmd struct {
+	*cobra.Command
+	cfgMeta *toml.MetaData
 }
