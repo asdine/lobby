@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sync"
 	"syscall"
 	"time"
 
@@ -19,15 +20,47 @@ var execCommand = exec.Command
 
 type process struct {
 	*os.Process
-	conn *grpc.ClientConn
-	name string
+	m      sync.Mutex
+	conn   *grpc.ClientConn
+	name   string
+	closed bool
 }
 
 func (p *process) Name() string {
 	return p.name
 }
 
+func (p *process) Wait() error {
+	status, err := p.Process.Wait()
+	if err != nil {
+		return err
+	}
+
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	if !p.closed {
+		p.closed = true
+		return fmt.Errorf("plugin %s exited unexpectedly", p.name)
+	}
+
+	if !status.Success() {
+		return fmt.Errorf("plugin %s crashed during exit", p.name)
+	}
+
+	return nil
+}
+
 func (p *process) Close() error {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	if p.closed {
+		return nil
+	}
+
+	p.closed = true
+
 	if p.conn != nil {
 		err := p.conn.Close()
 		if err != nil {
@@ -36,11 +69,7 @@ func (p *process) Close() error {
 		p.conn = nil
 	}
 
-	go func() {
-		p.Signal(syscall.SIGTERM)
-	}()
-	_, err := p.Wait()
-	return err
+	return p.Signal(syscall.SIGTERM)
 }
 
 // LoadPlugin loads a plugin.

@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -12,15 +11,15 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/cli/app"
+	cliapp "github.com/asdine/lobby/cli/app"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
 
 // RunPlugin runs a plugin as a standalone application.
-func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() error, cfg interface{}) error {
-	app := app.NewApp()
+func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() error, cfg interface{}) {
+	app := cliapp.NewApp()
 	root := newRootCmd(app)
 
 	root.Use = fmt.Sprintf("lobby-%s", name)
@@ -55,29 +54,48 @@ func RunPlugin(name string, startFn func(lobby.Registry) error, stopFn func() er
 			return err
 		}
 
+		errc := make(chan error)
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			err := startFn(reg)
+
 			if err != nil {
-				log.Fatal(err)
+				errc <- err
 			}
 		}()
 
-		<-ch
+		var errs cliapp.Errors
+		select {
+		case err := <-errc:
+			errs = append(errs, err)
+		case <-ch:
+		}
+
 		err = stopFn()
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 
 		wg.Wait()
+
+		if len(errs) > 0 {
+			return errs
+		}
 		return nil
 	}
-	return root.Execute()
+
+	err := root.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }
 
 // RunBackend runs a plugin as a backend.
-func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) error {
-	app := app.NewApp()
+func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) {
+	app := cliapp.NewApp()
 	root := newRootCmd(app)
 	root.Use = fmt.Sprintf("lobby-%s", name)
 	root.Short = fmt.Sprintf("%s plugin", name)
@@ -125,5 +143,10 @@ func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) 
 		return nil
 	}
 
-	return root.Execute()
+	err := root.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }

@@ -11,6 +11,9 @@ type Plugin struct {
 
 	CloseFn      func() error
 	CloseInvoked int
+
+	WaitFn      func() error
+	WaitInvoked int
 }
 
 // Name runs NameFn and increments NameInvoked when invoked.
@@ -30,6 +33,17 @@ func (s *Plugin) Close() error {
 
 	if s.CloseFn != nil {
 		return s.CloseFn()
+	}
+
+	return nil
+}
+
+// Wait runs WaitFn and increments WaitInvoked when invoked.
+func (s *Plugin) Wait() error {
+	s.WaitInvoked++
+
+	if s.WaitFn != nil {
+		return s.WaitFn()
 	}
 
 	return nil

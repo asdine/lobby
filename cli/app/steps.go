@@ -234,6 +234,14 @@ func (s *serverPluginsStep) setup(ctx context.Context, app *App) error {
 			return err
 		}
 
+		app.wg.Add(1)
+		go func() {
+			defer app.wg.Done()
+			err := plg.Wait()
+			if err != nil {
+				app.errc <- err
+			}
+		}()
 		s.plugins = append(s.plugins, plg)
 	}
 

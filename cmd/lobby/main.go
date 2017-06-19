@@ -1,7 +1,14 @@
 package main
 
-import "github.com/asdine/lobby/cli"
+import (
+	"os"
+
+	"github.com/asdine/lobby/cli"
+)
 
 func main() {
-	cli.New().Execute()
+	err := cli.New().Execute()
+	if err != nil {
+		os.Exit(1)
+	}
 }

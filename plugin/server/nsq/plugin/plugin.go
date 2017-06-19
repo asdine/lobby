@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/cli"
@@ -16,10 +17,8 @@ const (
 )
 
 var (
-	addr    string
-	topic   string
-	channel string
-	ch      chan struct{}
+	ch chan struct{}
+	wg sync.WaitGroup
 )
 
 // Config of the plugin
@@ -32,6 +31,7 @@ type Config struct {
 var cfg Config
 
 func init() {
+	wg.Add(1)
 	ch = make(chan struct{})
 }
 
@@ -40,6 +40,7 @@ const Name = "nsq"
 
 // Start plugin
 func Start(reg lobby.Registry) error {
+	defer wg.Done()
 	if cfg.NSQLookupdAddr == "" {
 		cfg.NSQLookupdAddr = defaultNSQLookupdAddr
 	}
@@ -71,7 +72,7 @@ func Start(reg lobby.Registry) error {
 
 	fmt.Printf("Listening for NSQ messages\n")
 
-	err = consumer.ConnectToNSQLookupds([]string{addr})
+	err = consumer.ConnectToNSQLookupds([]string{cfg.NSQLookupdAddr})
 	if err != nil {
 		return err
 	}
@@ -84,6 +85,7 @@ func Start(reg lobby.Registry) error {
 // Stop plugin
 func Stop() error {
 	close(ch)
+	wg.Wait()
 	return nil
 }
 
