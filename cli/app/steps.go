@@ -11,6 +11,7 @@ import (
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
+	"github.com/asdine/lobby/http"
 	"github.com/asdine/lobby/rpc"
 )
 
@@ -173,9 +174,8 @@ func (h *httpStep) setup(ctx context.Context, app *App) error {
 		return err
 	}
 
-	srv := rpc.NewServer(
-		rpc.WithBucketService(app.registry),
-		rpc.WithRegistryService(app.registry),
+	srv := http.NewServer(
+		http.NewHandler(app.registry, h.logger),
 	)
 	return h.runServer(srv, l, app)
 }

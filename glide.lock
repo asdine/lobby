@@ -1,5 +1,5 @@
 hash: 2085f9f732eddb49133cc9a038e40c0d7a7c49906c41b3249d6178e5ed8fc767
-updated: 2017-06-19T19:17:04.304863767+02:00
+updated: 2017-09-09T14:15:58.563806737+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -13,7 +13,7 @@ imports:
   - internal
   - q
 - name: github.com/boltdb/bolt
-  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
+  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/garyburd/redigo
@@ -21,14 +21,12 @@ imports:
   subpackages:
   - internal
   - redis
-- name: github.com/ghodss/yaml
-  version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
 - name: github.com/gogo/protobuf
   version: 100ba4e885062801d56799d78530b73b178a78f3
   subpackages:
   - proto
 - name: github.com/golang/protobuf
-  version: e325f446bebc2998605911c0a2650d9920361d4a
+  version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
   - proto
   - ptypes/any
@@ -41,15 +39,15 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nsqio/go-nsq
-  version: 973bf9a2952ff7e38071ae8392b73e4418503059
+  version: 1336c299dd900d045fb6df51fc02adf26cde5414
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/spf13/cobra
-  version: b4dbd37a01839e0653eec12aa4bbb2a2ce7b2a37
+  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
 - name: github.com/spf13/pflag
-  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+  version: 7aff26db30c1be810f9de5038ec5ef96ac41fd7c
 - name: golang.org/x/net
-  version: 973f3f3bbd50e92b13faa6c53ec16f49b45e851c
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
   - context
   - context/ctxhttp
@@ -60,23 +58,23 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: fb4cac33e3196ff7f507ab9b2d2a44b0142f5b5a
+  version: 43e60d72a8e2bd92ee98319ba9a384a0e9837c08
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 9e2f80a6ba7ed4ba13e0cd4b1f094bf916875735
+  version: e56139fd9c5bc7244c76116c68e500765bb6db6b
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
+  version: ee236bd376b077c7a89f260c026c4735b195e459
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: 42c095b6c9bdd80d4435b064508c398afdb0ec99
+  version: b15215fb911b24a5d61d57feec4233d610530464
   subpackages:
   - codes
   - credentials
@@ -98,11 +96,9 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
-- name: gopkg.in/yaml.v2
-  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports:
 - name: github.com/Azure/go-ansiterm
-  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
   subpackages:
   - winterm
 - name: github.com/cenk/backoff
@@ -112,7 +108,7 @@ testImports:
   subpackages:
   - spew
 - name: github.com/docker/docker
-  version: 4845c567eb35d68f35b0b1713a09b0c8d47fe67e
+  version: 89658bed64c2a8fe05a978e5b87dbec409d57a0f
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -140,21 +136,19 @@ testImports:
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-connections
-  version: e15c02316c12de00874640cd76311849de2aeed5
+  version: 3ede32e2033de7505e6500d6c868c2b9ed9f169d
   subpackages:
   - nat
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/fsouza/go-dockerclient
-  version: 9e921e30db8bcc1221fa0485ad9ce5b195fb4445
-- name: github.com/hashicorp/go-cleanhttp
-  version: 3573b8b52aa7b37b9358d966a898feb387f62437
+  version: 98edf3edfae6a6500fecc69d2bcccf1302544004
 - name: github.com/Microsoft/go-winio
-  version: f533f7a102197536779ea3a8cb881d639e21ec5a
+  version: 78439966b38d69bf38227fbf57ac8a6fee70f69a
 - name: github.com/Nvveen/Gotty
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/opencontainers/runc
-  version: c995ee407bdd9b2c3f649b42527fe3e02894096e
+  version: 13fa5d2953d2fabbf14c2f6fd05eac70d71c45c7
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -162,12 +156,20 @@ testImports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/sirupsen/logrus
+  version: 68806b4b77355d6c8577a2c8bbc6d547a5272491
 - name: github.com/Sirupsen/logrus
-  version: 85b1699d505667d13f8ac4478c1debbf85d6c5de
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
+  repo: https://github.com/sirupsen/logrus.git
+  vcs: git
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - require
+- name: golang.org/x/crypto
+  version: eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035
+  subpackages:
+  - ssh/terminal
 - name: gopkg.in/ory-am/dockertest.v3
-  version: 9d0647ae761f96a6738c5afb49688d22979b21ff
+  version: a7951f7a8442f0e70d36e499ed4d744f00af2963
