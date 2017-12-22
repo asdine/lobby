@@ -6,7 +6,7 @@ import (
 	"github.com/asdine/lobby"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 )
 
 var _ lobby.Backend = new(Backend)

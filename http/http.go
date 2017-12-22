@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -33,6 +34,16 @@ type Server struct {
 // Name of the server.
 func (s *Server) Name() string {
 	return "http"
+}
+
+// Serve incoming requests.
+func (s *Server) Serve(l net.Listener) error {
+	err := s.Server.Serve(l)
+	if err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }
 
 // Stop gracefully stops the server.

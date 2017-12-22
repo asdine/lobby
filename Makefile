@@ -1,5 +1,4 @@
-NAME      := lobby
-PACKAGES  := $(shell glide novendor)
+NAME := lobby
 
 .PHONY: all $(NAME) deps install test testrace bench gen plugin-backend plugin-server plugins
 
@@ -15,16 +14,16 @@ install:
 	glide install
 
 test:
-	go test -v -cover -timeout=1m $(PACKAGES) 
+	go test -v -cover -timeout=1m ./... 
 
 testrace:
-	go test -v -race -cover -timeout=1m $(PACKAGES)
+	go test -v -race -cover -timeout=2m ./...
 
 bench:
-	go test -run=NONE -bench=. -benchmem $(PACKAGES)
+	go test -run=NONE -bench=. -benchmem ./...
 
 gen:
-	go generate $(PACKAGES)
+	go generate ./...
 
 plugin-backend:
 	mkdir -p ./bin

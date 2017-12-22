@@ -7,7 +7,7 @@ import (
 	"github.com/asdine/lobby/bolt/internal"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/pkg/errors"
 )
 

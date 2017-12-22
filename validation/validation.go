@@ -1,9 +1,6 @@
 package validation
 
 import (
-	"reflect"
-	"strings"
-
 	"github.com/asaskevich/govalidator"
 )
 
@@ -19,37 +16,23 @@ func Validate(s interface{}) error {
 		return nil
 	}
 
-	typ := reflect.TypeOf(s)
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-
 	var verr validationError
 
 	for i := range errs {
-		e, ok := errs[i].(govalidator.Error)
-		if !ok {
-			continue
-		}
-
-		f, ok := typ.FieldByName(e.Name)
-		if !ok {
-			// shouldn't happen.
-			panic("unknown field")
-		}
-
-		var name = e.Name
-
-		tag := f.Tag.Get("json")
-		if tag != "" {
-			if idx := strings.Index(tag, ","); idx != -1 {
-				name = tag[:idx]
-			} else {
-				name = tag
+		switch t := errs[i].(type) {
+		case govalidator.Errors:
+			if len(t) == 0 {
+				continue
 			}
-		}
+			e, ok := t[0].(govalidator.Error)
+			if !ok {
+				continue
+			}
 
-		verr = AddError(verr, name, e.Err).(validationError)
+			verr = AddError(verr, e.Name, e.Err).(validationError)
+		case govalidator.Error:
+			verr = AddError(verr, t.Name, t.Err).(validationError)
+		}
 	}
 
 	return verr

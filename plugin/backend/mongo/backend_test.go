@@ -21,8 +21,7 @@ func TestMain(m *testing.M) {
 
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "mongo",
-		Tag:        "3.4.3",
-		Cmd:        []string{"--storageEngine=wiredTiger"},
+		Tag:        "3.6.0",
 	})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)

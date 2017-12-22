@@ -195,7 +195,10 @@ func (s *serverStep) runServer(srv lobby.Server, l net.Listener, app *App) error
 		s.srv = srv
 		s.logger.Printf("Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
 		close(c)
-		_ = srv.Serve(l)
+		err := srv.Serve(l)
+		if err != nil {
+			log.Println(err)
+		}
 	}()
 
 	<-c

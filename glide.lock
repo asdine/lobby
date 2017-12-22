@@ -1,10 +1,10 @@
-hash: 2085f9f732eddb49133cc9a038e40c0d7a7c49906c41b3249d6178e5ed8fc767
-updated: 2017-09-09T14:15:58.563806737+02:00
+hash: 950a531ba75ca44a85b8cc6140828dda0a2392450ea2c89ef8cb32a8a3f5e5e2
+updated: 2017-12-22T22:07:04.90162993+01:00
 imports:
 - name: github.com/asaskevich/govalidator
-  version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
+  version: 521b25f4b05fd26bec69d9dedeb8f9c9a83939a8
 - name: github.com/asdine/storm
-  version: 2da548c16156b3197728372bff5614033084aff5
+  version: dbd37722730b6cb703b5bd825c3f142d87358525
   subpackages:
   - codec
   - codec/json
@@ -12,24 +12,27 @@ imports:
   - index
   - internal
   - q
-- name: github.com/boltdb/bolt
-  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
+- name: github.com/coreos/bbolt
+  version: 48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d
 - name: github.com/garyburd/redigo
-  version: 433969511232c397de61b1442f9fd49ec06ae9ba
+  version: 47dc60e71eed504e3ef8e77ee3c6fe720f3be57f
   subpackages:
   - internal
   - redis
 - name: github.com/gogo/protobuf
-  version: 100ba4e885062801d56799d78530b73b178a78f3
+  version: 342cbe0a04158f6dcb03ca0079991a51a4248c02
   subpackages:
   - proto
 - name: github.com/golang/protobuf
-  version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
+  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - proto
+  - ptypes
   - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/inconshreveable/mousetrap
@@ -39,15 +42,15 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nsqio/go-nsq
-  version: 1336c299dd900d045fb6df51fc02adf26cde5414
+  version: 8c1ff52dff6fd3ecc19c418649bc643b18e862fc
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/spf13/cobra
-  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
+  version: ccaecb155a2177302cb56cae929251a256d0f646
 - name: github.com/spf13/pflag
-  version: 7aff26db30c1be810f9de5038ec5ef96ac41fd7c
+  version: 4c012f6dcd9546820e378d0bdda4d8fc772cdfea
 - name: golang.org/x/net
-  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  version: d866cfc389cec985d6fda2859936a575a55a3ab6
   subpackages:
   - context
   - context/ctxhttp
@@ -58,33 +61,40 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 43e60d72a8e2bd92ee98319ba9a384a0e9837c08
+  version: 83801418e1b59fb1880e363299581ee543af32ca
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: e56139fd9c5bc7244c76116c68e500765bb6db6b
+  version: eb22672bea55af56d225d4e35405f4d2e9f062a0
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: ee236bd376b077c7a89f260c026c4735b195e459
+  version: a8101f21cf983e773d0c1133ebc5424792003214
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: b15215fb911b24a5d61d57feec4233d610530464
+  version: e687fa4e6424368ece6e4fe727cea2c806a0fcb4
   subpackages:
+  - balancer
+  - balancer/roundrobin
   - codes
+  - connectivity
   - credentials
-  - grpclb/grpc_lb_v1
+  - encoding
+  - grpclb/grpc_lb_v1/messages
   - grpclog
   - internal
   - keepalive
   - metadata
   - naming
   - peer
+  - resolver
+  - resolver/dns
+  - resolver/passthrough
   - stats
   - status
   - tap
@@ -98,17 +108,21 @@ imports:
   - internal/scram
 testImports:
 - name: github.com/Azure/go-ansiterm
-  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
+  version: d6e3b3328b783f23731bc4d058875b0371ff8109
   subpackages:
   - winterm
 - name: github.com/cenk/backoff
-  version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
+  version: 309aa717adbf351e92864cbedf9cca0b769a4b5a
+- name: github.com/containerd/continuity
+  version: b2b946a77f5973f420514090d6f6dd58b08303f0
+  subpackages:
+  - pathdriver
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/docker/docker
-  version: 89658bed64c2a8fe05a978e5b87dbec409d57a0f
+  version: 3e1df952b7d693ac3961f492310852bdf3106240
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -119,6 +133,7 @@ testImports:
   - api/types/registry
   - api/types/strslice
   - api/types/swarm
+  - api/types/swarm/runtime
   - api/types/versions
   - opts
   - pkg/archive
@@ -126,11 +141,10 @@ testImports:
   - pkg/homedir
   - pkg/idtools
   - pkg/ioutils
-  - pkg/jsonlog
   - pkg/jsonmessage
   - pkg/longpath
+  - pkg/mount
   - pkg/pools
-  - pkg/promise
   - pkg/stdcopy
   - pkg/system
   - pkg/term
@@ -140,15 +154,22 @@ testImports:
   subpackages:
   - nat
 - name: github.com/docker/go-units
-  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
+  version: d59758554a3d3911fa25c0269de1ebe2f1912c39
 - name: github.com/fsouza/go-dockerclient
-  version: 98edf3edfae6a6500fecc69d2bcccf1302544004
+  version: 413e380d74dfeddac90c0b89c598a1c7b19f5c54
 - name: github.com/Microsoft/go-winio
   version: 78439966b38d69bf38227fbf57ac8a6fee70f69a
 - name: github.com/Nvveen/Gotty
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
+- name: github.com/opencontainers/go-digest
+  version: 279bed98673dd5bef374d3b6e4b09e2af76183bf
+- name: github.com/opencontainers/image-spec
+  version: 577479e4dc273d3779f00c223c7e0dba4cd6b8b0
+  subpackages:
+  - specs-go
+  - specs-go/v1
 - name: github.com/opencontainers/runc
-  version: 13fa5d2953d2fabbf14c2f6fd05eac70d71c45c7
+  version: e6516b3d5dc780cb57a976013c242a9a93052543
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -157,19 +178,15 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/sirupsen/logrus
-  version: 68806b4b77355d6c8577a2c8bbc6d547a5272491
-- name: github.com/Sirupsen/logrus
-  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
-  repo: https://github.com/sirupsen/logrus.git
-  vcs: git
+  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - require
 - name: golang.org/x/crypto
-  version: eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035
+  version: d585fd2cc9195196078f516b69daff6744ef5e84
   subpackages:
   - ssh/terminal
 - name: gopkg.in/ory-am/dockertest.v3
-  version: a7951f7a8442f0e70d36e499ed4d744f00af2963
+  version: 59e045640952457da1046932eae73e20cb3afe70

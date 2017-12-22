@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/mock"
@@ -144,16 +145,21 @@ func TestServersSteps(t *testing.T) {
 	defer cleanup()
 
 	testCases := []step{
+		newHTTPStep(),
 		newGRPCUnixSocketStep(),
 		newGRPCPortStep(),
-		newHTTPStep(),
 	}
 
 	for _, s := range testCases {
 		err := s.setup(context.Background(), app)
 		require.NoError(t, err)
+	}
 
-		err = s.teardown(context.Background(), app)
+	// bug when calling stop right after serve on http.
+	time.Sleep(10 * time.Millisecond)
+
+	for _, s := range testCases {
+		err := s.teardown(context.Background(), app)
 		require.NoError(t, err)
 	}
 
