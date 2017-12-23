@@ -33,18 +33,18 @@ func TestBackend(t *testing.T) {
 	require.NoError(t, err)
 	defer s.Close()
 
-	bucket, err := s.Bucket("a")
+	topic, err := s.Topic("a")
 	require.NoError(t, err)
-	require.NotNil(t, bucket)
+	require.NotNil(t, topic)
 	require.NotNil(t, s.DB)
 
-	err = bucket.Close()
+	err = topic.Close()
 	require.NoError(t, err)
 
-	b1, err := s.Bucket("a")
+	b1, err := s.Topic("a")
 	require.NoError(t, err)
 
-	b2, err := s.Bucket("b")
+	b2, err := s.Topic("b")
 	require.NoError(t, err)
 
 	err = b1.Close()

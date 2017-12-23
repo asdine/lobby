@@ -37,9 +37,9 @@ type Backend struct {
 	DB *storm.DB
 }
 
-// Bucket returns the bucket associated with the given id.
-func (s *Backend) Bucket(name string) (lobby.Bucket, error) {
-	return NewBucket(s.DB.From(name)), nil
+// Topic returns the topic associated with the given name.
+func (s *Backend) Topic(name string) (lobby.Topic, error) {
+	return NewTopic(s.DB.From(name)), nil
 }
 
 // Close BoltDB connection.

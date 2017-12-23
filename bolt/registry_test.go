@@ -33,16 +33,16 @@ func TestRegistry(t *testing.T) {
 		require.NoError(t, err)
 
 		err = r.Create("bolt1", "a")
-		require.Equal(t, lobby.ErrBucketAlreadyExists, err)
+		require.Equal(t, lobby.ErrTopicAlreadyExists, err)
 
 		err = r.Create("bolt1", "b")
 		require.NoError(t, err)
 
 		err = r.Create("bolt2", "a")
-		require.Equal(t, lobby.ErrBucketAlreadyExists, err)
+		require.Equal(t, lobby.ErrTopicAlreadyExists, err)
 	})
 
-	t.Run("bucket", func(t *testing.T) {
+	t.Run("topic", func(t *testing.T) {
 		pathReg, cleanupReg := preparePath(t, "reg.db")
 		defer cleanupReg()
 		r, err := bolt.NewRegistry(pathReg)
@@ -52,27 +52,27 @@ func TestRegistry(t *testing.T) {
 		r.RegisterBackend("bolt1", s)
 		r.RegisterBackend("bolt2", s)
 
-		b, err := r.Bucket("")
-		require.Equal(t, lobby.ErrBucketNotFound, err)
+		b, err := r.Topic("")
+		require.Equal(t, lobby.ErrTopicNotFound, err)
 
-		b, err = r.Bucket("a")
-		require.Equal(t, lobby.ErrBucketNotFound, err)
+		b, err = r.Topic("a")
+		require.Equal(t, lobby.ErrTopicNotFound, err)
 
 		err = r.Create("bolt1", "a")
 		require.NoError(t, err)
 
-		b, err = r.Bucket("a")
+		b, err = r.Topic("a")
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
 		err = r.Create("bolt2", "b")
 		require.NoError(t, err)
 
-		b, err = r.Bucket("b")
+		b, err = r.Topic("b")
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
 		err = r.Create("bolt2", "a")
-		require.Equal(t, lobby.ErrBucketAlreadyExists, err)
+		require.Equal(t, lobby.ErrTopicAlreadyExists, err)
 	})
 }

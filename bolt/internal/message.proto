@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package internal;
 
-message Item {
+message Message {
   // @inject_tag: storm:"id,increment"
   int64 id = 1;
-  // @inject_tag: storm:"unique"
-  string key = 2;
+  // @inject_tag: storm:"index"
+  string group = 2;
   bytes value = 3;
 }

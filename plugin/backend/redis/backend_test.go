@@ -65,18 +65,18 @@ func TestBackend(t *testing.T) {
 	backend, cleanup := getBackend(t)
 	defer cleanup()
 
-	bucket, err := backend.Bucket("a")
+	topic, err := backend.Topic("a")
 	require.NoError(t, err)
-	require.NotNil(t, bucket)
-	require.NotNil(t, bucket.(*Bucket).conn)
+	require.NotNil(t, topic)
+	require.NotNil(t, topic.(*Topic).conn)
 
-	err = bucket.Close()
-	require.NoError(t, err)
-
-	b1, err := backend.Bucket("a")
+	err = topic.Close()
 	require.NoError(t, err)
 
-	b2, err := backend.Bucket("b")
+	b1, err := backend.Topic("a")
+	require.NoError(t, err)
+
+	b2, err := backend.Topic("b")
 	require.NoError(t, err)
 
 	err = b1.Close()

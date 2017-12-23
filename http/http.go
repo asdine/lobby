@@ -1,9 +1,9 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -138,22 +138,20 @@ func NewHandler(r lobby.Registry, logger *log.Logger) http.Handler {
 		router:   router,
 	}
 
-	router.POST("/v1/buckets/:backend", h.createBucket)
-	router.PUT("/v1/b/:bucket/:key", h.putItem)
-	router.GET("/v1/b/:bucket/:key", h.getItem)
-	router.DELETE("/v1/b/:bucket/:key", h.deleteItem)
+	router.POST("/v1/topics", h.createTopic)
+	router.POST("/v1/topics/:topic", h.postMessage)
+	router.POST("/v1/topics/:topic/:group", h.postMessage)
 	return &wrapper{handler: router, logger: h.logger}
 }
 
-// Handler is the main http handler.
 type handler struct {
 	registry lobby.Registry
 	router   *httprouter.Router
 	logger   *log.Logger
 }
 
-func (h *handler) createBucket(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var req bucketCreationRequest
+func (h *handler) createTopic(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var req topicCreationRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -167,41 +165,35 @@ func (h *handler) createBucket(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	err = h.registry.Create(ps.ByName("backend"), req.Name)
+	err = h.registry.Create(req.Backend, req.Name)
 	switch err {
 	case nil:
 		w.WriteHeader(http.StatusCreated)
 	case lobby.ErrBackendNotFound:
 		http.NotFound(w, r)
-	case lobby.ErrBucketAlreadyExists:
+	case lobby.ErrTopicAlreadyExists:
 		writeError(w, validation.AddError(nil, "name", err), http.StatusBadRequest, h.logger)
 	default:
 		writeError(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
-func (h *handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *handler) postMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.ContentLength == 0 {
 		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	var buf bytes.Buffer
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		writeError(w, err, http.StatusBadRequest, h.logger)
-		return
-	}
 	defer r.Body.Close()
-
-	if len(bytes.TrimSpace(buf.Bytes())) == 0 {
-		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
+	value, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
-	b, err := h.registry.Bucket(ps.ByName("bucket"))
+	t, err := h.registry.Topic(ps.ByName("topic"))
 	if err != nil {
-		if err == lobby.ErrBucketNotFound {
+		if err == lobby.ErrTopicNotFound {
 			http.NotFound(w, r)
 			return
 		}
@@ -210,69 +202,26 @@ func (h *handler) putItem(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	item, err := b.Put(ps.ByName("key"), buf.Bytes())
+	err = t.Send(&lobby.Message{
+		Group: ps.ByName("group"),
+		Value: value,
+	})
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
-	writeRawJSON(w, item.Value, http.StatusOK, h.logger)
+	writeRawJSON(w, nil, http.StatusCreated, h.logger)
 }
 
-func (h *handler) getItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	b, err := h.registry.Bucket(ps.ByName("bucket"))
-	if err != nil {
-		if err == lobby.ErrBucketNotFound {
-			http.NotFound(w, r)
-			return
-		}
-
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	item, err := b.Get(ps.ByName("key"))
-	switch err {
-	case nil:
-		writeRawJSON(w, item.Value, http.StatusOK, h.logger)
-	case lobby.ErrKeyNotFound:
-		http.NotFound(w, r)
-	default:
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-	}
+type topicCreationRequest struct {
+	Name    string `json:"name" valid:"required,alphanum,stringlength(1|64)"`
+	Backend string `json:"backend" valid:"required,alphanum"`
 }
 
-func (h *handler) deleteItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	b, err := h.registry.Bucket(ps.ByName("bucket"))
-	if err != nil {
-		if err == lobby.ErrBucketNotFound {
-			http.NotFound(w, r)
-			return
-		}
+func (t *topicCreationRequest) Validate() error {
+	t.Name = strings.TrimSpace(t.Name)
+	t.Backend = strings.TrimSpace(t.Backend)
 
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	err = b.Delete(ps.ByName("key"))
-	switch err {
-	case nil:
-		w.WriteHeader(http.StatusNoContent)
-	case lobby.ErrKeyNotFound:
-		http.NotFound(w, r)
-	default:
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-	}
-}
-
-// BucketCreationRequest is used to create a bucket.
-type bucketCreationRequest struct {
-	Name string `json:"name" valid:"required,alphanum,stringlength(1|64)"`
-}
-
-// Validate bucket creation payload.
-func (b *bucketCreationRequest) Validate() error {
-	b.Name = strings.TrimSpace(b.Name)
-
-	return validation.Validate(b)
+	return validation.Validate(t)
 }

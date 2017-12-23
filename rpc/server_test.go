@@ -22,7 +22,7 @@ func newServer(t *testing.T, r lobby.Registry) (*grpc.ClientConn, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(rpc.WithBucketService(r), rpc.WithRegistryService(r))
+	srv := rpc.NewServer(rpc.WithTopicService(r), rpc.WithRegistryService(r))
 
 	go func() {
 		srv.Serve(l)

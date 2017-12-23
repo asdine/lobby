@@ -2,32 +2,32 @@ syntax = "proto3";
 
 package proto;
 
-import "types.proto";
+import "topic.proto";
 
 service RegistryService {
-  rpc Create (NewBucket) returns (Empty) {}
-  rpc Status (Bucket) returns (BucketStatus) {}
+  rpc Create (NewTopic) returns (Empty) {}
+  rpc Status (Topic) returns (TopicStatus) {}
 }
 
-message NewBucket {
-  // Bucket name.
+message NewTopic {
+  // Topic name.
   // @inject_tag: valid:"required"
   string name = 1;
 
-  // Backend used by this bucket.
+  // Backend used by this topic.
   // @inject_tag: valid:"required"
   string backend = 2;
 }
 
-message Bucket {
-  // Bucket name.
+message Topic {
+  // Topic name.
   // @inject_tag: valid:"required"
   string name = 1;
 
-  // Backend used by this bucket.
+  // Backend used by this topic.
   string backend = 2;
 }
 
-message BucketStatus {
+message TopicStatus {
   bool exists = 1;
 }

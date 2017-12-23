@@ -13,25 +13,25 @@ Lobby is an open-source pluggable platform for data delivery.
 At the core, Lobby is a framework to assemble network APIs and backends.
 It provides several key features:
 
-- **Key-Value store**: Applications can create buckets they can use to save or fetch data using the API of their choice. A bucket is bound to a particular backend, Lobby can route data to the right backend so applications can target multiple backends using different buckets.
-- **Protocol and backend agnostic**: Data can be received using HTTP, gRPC, asynchronous consumers or by any other means and delivered to any database or proxied to another service. Lobby provides a solid framework that links everything together.
+- **Topics**: Applications can create topics they can use to save data using the API of their choice. A topic is bound to a particular backend, Lobby can route data to the right backend so applications can target multiple stores using different topics.
+- **Protocol and backend agnostic**: Data can be received using HTTP, gRPC, asynchronous consumers or by any other means and delivered to any database, message broker or even proxied to another service. Lobby provides a solid framework that links everything together.
 - **Plugin based architecture**: Lobby can be extended using plugins. New APIs and backends can be written using any language that supports gRPC.
 
 ## How it works
 
-### Bucket
+### Topic
 
-Lobby uses a concept of **Bucket** to store and fetch data. Each bucket is associated to a specific backend and provide an unified API to read, write and delete values.
+Lobby uses a concept of **Topic** to store data. Each topic is associated to a specific backend and provide an unified API to send values.
 
 ### Backend
 
-A backend is the storage unit used by Lobby. It usually represents a datastore but can litteraly be anything that satisfies the backend interface, like an http proxy, a file or a broker.
+A backend is the storage unit used by Lobby. It usually represents a datastore or a message broker but can litteraly be anything that satisfies the backend interface, like an http proxy, a file or a memory store.
 By default, Lobby is shipped with a builtin BoltDB backend and provides MongoDB and Redis backends as plugins.
 
 ### Entrypoints
 
-Lobby can run multiple servers at the same time, each providing a different entrypoint to manipulate buckets. Those entrypoints can create and manipulate all or part of Lobby's buckets.
-By default, Lobby runs a gRPC server which is the main communication system, also used to communicate with plugins and an HTTP server. NSQ is provided as plugin.
+Lobby can run multiple servers at the same time, each providing a different entrypoint to manipulate topics. Those entrypoints can create and manipulate all or part of Lobby's topics.
+By default, Lobby runs an HTTP server and a gRPC server which is the main communication system, also used to communicate with plugins. NSQ is provided as a plugin.
 
 ## Usage
 
@@ -51,26 +51,19 @@ lobby run --server=nsq --backend=mongo --backend=redis
 
 The previous command adds a NSQ consumer, a MongoDB and a Redis backend.
 
-Currently, Lobby contains no bucket.
+Currently, Lobby contains no topics.
 
-The following command creates a bucket with a MongoDB backend using the HTTP API:
+The following command creates a topic with a Redis backend using the HTTP API:
 
 ```sh
-curl -X POST -d '{"name": "colors"}' http://localhost:5657/v1/buckets/mongo
+curl -X POST -d '{"name": "quotes", "backend": "redis"}' http://localhost:5657/v1/topics
 ```
 
-Once the bucket is created, data can sent and fetched.
+Once the topic is created, data can be sent to it.
 
-The following command will put the key `blue` in the `colors` bucket.
-
-```sh
-curl -X PUT -d 'There is no blue without yellow and without orange.' \
-                                  http://localhost:5657/v1/b/colors/blue
-```
-
-To get a key:
+The following command will send the following value in the `quotes` topic.
 
 ```sh
-$ curl http://localhost:5657/v1/b/colors/blue
-There is no blue without yellow and without orange.
+curl -X POST -d 'There is no blue without yellow and without orange.' \
+                                  http://localhost:5657/v1/topics/quotes
 ```

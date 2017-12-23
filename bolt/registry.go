@@ -46,8 +46,8 @@ func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
 	r.backends[name] = backend
 }
 
-// Create a bucket in the registry.
-func (r *Registry) Create(backendName, bucketName string) error {
+// Create a topic in the registry.
+func (r *Registry) Create(backendName, topicName string) error {
 	if _, ok := r.backends[backendName]; !ok {
 		return lobby.ErrBackendNotFound
 	}
@@ -58,49 +58,49 @@ func (r *Registry) Create(backendName, bucketName string) error {
 	}
 	defer tx.Rollback()
 
-	var bucket internal.Bucket
+	var topic internal.Topic
 
-	err = tx.One("Name", bucketName, &bucket)
+	err = tx.One("Name", topicName, &topic)
 	if err == nil {
-		return lobby.ErrBucketAlreadyExists
+		return lobby.ErrTopicAlreadyExists
 	}
 
 	if err != storm.ErrNotFound {
-		return errors.Wrapf(err, "failed to fetch bucket %s", bucketName)
+		return errors.Wrapf(err, "failed to fetch topic %s", topicName)
 	}
 
-	err = tx.Save(&internal.Bucket{
-		Name:    bucketName,
+	err = tx.Save(&internal.Topic{
+		Name:    topicName,
 		Backend: backendName,
 	})
 
 	if err != nil {
-		return errors.Wrapf(err, "failed to create bucket %s", bucketName)
+		return errors.Wrapf(err, "failed to create topic %s", topicName)
 	}
 
 	err = tx.Commit()
 	return errors.Wrap(err, "failed to commit")
 }
 
-// Bucket returns the selected bucket from the Backend.
-func (r *Registry) Bucket(name string) (lobby.Bucket, error) {
-	var bucket internal.Bucket
+// Topic returns the selected topic from the Backend.
+func (r *Registry) Topic(name string) (lobby.Topic, error) {
+	var topic internal.Topic
 
-	err := r.DB.One("Name", name, &bucket)
+	err := r.DB.One("Name", name, &topic)
 	if err == storm.ErrNotFound {
-		return nil, lobby.ErrBucketNotFound
+		return nil, lobby.ErrTopicNotFound
 	}
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch bucket %s", name)
+		return nil, errors.Wrapf(err, "failed to fetch topic %s", name)
 	}
 
-	backend, ok := r.backends[bucket.Backend]
+	backend, ok := r.backends[topic.Backend]
 	if !ok {
-		return nil, lobby.ErrBucketNotFound
+		return nil, lobby.ErrTopicNotFound
 	}
 
-	return backend.Bucket(name)
+	return backend.Topic(name)
 }
 
 // Close BoltDB connection and registered backends.

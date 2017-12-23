@@ -126,7 +126,7 @@ func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) 
 		}
 		defer l.Close()
 
-		srv := rpc.NewServer(rpc.WithBucketService(bck))
+		srv := rpc.NewServer(rpc.WithTopicService(bck))
 
 		go func() {
 			defer wg.Done()

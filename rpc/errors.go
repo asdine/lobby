@@ -25,9 +25,9 @@ func newError(err error, logger *log.Logger) error {
 	switch {
 	case validation.IsError(err):
 		code = codes.InvalidArgument
-	case err == lobby.ErrBucketNotFound || err == lobby.ErrKeyNotFound || err == lobby.ErrBackendNotFound:
+	case err == lobby.ErrTopicNotFound || err == lobby.ErrBackendNotFound:
 		code = codes.NotFound
-	case err == lobby.ErrBucketAlreadyExists:
+	case err == lobby.ErrTopicAlreadyExists:
 		code = codes.AlreadyExists
 	default:
 		code = codes.Unknown
@@ -49,15 +49,12 @@ func errFromGRPC(err error) error {
 
 	switch code {
 	case codes.AlreadyExists:
-		return lobby.ErrBucketAlreadyExists
+		return lobby.ErrTopicAlreadyExists
 	case codes.NotFound:
-		if strings.Contains(err.Error(), lobby.ErrKeyNotFound.Error()) {
-			return lobby.ErrKeyNotFound
-		}
 		if strings.Contains(err.Error(), lobby.ErrBackendNotFound.Error()) {
 			return lobby.ErrBackendNotFound
 		}
-		return lobby.ErrBucketNotFound
+		return lobby.ErrTopicNotFound
 	default:
 		return err
 	}

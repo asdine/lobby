@@ -18,46 +18,46 @@ var _ = proto1.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-type NewBucket struct {
-	// Bucket name.
+type NewTopic struct {
+	// Topic name.
 	// @inject_tag: valid:"required"
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty" valid:"required"`
-	// Backend used by this bucket.
+	// Backend used by this topic.
 	// @inject_tag: valid:"required"
 	Backend string `protobuf:"bytes,2,opt,name=backend" json:"backend,omitempty" valid:"required"`
 }
 
-func (m *NewBucket) Reset()                    { *m = NewBucket{} }
-func (m *NewBucket) String() string            { return proto1.CompactTextString(m) }
-func (*NewBucket) ProtoMessage()               {}
-func (*NewBucket) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+func (m *NewTopic) Reset()                    { *m = NewTopic{} }
+func (m *NewTopic) String() string            { return proto1.CompactTextString(m) }
+func (*NewTopic) ProtoMessage()               {}
+func (*NewTopic) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
 
-type Bucket struct {
-	// Bucket name.
+type Topic struct {
+	// Topic name.
 	// @inject_tag: valid:"required"
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty" valid:"required"`
-	// Backend used by this bucket.
+	// Backend used by this topic.
 	Backend string `protobuf:"bytes,2,opt,name=backend" json:"backend,omitempty"`
 }
 
-func (m *Bucket) Reset()                    { *m = Bucket{} }
-func (m *Bucket) String() string            { return proto1.CompactTextString(m) }
-func (*Bucket) ProtoMessage()               {}
-func (*Bucket) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+func (m *Topic) Reset()                    { *m = Topic{} }
+func (m *Topic) String() string            { return proto1.CompactTextString(m) }
+func (*Topic) ProtoMessage()               {}
+func (*Topic) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
 
-type BucketStatus struct {
+type TopicStatus struct {
 	Exists bool `protobuf:"varint,1,opt,name=exists" json:"exists,omitempty"`
 }
 
-func (m *BucketStatus) Reset()                    { *m = BucketStatus{} }
-func (m *BucketStatus) String() string            { return proto1.CompactTextString(m) }
-func (*BucketStatus) ProtoMessage()               {}
-func (*BucketStatus) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+func (m *TopicStatus) Reset()                    { *m = TopicStatus{} }
+func (m *TopicStatus) String() string            { return proto1.CompactTextString(m) }
+func (*TopicStatus) ProtoMessage()               {}
+func (*TopicStatus) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
 
 func init() {
-	proto1.RegisterType((*NewBucket)(nil), "proto.NewBucket")
-	proto1.RegisterType((*Bucket)(nil), "proto.Bucket")
-	proto1.RegisterType((*BucketStatus)(nil), "proto.BucketStatus")
+	proto1.RegisterType((*NewTopic)(nil), "proto.NewTopic")
+	proto1.RegisterType((*Topic)(nil), "proto.Topic")
+	proto1.RegisterType((*TopicStatus)(nil), "proto.TopicStatus")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -71,8 +71,8 @@ const _ = grpc.SupportPackageIsVersion3
 // Client API for RegistryService service
 
 type RegistryServiceClient interface {
-	Create(ctx context.Context, in *NewBucket, opts ...grpc.CallOption) (*Empty, error)
-	Status(ctx context.Context, in *Bucket, opts ...grpc.CallOption) (*BucketStatus, error)
+	Create(ctx context.Context, in *NewTopic, opts ...grpc.CallOption) (*Empty, error)
+	Status(ctx context.Context, in *Topic, opts ...grpc.CallOption) (*TopicStatus, error)
 }
 
 type registryServiceClient struct {
@@ -83,7 +83,7 @@ func NewRegistryServiceClient(cc *grpc.ClientConn) RegistryServiceClient {
 	return &registryServiceClient{cc}
 }
 
-func (c *registryServiceClient) Create(ctx context.Context, in *NewBucket, opts ...grpc.CallOption) (*Empty, error) {
+func (c *registryServiceClient) Create(ctx context.Context, in *NewTopic, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := grpc.Invoke(ctx, "/proto.RegistryService/Create", in, out, c.cc, opts...)
 	if err != nil {
@@ -92,8 +92,8 @@ func (c *registryServiceClient) Create(ctx context.Context, in *NewBucket, opts 
 	return out, nil
 }
 
-func (c *registryServiceClient) Status(ctx context.Context, in *Bucket, opts ...grpc.CallOption) (*BucketStatus, error) {
-	out := new(BucketStatus)
+func (c *registryServiceClient) Status(ctx context.Context, in *Topic, opts ...grpc.CallOption) (*TopicStatus, error) {
+	out := new(TopicStatus)
 	err := grpc.Invoke(ctx, "/proto.RegistryService/Status", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -104,8 +104,8 @@ func (c *registryServiceClient) Status(ctx context.Context, in *Bucket, opts ...
 // Server API for RegistryService service
 
 type RegistryServiceServer interface {
-	Create(context.Context, *NewBucket) (*Empty, error)
-	Status(context.Context, *Bucket) (*BucketStatus, error)
+	Create(context.Context, *NewTopic) (*Empty, error)
+	Status(context.Context, *Topic) (*TopicStatus, error)
 }
 
 func RegisterRegistryServiceServer(s *grpc.Server, srv RegistryServiceServer) {
@@ -113,7 +113,7 @@ func RegisterRegistryServiceServer(s *grpc.Server, srv RegistryServiceServer) {
 }
 
 func _RegistryService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewBucket)
+	in := new(NewTopic)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -125,13 +125,13 @@ func _RegistryService_Create_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/proto.RegistryService/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Create(ctx, req.(*NewBucket))
+		return srv.(RegistryServiceServer).Create(ctx, req.(*NewTopic))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _RegistryService_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Bucket)
+	in := new(Topic)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func _RegistryService_Status_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/proto.RegistryService/Status",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServiceServer).Status(ctx, req.(*Bucket))
+		return srv.(RegistryServiceServer).Status(ctx, req.(*Topic))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -168,18 +168,18 @@ var _RegistryService_serviceDesc = grpc.ServiceDesc{
 func init() { proto1.RegisterFile("registry.proto", fileDescriptor1) }
 
 var fileDescriptor1 = []byte{
-	// 197 bytes of a gzipped FileDescriptorProto
+	// 193 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2b, 0x4a, 0x4d, 0xcf,
 	0x2c, 0x2e, 0x29, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x52, 0xdc,
-	0x25, 0x95, 0x05, 0xa9, 0xc5, 0x10, 0x31, 0x25, 0x4b, 0x2e, 0x4e, 0xbf, 0xd4, 0x72, 0xa7, 0xd2,
-	0xe4, 0xec, 0xd4, 0x12, 0x21, 0x21, 0x2e, 0x96, 0xbc, 0xc4, 0xdc, 0x54, 0x09, 0x46, 0x05, 0x46,
-	0x0d, 0xce, 0x20, 0x30, 0x5b, 0x48, 0x82, 0x8b, 0x3d, 0x29, 0x31, 0x39, 0x3b, 0x35, 0x2f, 0x45,
-	0x82, 0x09, 0x2c, 0x0c, 0xe3, 0x2a, 0x99, 0x71, 0xb1, 0x91, 0xa5, 0x4f, 0x8d, 0x8b, 0x07, 0xa2,
-	0x2f, 0xb8, 0x24, 0xb1, 0xa4, 0xb4, 0x58, 0x48, 0x8c, 0x8b, 0x2d, 0xb5, 0x22, 0xb3, 0xb8, 0xa4,
-	0x18, 0xac, 0x9f, 0x23, 0x08, 0xca, 0x33, 0xca, 0xe5, 0xe2, 0x0f, 0x82, 0x7a, 0x20, 0x38, 0xb5,
-	0xa8, 0x2c, 0x33, 0x39, 0x55, 0x48, 0x8b, 0x8b, 0xcd, 0xb9, 0x28, 0x35, 0xb1, 0x24, 0x55, 0x48,
-	0x00, 0xe2, 0x7e, 0x3d, 0xb8, 0xe3, 0xa5, 0x78, 0xa0, 0x22, 0xae, 0xb9, 0x05, 0x25, 0x95, 0x4a,
-	0x0c, 0x42, 0x7a, 0x5c, 0x6c, 0x50, 0x0b, 0x78, 0xa1, 0x32, 0x50, 0x85, 0xc2, 0x28, 0x5c, 0x88,
-	0x1a, 0x25, 0x86, 0x24, 0x36, 0xb0, 0xa8, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x8d, 0x02, 0x84,
-	0x65, 0x36, 0x01, 0x00, 0x00,
+	0x25, 0xf9, 0x05, 0x99, 0xc9, 0x10, 0x31, 0x25, 0x0b, 0x2e, 0x0e, 0xbf, 0xd4, 0xf2, 0x10, 0x90,
+	0x88, 0x90, 0x10, 0x17, 0x4b, 0x5e, 0x62, 0x6e, 0xaa, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0x67, 0x10,
+	0x98, 0x2d, 0x24, 0xc1, 0xc5, 0x9e, 0x94, 0x98, 0x9c, 0x9d, 0x9a, 0x97, 0x22, 0xc1, 0x04, 0x16,
+	0x86, 0x71, 0x95, 0x4c, 0xb9, 0x58, 0xc9, 0xd1, 0xa6, 0xca, 0xc5, 0x0d, 0xd6, 0x16, 0x5c, 0x92,
+	0x58, 0x52, 0x5a, 0x2c, 0x24, 0xc6, 0xc5, 0x96, 0x5a, 0x91, 0x59, 0x5c, 0x52, 0x0c, 0xd6, 0xce,
+	0x11, 0x04, 0xe5, 0x19, 0x65, 0x71, 0xf1, 0x07, 0x41, 0x5d, 0x1f, 0x9c, 0x5a, 0x54, 0x96, 0x99,
+	0x9c, 0x2a, 0xa4, 0xc9, 0xc5, 0xe6, 0x5c, 0x94, 0x9a, 0x58, 0x92, 0x2a, 0xc4, 0x0f, 0x71, 0xbc,
+	0x1e, 0xcc, 0xe5, 0x52, 0x3c, 0x50, 0x01, 0xd7, 0xdc, 0x82, 0x92, 0x4a, 0x25, 0x06, 0x21, 0x1d,
+	0x2e, 0x36, 0xa8, 0xf9, 0x30, 0x19, 0x88, 0x3a, 0x21, 0x64, 0x1e, 0x44, 0x85, 0x12, 0x43, 0x12,
+	0x1b, 0x58, 0xd0, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x19, 0x75, 0xfd, 0xd9, 0x30, 0x01, 0x00,
+	0x00,
 }

@@ -12,7 +12,7 @@ var _ lobby.Backend = new(Backend)
 
 // NewBackend returns a gRPC backend. It is used to communicate with external backends.
 func NewBackend(conn *grpc.ClientConn) (*Backend, error) {
-	client := proto.NewBucketServiceClient(conn)
+	client := proto.NewTopicServiceClient(conn)
 
 	return &Backend{
 		conn:   conn,
@@ -23,12 +23,12 @@ func NewBackend(conn *grpc.ClientConn) (*Backend, error) {
 // Backend is a gRPC backend.
 type Backend struct {
 	conn   *grpc.ClientConn
-	client proto.BucketServiceClient
+	client proto.TopicServiceClient
 }
 
-// Bucket returns the bucket associated with the given id.
-func (s *Backend) Bucket(name string) (lobby.Bucket, error) {
-	return NewBucket(name, s.client), nil
+// Topic returns the topic associated with the given name.
+func (s *Backend) Topic(name string) (lobby.Topic, error) {
+	return NewTopic(name, s.client), nil
 }
 
 // Close does nothing.
@@ -36,75 +36,36 @@ func (s *Backend) Close() error {
 	return nil
 }
 
-var _ lobby.Bucket = new(Bucket)
+var _ lobby.Topic = new(Topic)
 
-// NewBucket returns a Bucket.
-func NewBucket(name string, client proto.BucketServiceClient) *Bucket {
-	return &Bucket{
+// NewTopic returns a Topic.
+func NewTopic(name string, client proto.TopicServiceClient) *Topic {
+	return &Topic{
 		name:   name,
 		client: client,
 	}
 }
 
-// Bucket is a gRPC implementation of a bucket.
-type Bucket struct {
+// Topic is a gRPC implementation of a topic.
+type Topic struct {
 	name   string
-	client proto.BucketServiceClient
+	client proto.TopicServiceClient
 }
 
-// Put value to the bucket. Returns an Item.
-func (b *Bucket) Put(key string, value []byte) (*lobby.Item, error) {
-	stream, err := b.client.Put(context.Background())
-	if err != nil {
-		return nil, errFromGRPC(err)
-	}
-
-	err = stream.Send(&proto.NewItem{
-		Bucket: b.name,
-		Item: &proto.Item{
-			Key:   key,
-			Value: value,
+// Send a message to the topic.
+func (t *Topic) Send(message *lobby.Message) error {
+	_, err := t.client.Send(context.Background(), &proto.NewMessage{
+		Topic: t.name,
+		Message: &proto.Message{
+			Group: message.Group,
+			Value: message.Value,
 		},
 	})
-	if err != nil {
-		return nil, errFromGRPC(err)
-	}
 
-	_, err = stream.CloseAndRecv()
-	if err != nil {
-		return nil, errFromGRPC(err)
-	}
-
-	return &lobby.Item{
-		Key:   key,
-		Value: value,
-	}, nil
+	return errFromGRPC(err)
 }
 
-// Get an item by key.
-func (b *Bucket) Get(key string) (*lobby.Item, error) {
-	item, err := b.client.Get(context.Background(), &proto.Key{Bucket: b.name, Key: key})
-	if err != nil {
-		return nil, errFromGRPC(err)
-	}
-
-	return &lobby.Item{
-		Key:   item.Key,
-		Value: item.Value,
-	}, nil
-}
-
-// Delete item from the bucket
-func (b *Bucket) Delete(key string) error {
-	_, err := b.client.Delete(context.Background(), &proto.Key{Bucket: b.name, Key: key})
-	if err != nil {
-		return errFromGRPC(err)
-	}
-
-	return nil
-}
-
-// Close the bucket session.
-func (b *Bucket) Close() error {
+// Close the topic session.
+func (t *Topic) Close() error {
 	return nil
 }

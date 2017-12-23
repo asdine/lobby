@@ -24,14 +24,14 @@ type registryService struct {
 	logger   *log.Logger
 }
 
-// Create a bucket in the registry.
-func (s *registryService) Create(ctx context.Context, newBucket *proto.NewBucket) (*proto.Empty, error) {
-	err := validation.Validate(newBucket)
+// Create a topic in the registry.
+func (s *registryService) Create(ctx context.Context, newTopic *proto.NewTopic) (*proto.Empty, error) {
+	err := validation.Validate(newTopic)
 	if err != nil {
 		return nil, newError(err, s.logger)
 	}
 
-	err = s.registry.Create(newBucket.Backend, newBucket.Name)
+	err = s.registry.Create(newTopic.Backend, newTopic.Name)
 	if err != nil {
 		return nil, newError(err, s.logger)
 	}
@@ -39,25 +39,25 @@ func (s *registryService) Create(ctx context.Context, newBucket *proto.NewBucket
 	return new(proto.Empty), nil
 }
 
-// Exists check a bucket in the registry.
-func (s *registryService) Status(ctx context.Context, bucket *proto.Bucket) (*proto.BucketStatus, error) {
-	err := validation.Validate(bucket)
+// Exists check a topic in the registry.
+func (s *registryService) Status(ctx context.Context, topic *proto.Topic) (*proto.TopicStatus, error) {
+	err := validation.Validate(topic)
 	if err != nil {
 		return nil, newError(err, s.logger)
 	}
 
 	var exists bool
 
-	_, err = s.registry.Bucket(bucket.Name)
+	_, err = s.registry.Topic(topic.Name)
 	if err != nil {
-		if err != lobby.ErrBucketNotFound {
+		if err != lobby.ErrTopicNotFound {
 			return nil, newError(err, s.logger)
 		}
 	} else {
 		exists = true
 	}
 
-	return &proto.BucketStatus{
+	return &proto.TopicStatus{
 		Exists: exists,
 	}, nil
 }
@@ -93,28 +93,24 @@ func (s *Registry) RegisterBackend(_ string, _ lobby.Backend) {
 	panic("RegisterBackend should not be called on this type")
 }
 
-// Create a bucket and register it to the Registry.
-func (s *Registry) Create(backendName, bucketName string) error {
-	_, err := s.client.Create(context.Background(), &proto.NewBucket{Name: bucketName, Backend: backendName})
-	if err != nil {
-		return errFromGRPC(err)
-	}
-
-	return nil
+// Create a topic and register it to the Registry.
+func (s *Registry) Create(backendName, topicName string) error {
+	_, err := s.client.Create(context.Background(), &proto.NewTopic{Name: topicName, Backend: backendName})
+	return errFromGRPC(err)
 }
 
-// Bucket returns the bucket associated with the given id.
-func (s *Registry) Bucket(name string) (lobby.Bucket, error) {
-	status, err := s.client.Status(context.Background(), &proto.Bucket{Name: name})
+// Topic returns the topic associated with the given id.
+func (s *Registry) Topic(name string) (lobby.Topic, error) {
+	status, err := s.client.Status(context.Background(), &proto.Topic{Name: name})
 	if err != nil {
 		return nil, errFromGRPC(err)
 	}
 
 	if !status.Exists {
-		return nil, lobby.ErrBucketNotFound
+		return nil, lobby.ErrTopicNotFound
 	}
 
-	return s.Backend.Bucket(name)
+	return s.Backend.Topic(name)
 }
 
 // Close the connexion to the Registry.

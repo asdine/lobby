@@ -26,9 +26,9 @@ func TestRegistryServerCreate(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
-		r.CreateFn = func(backendName, bucketName string) error {
+		r.CreateFn = func(backendName, topicName string) error {
 			assert.Equal(t, "backend", backendName)
-			assert.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "topic", topicName)
 
 			return nil
 		}
@@ -38,7 +38,7 @@ func TestRegistryServerCreate(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
+		_, err := client.Create(context.Background(), &proto.NewTopic{Name: "topic", Backend: "backend"})
 		require.NoError(t, err)
 	})
 
@@ -48,19 +48,19 @@ func TestRegistryServerCreate(t *testing.T) {
 		defer cleanup()
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Create(context.Background(), new(proto.NewBucket))
+		_, err := client.Create(context.Background(), new(proto.NewTopic))
 		require.Error(t, err)
 		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
 	})
 
-	t.Run("BucketAlreadyExists", func(t *testing.T) {
+	t.Run("TopicAlreadyExists", func(t *testing.T) {
 		var r mock.Registry
 
-		r.CreateFn = func(backendName, bucketName string) error {
+		r.CreateFn = func(backendName, topicName string) error {
 			assert.Equal(t, "backend", backendName)
-			assert.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "topic", topicName)
 
-			return lobby.ErrBucketAlreadyExists
+			return lobby.ErrTopicAlreadyExists
 		}
 
 		conn, cleanup := newServer(t, &r)
@@ -68,7 +68,7 @@ func TestRegistryServerCreate(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
+		_, err := client.Create(context.Background(), &proto.NewTopic{Name: "topic", Backend: "backend"})
 		require.Error(t, err)
 		require.Equal(t, codes.AlreadyExists, grpc.Code(err))
 	})
@@ -76,9 +76,9 @@ func TestRegistryServerCreate(t *testing.T) {
 	t.Run("BackendNotFound", func(t *testing.T) {
 		var r mock.Registry
 
-		r.CreateFn = func(backendName, bucketName string) error {
+		r.CreateFn = func(backendName, topicName string) error {
 			assert.Equal(t, "backend", backendName)
-			assert.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "topic", topicName)
 
 			return lobby.ErrBackendNotFound
 		}
@@ -88,7 +88,7 @@ func TestRegistryServerCreate(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
+		_, err := client.Create(context.Background(), &proto.NewTopic{Name: "topic", Backend: "backend"})
 		require.Error(t, err)
 		require.Equal(t, codes.NotFound, grpc.Code(err))
 	})
@@ -96,9 +96,9 @@ func TestRegistryServerCreate(t *testing.T) {
 	t.Run("InternalError", func(t *testing.T) {
 		var r mock.Registry
 
-		r.CreateFn = func(backendName, bucketName string) error {
+		r.CreateFn = func(backendName, topicName string) error {
 			assert.Equal(t, "backend", backendName)
-			assert.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "topic", topicName)
 
 			return errors.New("something unexpected happened !")
 		}
@@ -108,7 +108,7 @@ func TestRegistryServerCreate(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Create(context.Background(), &proto.NewBucket{Name: "bucket", Backend: "backend"})
+		_, err := client.Create(context.Background(), &proto.NewTopic{Name: "topic", Backend: "backend"})
 		require.Error(t, err)
 		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
@@ -118,10 +118,10 @@ func TestRegistryServerStatus(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
+		r.TopicFn = func(name string) (lobby.Topic, error) {
+			assert.Equal(t, "topic", name)
 
-			return new(mock.Bucket), nil
+			return new(mock.Topic), nil
 		}
 
 		conn, cleanup := newServer(t, &r)
@@ -129,7 +129,7 @@ func TestRegistryServerStatus(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		status, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
+		status, err := client.Status(context.Background(), &proto.Topic{Name: "topic"})
 		require.NoError(t, err)
 		require.True(t, status.Exists)
 	})
@@ -140,7 +140,7 @@ func TestRegistryServerStatus(t *testing.T) {
 		defer cleanup()
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Status(context.Background(), new(proto.Bucket))
+		_, err := client.Status(context.Background(), new(proto.Topic))
 		require.Error(t, err)
 		require.Equal(t, codes.InvalidArgument, grpc.Code(err))
 	})
@@ -148,10 +148,10 @@ func TestRegistryServerStatus(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		var r mock.Registry
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
+		r.TopicFn = func(name string) (lobby.Topic, error) {
+			assert.Equal(t, "topic", name)
 
-			return nil, lobby.ErrBucketNotFound
+			return nil, lobby.ErrTopicNotFound
 		}
 
 		conn, cleanup := newServer(t, &r)
@@ -159,7 +159,7 @@ func TestRegistryServerStatus(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		status, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
+		status, err := client.Status(context.Background(), &proto.Topic{Name: "topic"})
 		require.NoError(t, err)
 		require.False(t, status.Exists)
 	})
@@ -167,8 +167,8 @@ func TestRegistryServerStatus(t *testing.T) {
 	t.Run("InternalError", func(t *testing.T) {
 		var r mock.Registry
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
+		r.TopicFn = func(name string) (lobby.Topic, error) {
+			assert.Equal(t, "topic", name)
 
 			return nil, errors.New("something unexpected happened !")
 		}
@@ -178,7 +178,7 @@ func TestRegistryServerStatus(t *testing.T) {
 
 		client := proto.NewRegistryServiceClient(conn)
 
-		_, err := client.Status(context.Background(), &proto.Bucket{Name: "bucket"})
+		_, err := client.Status(context.Background(), &proto.Topic{Name: "topic"})
 		require.Error(t, err)
 		require.Equal(t, codes.Unknown, grpc.Code(err))
 	})
@@ -192,7 +192,7 @@ func newRegistry(t *testing.T, r lobby.Registry) (*rpc.Registry, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(rpc.WithBucketService(r), rpc.WithRegistryService(r))
+	srv := rpc.NewServer(rpc.WithTopicService(r), rpc.WithRegistryService(r))
 
 	go func() {
 		srv.Serve(l)
@@ -222,9 +222,9 @@ func TestRegistryCreate(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
-		r.CreateFn = func(backendName, bucketName string) error {
+		r.CreateFn = func(backendName, topicName string) error {
 			assert.Equal(t, "backend", backendName)
-			assert.Equal(t, "bucket", bucketName)
+			assert.Equal(t, "topic", topicName)
 
 			return nil
 		}
@@ -232,7 +232,7 @@ func TestRegistryCreate(t *testing.T) {
 		reg, cleanup := newRegistry(t, &r)
 		defer cleanup()
 
-		err := reg.Create("backend", "bucket")
+		err := reg.Create("backend", "topic")
 		require.NoError(t, err)
 	})
 
@@ -243,11 +243,10 @@ func TestRegistryCreate(t *testing.T) {
 		defer cleanup()
 
 		testCases := map[error]error{
-			lobby.ErrBucketAlreadyExists: lobby.ErrBucketAlreadyExists,
-			lobby.ErrKeyNotFound:         lobby.ErrKeyNotFound,
-			lobby.ErrBackendNotFound:     lobby.ErrBackendNotFound,
-			lobby.ErrBucketNotFound:      lobby.ErrBucketNotFound,
-			errors.New("unexpected"):     status.Error(codes.Unknown, rpc.ErrInternal.Error()),
+			lobby.ErrTopicAlreadyExists: lobby.ErrTopicAlreadyExists,
+			lobby.ErrBackendNotFound:    lobby.ErrBackendNotFound,
+			lobby.ErrTopicNotFound:      lobby.ErrTopicNotFound,
+			errors.New("unexpected"):    status.Error(codes.Unknown, rpc.ErrInternal.Error()),
 		}
 
 		for returnedErr, expectedErr := range testCases {
@@ -257,21 +256,21 @@ func TestRegistryCreate(t *testing.T) {
 }
 
 func testRegistryCreateWith(t *testing.T, reg lobby.Registry, mockReg *mock.Registry, returnedErr, expectedErr error) {
-	mockReg.CreateFn = func(backendName, bucketName string) error {
+	mockReg.CreateFn = func(backendName, topicName string) error {
 		return returnedErr
 	}
 
-	err := reg.Create("backend", "bucket")
+	err := reg.Create("backend", "topic")
 	require.Error(t, err)
 	require.Equal(t, expectedErr, err)
 }
 
-func TestRegistryBucket(t *testing.T) {
+func TestRegistryTopic(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var r mock.Registry
 
-		r.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
+		r.TopicFn = func(name string) (lobby.Topic, error) {
+			assert.Equal(t, "topic", name)
 
 			return nil, nil
 		}
@@ -279,9 +278,9 @@ func TestRegistryBucket(t *testing.T) {
 		reg, cleanup := newRegistry(t, &r)
 		defer cleanup()
 
-		_, err := reg.Bucket("bucket")
+		_, err := reg.Topic("topic")
 		require.NoError(t, err)
-		require.Equal(t, 1, reg.Backend.(*mock.Backend).BucketInvoked)
+		require.Equal(t, 1, reg.Backend.(*mock.Backend).TopicInvoked)
 	})
 
 	t.Run("Errors", func(t *testing.T) {
@@ -291,25 +290,24 @@ func TestRegistryBucket(t *testing.T) {
 		defer cleanup()
 
 		testCases := map[error]error{
-			lobby.ErrBucketAlreadyExists: lobby.ErrBucketAlreadyExists,
-			lobby.ErrKeyNotFound:         lobby.ErrKeyNotFound,
-			lobby.ErrBackendNotFound:     lobby.ErrBackendNotFound,
-			lobby.ErrBucketNotFound:      lobby.ErrBucketNotFound,
-			errors.New("unexpected"):     status.Error(codes.Unknown, rpc.ErrInternal.Error()),
+			lobby.ErrTopicAlreadyExists: lobby.ErrTopicAlreadyExists,
+			lobby.ErrBackendNotFound:    lobby.ErrBackendNotFound,
+			lobby.ErrTopicNotFound:      lobby.ErrTopicNotFound,
+			errors.New("unexpected"):    status.Error(codes.Unknown, rpc.ErrInternal.Error()),
 		}
 
 		for returnedErr, expectedErr := range testCases {
-			testRegistryBucketWith(t, reg, &r, returnedErr, expectedErr)
+			testRegistryTopicWith(t, reg, &r, returnedErr, expectedErr)
 		}
 	})
 }
 
-func testRegistryBucketWith(t *testing.T, reg lobby.Registry, mockReg *mock.Registry, returnedErr, expectedErr error) {
-	mockReg.BucketFn = func(name string) (lobby.Bucket, error) {
+func testRegistryTopicWith(t *testing.T, reg lobby.Registry, mockReg *mock.Registry, returnedErr, expectedErr error) {
+	mockReg.TopicFn = func(name string) (lobby.Topic, error) {
 		return nil, returnedErr
 	}
 
-	_, err := reg.Bucket("bucket")
+	_, err := reg.Topic("topic")
 	require.Error(t, err)
 	require.Equal(t, expectedErr, err)
 }

@@ -19,10 +19,10 @@ func NewServer(services ...func(*grpc.Server)) lobby.Server {
 	return &server{srv: g}
 }
 
-// WithBucketService enables the BucketService.
-func WithBucketService(b lobby.Backend) func(*grpc.Server) {
+// WithTopicService enables the TopicService.
+func WithTopicService(b lobby.Backend) func(*grpc.Server) {
 	return func(g *grpc.Server) {
-		proto.RegisterBucketServiceServer(g, newBucketService(b))
+		proto.RegisterTopicServiceServer(g, newTopicService(b))
 	}
 }
 

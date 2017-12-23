@@ -125,7 +125,7 @@ func (g *gRPCUnixSocketStep) setup(ctx context.Context, app *App) error {
 	}
 
 	srv := rpc.NewServer(
-		rpc.WithBucketService(app.registry),
+		rpc.WithTopicService(app.registry),
 		rpc.WithRegistryService(app.registry),
 	)
 	return g.runServer(srv, l, app)
@@ -150,7 +150,7 @@ func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
 	}
 
 	srv := rpc.NewServer(
-		rpc.WithBucketService(app.registry),
+		rpc.WithTopicService(app.registry),
 		rpc.WithRegistryService(app.registry),
 	)
 	return g.runServer(srv, l, app)

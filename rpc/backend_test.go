@@ -27,7 +27,7 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(rpc.WithBucketService(b))
+	srv := rpc.NewServer(rpc.WithTopicService(b))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -58,148 +58,17 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 	}
 }
 
-func TestBucketPut(t *testing.T) {
+func TestTopicSend(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		var b mock.Backend
 
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
+		b.TopicFn = func(name string) (lobby.Topic, error) {
+			require.Equal(t, "topic", name)
 
-			return &mock.Bucket{
-				PutFn: func(key string, value []byte) (*lobby.Item, error) {
-					assert.Equal(t, "key", key)
-					assert.Equal(t, []byte(`"Value"`), value)
-					return &lobby.Item{
-						Key:   key,
-						Value: value,
-					}, nil
-				},
-			}, nil
-		}
-
-		backend, cleanup := newBackend(t, &b)
-		defer cleanup()
-
-		bucket, err := backend.Bucket("bucket")
-		require.NoError(t, err)
-
-		item, err := bucket.Put("key", []byte(`"Value"`))
-		require.NoError(t, err)
-		require.Equal(t, "key", item.Key)
-		require.Equal(t, []byte(`"Value"`), item.Value)
-	})
-
-	t.Run("BucketNotFound", func(t *testing.T) {
-		var b mock.Backend
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "unknown", name)
-			return nil, lobby.ErrBucketNotFound
-		}
-
-		backend, cleanup := newBackend(t, &b)
-		defer cleanup()
-
-		bucket, err := backend.Bucket("unknown")
-		require.NoError(t, err)
-
-		_, err = bucket.Put("key", []byte(`"Value"`))
-		require.Error(t, err)
-		require.Equal(t, lobby.ErrBucketNotFound, err)
-	})
-
-	t.Run("InternalError", func(t *testing.T) {
-		var b mock.Backend
-
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
-
-			return &mock.Bucket{
-				PutFn: func(key string, value []byte) (*lobby.Item, error) {
-					assert.Equal(t, "key", key)
-					assert.Equal(t, []byte(`"Value"`), value)
-					return nil, errors.New("something unexpected happened !")
-				},
-			}, nil
-		}
-
-		backend, cleanup := newBackend(t, &b)
-		defer cleanup()
-
-		bucket, err := backend.Bucket("bucket")
-		require.NoError(t, err)
-
-		_, err = bucket.Put("key", []byte(`"Value"`))
-		require.Error(t, err)
-	})
-
-	t.Run("KeyNotFound", func(t *testing.T) {
-		var b mock.Backend
-
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			require.Equal(t, "bucket", name)
-
-			return &mock.Bucket{
-				PutFn: func(key string, value []byte) (*lobby.Item, error) {
-					assert.Equal(t, "key", key)
-					assert.Equal(t, []byte(`"Value"`), value)
-					return nil, lobby.ErrKeyNotFound
-				},
-			}, nil
-		}
-
-		backend, cleanup := newBackend(t, &b)
-		defer cleanup()
-
-		bucket, err := backend.Bucket("bucket")
-		require.NoError(t, err)
-
-		_, err = bucket.Put("key", []byte(`"Value"`))
-		require.Error(t, err)
-		require.Equal(t, lobby.ErrKeyNotFound, err)
-	})
-}
-
-func TestBucketGet(t *testing.T) {
-	t.Run("OK", func(t *testing.T) {
-		var b mock.Backend
-
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
-
-			return &mock.Bucket{
-				GetFn: func(key string) (*lobby.Item, error) {
-					assert.Equal(t, "key", key)
-					return &lobby.Item{
-						Key:   key,
-						Value: []byte(`"Value"`),
-					}, nil
-				},
-			}, nil
-		}
-
-		backend, cleanup := newBackend(t, &b)
-		defer cleanup()
-
-		bucket, err := backend.Bucket("bucket")
-		require.NoError(t, err)
-
-		item, err := bucket.Get("key")
-		require.NoError(t, err)
-		require.Equal(t, "key", item.Key)
-		require.Equal(t, []byte(`"Value"`), item.Value)
-	})
-}
-
-func TestBucketDelete(t *testing.T) {
-	t.Run("OK", func(t *testing.T) {
-		var b mock.Backend
-
-		b.BucketFn = func(name string) (lobby.Bucket, error) {
-			assert.Equal(t, "bucket", name)
-
-			return &mock.Bucket{
-				DeleteFn: func(key string) error {
-					assert.Equal(t, "key", key)
+			return &mock.Topic{
+				SendFn: func(message *lobby.Message) error {
+					assert.Equal(t, "group", message.Group)
+					assert.Equal(t, []byte(`Value`), message.Value)
 					return nil
 				},
 			}, nil
@@ -208,10 +77,62 @@ func TestBucketDelete(t *testing.T) {
 		backend, cleanup := newBackend(t, &b)
 		defer cleanup()
 
-		bucket, err := backend.Bucket("bucket")
+		topic, err := backend.Topic("topic")
 		require.NoError(t, err)
 
-		err = bucket.Delete("key")
+		err = topic.Send(&lobby.Message{
+			Group: "group",
+			Value: []byte("Value"),
+		})
 		require.NoError(t, err)
+	})
+
+	t.Run("TopicNotFound", func(t *testing.T) {
+		var b mock.Backend
+		b.TopicFn = func(name string) (lobby.Topic, error) {
+			assert.Equal(t, "unknown", name)
+			return nil, lobby.ErrTopicNotFound
+		}
+
+		backend, cleanup := newBackend(t, &b)
+		defer cleanup()
+
+		topic, err := backend.Topic("unknown")
+		require.NoError(t, err)
+
+		err = topic.Send(&lobby.Message{
+			Group: "group",
+			Value: []byte("Value"),
+		})
+		require.Error(t, err)
+		require.Equal(t, lobby.ErrTopicNotFound, err)
+	})
+
+	t.Run("InternalError", func(t *testing.T) {
+		var b mock.Backend
+
+		b.TopicFn = func(name string) (lobby.Topic, error) {
+			require.Equal(t, "topic", name)
+
+			return &mock.Topic{
+				SendFn: func(message *lobby.Message) error {
+					assert.Equal(t, "group", message.Group)
+					assert.Equal(t, []byte(`Value`), message.Value)
+					return errors.New("something unexpected happened !")
+				},
+			}, nil
+		}
+
+		backend, cleanup := newBackend(t, &b)
+		defer cleanup()
+
+		topic, err := backend.Topic("topic")
+		require.NoError(t, err)
+
+		err = topic.Send(&lobby.Message{
+			Group: "group",
+			Value: []byte("Value"),
+		})
+		require.Error(t, err)
 	})
 }

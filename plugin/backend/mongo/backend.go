@@ -27,11 +27,10 @@ func NewBackend(uri string) (*Backend, error) {
 }
 
 func ensureIndexes(db *mgo.Database) error {
-	col := db.C(colItems)
+	col := db.C(colMessages)
 
 	index := mgo.Index{
-		Key:    []string{"bucket", "key"},
-		Unique: true,
+		Key:    []string{"topic", "group"},
 		Sparse: true,
 	}
 
@@ -43,9 +42,9 @@ type Backend struct {
 	session *mgo.Session
 }
 
-// Bucket returns the bucket associated with the given id.
-func (s *Backend) Bucket(name string) (lobby.Bucket, error) {
-	return NewBucket(s.session.Copy(), name), nil
+// Topic returns the topic associated with the given name.
+func (s *Backend) Topic(name string) (lobby.Topic, error) {
+	return NewTopic(s.session.Copy(), name), nil
 }
 
 // Close MongoDB connection.

@@ -14,13 +14,13 @@ import (
 func TestHandleMessage(t *testing.T) {
 	var reg mock.Registry
 
-	reg.BucketFn = func(name string) (lobby.Bucket, error) {
-		require.Equal(t, "bucket", name)
-		return &mock.Bucket{
-			PutFn: func(key string, value []byte) (*lobby.Item, error) {
-				require.Equal(t, "key", key)
-				require.Equal(t, `"value"`, string(value))
-				return nil, nil
+	reg.TopicFn = func(name string) (lobby.Topic, error) {
+		require.Equal(t, "topic", name)
+		return &mock.Topic{
+			SendFn: func(m *lobby.Message) error {
+				require.Equal(t, "group", m.Group)
+				require.Equal(t, `"value"`, string(m.Value))
+				return nil
 			},
 		}, nil
 	}
@@ -29,10 +29,10 @@ func TestHandleMessage(t *testing.T) {
 		Registry: &reg,
 	}
 
-	item := lobbypb.NewItem{
-		Bucket: "bucket",
-		Item: &lobbypb.Item{
-			Key:   "key",
+	item := lobbypb.NewMessage{
+		Topic: "topic",
+		Message: &lobbypb.Message{
+			Group: "group",
 			Value: []byte(`"value"`),
 		},
 	}

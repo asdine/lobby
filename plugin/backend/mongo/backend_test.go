@@ -51,7 +51,7 @@ type errorHandler interface {
 
 func getBackend(t errorHandler) (*Backend, func()) {
 	return bck, func() {
-		_, err := bck.session.DB("").C(colItems).RemoveAll(nil)
+		_, err := bck.session.DB("").C(colMessages).RemoveAll(nil)
 		if err != nil {
 			t.Error(err)
 		}
@@ -62,18 +62,18 @@ func TestBackend(t *testing.T) {
 	backend, cleanup := getBackend(t)
 	defer cleanup()
 
-	bucket, err := backend.Bucket("a")
+	topic, err := backend.Topic("a")
 	require.NoError(t, err)
-	require.NotNil(t, bucket)
-	require.NotNil(t, bucket.(*Bucket).session)
+	require.NotNil(t, topic)
+	require.NotNil(t, topic.(*Topic).session)
 
-	err = bucket.Close()
-	require.NoError(t, err)
-
-	b1, err := backend.Bucket("a")
+	err = topic.Close()
 	require.NoError(t, err)
 
-	b2, err := backend.Bucket("b")
+	b1, err := backend.Topic("a")
+	require.NoError(t, err)
+
+	b2, err := backend.Topic("b")
 	require.NoError(t, err)
 
 	err = b1.Close()

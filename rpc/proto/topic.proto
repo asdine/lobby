@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package proto;
+
+// Empty response.
+message Empty {}
+
+// The Topic service definition.
+service TopicService {
+  // Send message to the topic.
+  rpc Send (NewMessage) returns (Empty) {}
+}
+
+// NewMessage is used to put an item in a topic.
+message NewMessage {
+  // Topic name.
+  // @inject_tag: valid:"required"
+  string topic = 1;
+
+  // Message to send to the topic.
+  // @inject_tag: valid:"required"
+  Message message = 2;
+}
+
+message Message {
+  string group = 1;
+  // @inject_tag: valid:"required"
+  bytes value = 2;
+}
