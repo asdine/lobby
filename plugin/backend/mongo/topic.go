@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/asdine/lobby"
-	ljson "github.com/asdine/lobby/json"
 	"github.com/pkg/errors"
 	mgo "gopkg.in/mgo.v2"
 )
@@ -40,7 +39,7 @@ func (t *Topic) Send(m *lobby.Message) error {
 
 	var raw interface{}
 
-	valid, err := ljson.ValidateBytes(m.Value)
+	valid, err := ValidateBytes(m.Value)
 	if err == nil {
 		err := json.Unmarshal(valid, &raw)
 		if err != nil {
@@ -62,4 +61,16 @@ func (t *Topic) Send(m *lobby.Message) error {
 func (t *Topic) Close() error {
 	t.session.Close()
 	return nil
+}
+
+// ValidateBytes checks if the data is valid json.
+func ValidateBytes(data []byte) ([]byte, error) {
+	var i json.RawMessage
+
+	err := json.Unmarshal(data, &i)
+	if err != nil {
+		return nil, err
+	}
+
+	return i, nil
 }
