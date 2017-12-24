@@ -11,8 +11,10 @@ import (
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
+	"github.com/asdine/lobby/etcd"
 	"github.com/asdine/lobby/http"
 	"github.com/asdine/lobby/rpc"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
 )
 
@@ -65,6 +67,66 @@ func (directoriesStep) teardown(ctx context.Context, app *App) error {
 type registryStep int
 
 func (registryStep) setup(ctx context.Context, app *App) error {
+	var reg lobby.Registry
+	var err error
+	switch app.Config.Registry {
+	case "":
+		fallthrough
+	case "bolt":
+		reg, err = boltRegistry(ctx, app)
+	case "etcd":
+		reg, err = etcdRegistry(ctx, app)
+	default:
+		return errors.New("unknown registry")
+	}
+	if err != nil {
+		return err
+	}
+
+	app.registry = reg
+	return nil
+}
+
+func boltRegistry(ctx context.Context, app *App) (lobby.Registry, error) {
+	dataPath := path.Join(app.Config.Paths.DataDir, "db")
+	err := createDir(dataPath)
+	if err != nil {
+		return nil, err
+	}
+
+	boltPath := path.Join(dataPath, "bolt")
+	err = createDir(boltPath)
+	if err != nil {
+		return nil, err
+	}
+
+	registryPath := path.Join(boltPath, "registry.db")
+
+	return bolt.NewRegistry(registryPath)
+}
+
+func etcdRegistry(ctx context.Context, app *App) (lobby.Registry, error) {
+	client, err := clientv3.New(app.Config.Etcd)
+	if err != nil {
+		return nil, err
+	}
+
+	return etcd.NewRegistry(client, "lobby")
+}
+
+func (registryStep) teardown(ctx context.Context, app *App) error {
+	if app.registry != nil {
+		err := app.registry.Close()
+		app.registry = nil
+		return err
+	}
+
+	return nil
+}
+
+type boltBackendStep int
+
+func (boltBackendStep) setup(ctx context.Context, app *App) error {
 	dataPath := path.Join(app.Config.Paths.DataDir, "db")
 	err := createDir(dataPath)
 	if err != nil {
@@ -77,15 +139,7 @@ func (registryStep) setup(ctx context.Context, app *App) error {
 		return err
 	}
 
-	registryPath := path.Join(boltPath, "registry.db")
 	backendPath := path.Join(boltPath, "backend.db")
-
-	// Creating default registry.
-	reg, err := bolt.NewRegistry(registryPath)
-	if err != nil {
-		return err
-	}
-	app.registry = reg
 
 	// Creating default backend.
 	bck, err := bolt.NewBackend(backendPath)
@@ -93,17 +147,11 @@ func (registryStep) setup(ctx context.Context, app *App) error {
 		return err
 	}
 
-	reg.RegisterBackend("bolt", bck)
+	app.registry.RegisterBackend("bolt", bck)
 	return nil
 }
 
-func (registryStep) teardown(ctx context.Context, app *App) error {
-	if app.registry != nil {
-		err := app.registry.Close()
-		app.registry = nil
-		return err
-	}
-
+func (boltBackendStep) teardown(ctx context.Context, app *App) error {
 	return nil
 }
 

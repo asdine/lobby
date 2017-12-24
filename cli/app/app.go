@@ -31,6 +31,7 @@ func NewApp() *App {
 	app.steps = []step{
 		new(directoriesStep),
 		new(registryStep),
+		new(boltBackendStep),
 		newGRPCUnixSocketStep(),
 		newGRPCPortStep(),
 		newHTTPStep(),

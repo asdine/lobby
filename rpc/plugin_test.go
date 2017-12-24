@@ -51,7 +51,7 @@ func TestHelperProcess(t *testing.T) {
 	cmd, args := args[0], args[1:]
 	require.Equal(t, "/fake/command", cmd)
 	require.Len(t, args, 2)
-	require.Equal(t, "--config-dir", args[0])
+	require.Equal(t, "--data-dir", args[0])
 	l, err := net.Listen("unix", path.Join(args[1], "sockets", "backend.sock"))
 	require.NoError(t, err)
 	defer l.Close()

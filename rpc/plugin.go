@@ -73,14 +73,14 @@ func (p *process) Close() error {
 }
 
 // LoadPlugin loads a plugin.
-func LoadPlugin(ctx context.Context, name, cmdPath, configDir string) (lobby.Plugin, error) {
+func LoadPlugin(ctx context.Context, name, cmdPath, dataDir string) (lobby.Plugin, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
 	}
 
-	cmd := execCommand(cmdPath, "--config-dir", configDir)
+	cmd := execCommand(cmdPath, "--data-dir", dataDir)
 	prefix := fmt.Sprintf("[%s] ", name)
 	cmd.Stdout = lobby.NewPrefixWriter(prefix, os.Stdout)
 	cmd.Stderr = lobby.NewPrefixWriter(prefix, os.Stderr)
@@ -100,13 +100,13 @@ func LoadPlugin(ctx context.Context, name, cmdPath, configDir string) (lobby.Plu
 }
 
 // LoadBackendPlugin loads a backend plugin.
-func LoadBackendPlugin(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
-	plugin, err := LoadPlugin(ctx, name, cmdPath, configDir)
+func LoadBackendPlugin(ctx context.Context, name, cmdPath, dataDir string) (lobby.Backend, lobby.Plugin, error) {
+	plugin, err := LoadPlugin(ctx, name, cmdPath, dataDir)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	socketPath := path.Join(configDir, "sockets", fmt.Sprintf("%s.sock", name))
+	socketPath := path.Join(dataDir, "sockets", fmt.Sprintf("%s.sock", name))
 	c := time.Tick(10 * time.Millisecond)
 
 Loop:

@@ -5,13 +5,16 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
 )
 
 // Config of the application.
 type Config struct {
-	Paths   Paths
-	Plugins Plugins
+	Registry string
+	Etcd     clientv3.Config
+	Paths    Paths
+	Plugins  Plugins
 }
 
 // Plugins contains the list of backend and server plugins.
@@ -27,7 +30,7 @@ type Paths struct {
 	SocketDir string `toml:"socket-dir"`
 }
 
-// Create the ConfigDir and SocketDir if they don't exist.
+// Create the DataDir and SocketDir if they don't exist.
 func (p *Paths) Create() error {
 	if p.DataDir == "" {
 		return errors.New("unspecified data directory")
