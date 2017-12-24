@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package internal;
+package boltpb;
 
 message Message {
   // @inject_tag: storm:"id,increment"

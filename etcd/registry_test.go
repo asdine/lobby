@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/asdine/lobby/etcd/internal"
+	"github.com/asdine/lobby/etcd/etcdpb"
 	"github.com/asdine/lobby/mock"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -58,7 +58,7 @@ func TestEtcdRegistry(t *testing.T) {
 func createTopics(t *testing.T, client *clientv3.Client, namespace string, count int) {
 	for i := 0; i < count; i++ {
 		key := fmt.Sprintf("%s/topics/topic-%d", namespace, i)
-		raw, err := proto.Marshal(&internal.Topic{
+		raw, err := proto.Marshal(&etcdpb.Topic{
 			Name:    fmt.Sprintf("topic-%d", i),
 			Backend: "backend",
 		})

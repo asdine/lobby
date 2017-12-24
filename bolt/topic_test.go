@@ -5,7 +5,7 @@ import (
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
-	"github.com/asdine/lobby/bolt/internal"
+	"github.com/asdine/lobby/bolt/boltpb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +25,7 @@ func TestTopicSend(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	var m []internal.Message
+	var m []boltpb.Message
 	err = bk.DB.From("1a").Find("Group", "2a", &m)
 	require.NoError(t, err)
 	require.Len(t, m, 1)

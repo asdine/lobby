@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/bolt/internal"
+	"github.com/asdine/lobby/bolt/boltpb"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	"github.com/coreos/bbolt"
@@ -58,7 +58,7 @@ func (r *Registry) Create(backendName, topicName string) error {
 	}
 	defer tx.Rollback()
 
-	var topic internal.Topic
+	var topic boltpb.Topic
 
 	err = tx.One("Name", topicName, &topic)
 	if err == nil {
@@ -69,7 +69,7 @@ func (r *Registry) Create(backendName, topicName string) error {
 		return errors.Wrapf(err, "failed to fetch topic %s", topicName)
 	}
 
-	err = tx.Save(&internal.Topic{
+	err = tx.Save(&boltpb.Topic{
 		Name:    topicName,
 		Backend: backendName,
 	})
@@ -84,7 +84,7 @@ func (r *Registry) Create(backendName, topicName string) error {
 
 // Topic returns the selected topic from the Backend.
 func (r *Registry) Topic(name string) (lobby.Topic, error) {
-	var topic internal.Topic
+	var topic boltpb.Topic
 
 	err := r.DB.One("Name", name, &topic)
 	if err == storm.ErrNotFound {

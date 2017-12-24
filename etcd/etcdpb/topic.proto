@@ -1,9 +1,8 @@
 syntax = "proto3";
 
-package internal;
+package etcdpb;
 
 message Topic {
-  // @inject_tag: storm:"id"
   string Name = 1;
   string Backend = 2;
 }

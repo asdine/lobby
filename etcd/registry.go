@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/etcd/internal"
+	"github.com/asdine/lobby/etcd/etcdpb"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/gogo/protobuf/proto"
@@ -30,7 +30,7 @@ func NewRegistry(client *clientv3.Client, namespace string) (*Registry, error) {
 		namespace:    namespace,
 		topicsPrefix: topicsPrefix,
 		backends:     make(map[string]lobby.Backend),
-		topics:       make(map[string]*internal.Topic),
+		topics:       make(map[string]*etcdpb.Topic),
 	}
 
 	resp, err := client.Get(ctx, topicsPrefix, clientv3.WithPrefix())
@@ -60,7 +60,7 @@ type Registry struct {
 	namespace     string
 	topicsPrefix  string
 	topicsWatcher clientv3.Watcher
-	topics        map[string]*internal.Topic
+	topics        map[string]*etcdpb.Topic
 	mu            sync.RWMutex
 	wg            sync.WaitGroup
 	backends      map[string]lobby.Backend
@@ -88,7 +88,7 @@ func (r *Registry) watchTopics(c clientv3.WatchChan) {
 }
 
 func (r *Registry) storeTopic(key, value []byte) error {
-	var t internal.Topic
+	var t etcdpb.Topic
 	if err := proto.Unmarshal(value, &t); err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (r *Registry) Create(backendName, topicName string) error {
 		return lobby.ErrTopicAlreadyExists
 	}
 
-	topic := internal.Topic{
+	topic := etcdpb.Topic{
 		Name:    topicName,
 		Backend: backendName,
 	}

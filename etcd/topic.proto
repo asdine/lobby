@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package internal;
+package etcd;
 
 message Topic {
   string Name = 1;

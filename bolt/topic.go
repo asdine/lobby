@@ -2,7 +2,7 @@ package bolt
 
 import (
 	"github.com/asdine/lobby"
-	"github.com/asdine/lobby/bolt/internal"
+	"github.com/asdine/lobby/bolt/boltpb"
 	"github.com/asdine/storm"
 	"github.com/pkg/errors"
 )
@@ -29,7 +29,7 @@ func (t *Topic) Send(message *lobby.Message) error {
 	}
 	defer tx.Rollback()
 
-	err = tx.Save(&internal.Message{
+	err = tx.Save(&boltpb.Message{
 		Group: message.Group,
 		Value: message.Value,
 	})

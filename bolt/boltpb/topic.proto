@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package boltpb;
+
+message Topic {
+  // @inject_tag: storm:"id"
+  string Name = 1;
+  string Backend = 2;
+}
