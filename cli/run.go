@@ -13,7 +13,6 @@ import (
 
 func newRunCmd(app *app.App) *cobra.Command {
 	var backends []string
-	var servers []string
 	var pluginDir string
 
 	cmd := cobra.Command{
@@ -22,10 +21,6 @@ func newRunCmd(app *app.App) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if backends != nil {
 				app.Config.Plugins.Backend = backends
-			}
-
-			if servers != nil {
-				app.Config.Plugins.Server = servers
 			}
 
 			if pluginDir != "" {
@@ -61,7 +56,6 @@ func newRunCmd(app *app.App) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVar(&backends, "backend", nil, "Name of the backend to use")
-	cmd.Flags().StringSliceVar(&servers, "server", nil, "Name of the server to run")
 	cmd.Flags().StringVar(&pluginDir, "plugin-dir", "", "Location of plugins")
 
 	return &cmd

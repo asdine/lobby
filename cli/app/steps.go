@@ -13,6 +13,7 @@ import (
 	"github.com/asdine/lobby/bolt"
 	"github.com/asdine/lobby/http"
 	"github.com/asdine/lobby/rpc"
+	"github.com/pkg/errors"
 )
 
 type step interface {
@@ -197,7 +198,7 @@ func (s *serverStep) runServer(srv lobby.Server, l net.Listener, app *App) error
 		close(c)
 		err := srv.Serve(l)
 		if err != nil {
-			log.Println(err)
+			s.logger.Println(err)
 		}
 	}()
 
@@ -211,64 +212,15 @@ func (s *serverStep) teardown(ctx context.Context, app *App) error {
 	return err
 }
 
-func newServerPluginsStep() *serverPluginsStep {
-	return &serverPluginsStep{
-		pluginLoader: rpc.LoadPlugin,
-	}
-}
-
-type serverPluginsStep struct {
-	pluginLoader func(context.Context, string, string, string) (lobby.Plugin, error)
-	plugins      []lobby.Plugin
-}
-
-func (s *serverPluginsStep) setup(ctx context.Context, app *App) error {
-	for _, name := range app.Config.Plugins.Server {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-
-		plg, err := s.pluginLoader(
-			ctx,
-			name,
-			path.Join(app.Config.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
-			app.Config.Paths.ConfigDir,
-		)
-		if err != nil {
-			return err
-		}
-
-		app.wg.Add(1)
-		go func() {
-			defer app.wg.Done()
-			err := plg.Wait()
-			if err != nil {
-				app.errc <- err
-			}
-		}()
-		s.plugins = append(s.plugins, plg)
-	}
-
-	return nil
-}
-
-func (s *serverPluginsStep) teardown(ctx context.Context, app *App) error {
-	for _, p := range s.plugins {
-		err := p.Close()
-		if err != nil {
-			app.errc <- err
-		}
-	}
-
-	return nil
-}
-
 func newBackendPluginsStep() *backendPluginsStep {
 	return &backendPluginsStep{
 		pluginLoader: rpc.LoadBackendPlugin,
+		logger:       log.New(os.Stderr, "[lobby] ", log.LstdFlags),
 	}
 }
 
 type backendPluginsStep struct {
+	logger       *log.Logger
 	pluginLoader func(context.Context, string, string, string) (lobby.Backend, lobby.Plugin, error)
 	plugins      []lobby.Plugin
 }
@@ -285,7 +237,7 @@ func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
 			app.Config.Paths.ConfigDir,
 		)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to run backend '%s'", name)
 		}
 
 		app.registry.RegisterBackend(name, bck)

@@ -35,7 +35,6 @@ func NewApp() *App {
 		newGRPCPortStep(),
 		newHTTPStep(),
 		newBackendPluginsStep(),
-		newServerPluginsStep(),
 	}
 
 	return &app

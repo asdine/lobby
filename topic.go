@@ -21,6 +21,23 @@ type Topic interface {
 	Close() error
 }
 
+// TopicFunc creates a topic from a send function.
+func TopicFunc(fn func(*Message) error) Topic {
+	return &topicFunc{fn}
+}
+
+type topicFunc struct {
+	fn func(*Message) error
+}
+
+func (t *topicFunc) Send(m *Message) error {
+	return t.fn(m)
+}
+
+func (t *topicFunc) Close() error {
+	return nil
+}
+
 // A Backend is able to create topics that can be used to store data.
 type Backend interface {
 	// Get a topic by name.

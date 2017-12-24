@@ -17,7 +17,6 @@ type Config struct {
 // Plugins contains the list of backend and server plugins.
 type Plugins struct {
 	Backend []string
-	Server  []string
 	Config  map[string]toml.Primitive
 }
 

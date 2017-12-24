@@ -1,6 +1,6 @@
 NAME := lobby
 
-.PHONY: all $(NAME) deps install test testrace bench gen plugin-backend plugin-server plugins
+.PHONY: all $(NAME) deps install test testrace bench gen plugin plugins
 
 all: $(NAME)
 
@@ -25,15 +25,11 @@ bench:
 gen:
 	go generate ./...
 
-plugin-backend:
+plugin:
 	mkdir -p ./bin
 	go build -o ./bin/$(NAME)-$(PLUGIN) ./plugin/backend/$(PLUGIN)/plugin
 
-plugin-server:
-	mkdir -p ./bin
-	go build -o ./bin/$(NAME)-$(PLUGIN) ./plugin/server/$(PLUGIN)/plugin
-
 plugins:
-	make plugin-backend PLUGIN=mongo
-	make plugin-backend PLUGIN=redis
-	make plugin-server PLUGIN=nsq
+	make plugin PLUGIN=mongo
+	make plugin PLUGIN=redis
+	make plugin PLUGIN=nsq
