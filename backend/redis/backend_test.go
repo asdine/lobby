@@ -1,4 +1,4 @@
-package redis
+package main
 
 import (
 	"fmt"
@@ -6,9 +6,8 @@ import (
 	"os"
 	"testing"
 
-	dockertest "gopkg.in/ory-am/dockertest.v3"
-
 	"github.com/stretchr/testify/require"
+	dockertest "gopkg.in/ory-am/dockertest.v3"
 )
 
 var bck *Backend

@@ -1,4 +1,4 @@
-package mongo
+package main
 
 import (
 	"encoding/json"

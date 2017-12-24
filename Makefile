@@ -27,7 +27,7 @@ gen:
 
 plugin:
 	mkdir -p ./bin
-	go build -o ./bin/$(NAME)-$(PLUGIN) ./plugin/backend/$(PLUGIN)/plugin
+	go build -o ./bin/$(NAME)-$(PLUGIN) ./backend/$(PLUGIN)
 
 plugins:
 	make plugin PLUGIN=mongo
