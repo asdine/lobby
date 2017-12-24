@@ -1,55 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	dockertest "gopkg.in/ory-am/dockertest.v3"
 )
 
-var bck *Backend
+func getBackend(t *testing.T) (*Backend, func()) {
+	bck, err := NewBackend(":6379")
+	require.NoError(t, err)
 
-func TestMain(m *testing.M) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "redis",
-		Tag:        "3.2.9",
-	})
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	if err := pool.Retry(func() error {
-		var err error
-
-		bck, err = NewBackend(fmt.Sprintf(":%s", resource.GetPort("6379/tcp")))
-		return err
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	code := m.Run()
-
-	bck.Close()
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
-	}
-
-	os.Exit(code)
-}
-
-type errorHandler interface {
-	Error(args ...interface{})
-}
-
-func getBackend(t errorHandler) (*Backend, func()) {
 	return bck, func() {
 		conn := bck.pool.Get()
 		defer conn.Close()

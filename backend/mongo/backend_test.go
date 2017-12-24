@@ -1,55 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
 	"testing"
-
-	dockertest "gopkg.in/ory-am/dockertest.v3"
 
 	"github.com/stretchr/testify/require"
 )
 
-var bck *Backend
+func getBackend(t *testing.T) (*Backend, func()) {
+	bck, err := NewBackend("mongodb://localhost:27017/test-db")
+	require.NoError(t, err)
 
-func TestMain(m *testing.M) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "mongo",
-		Tag:        "3.6.0",
-	})
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	if err := pool.Retry(func() error {
-		var err error
-
-		bck, err = NewBackend(fmt.Sprintf("mongodb://localhost:%s/test-db", resource.GetPort("27017/tcp")))
-		return err
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	code := m.Run()
-
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
-	}
-
-	os.Exit(code)
-}
-
-type errorHandler interface {
-	Error(args ...interface{})
-}
-
-func getBackend(t errorHandler) (*Backend, func()) {
 	return bck, func() {
 		_, err := bck.session.DB("").C(colMessages).RemoveAll(nil)
 		if err != nil {

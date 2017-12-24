@@ -1,5 +1,4 @@
 sudo: required
-dist: trusty
 
 language: go
 
@@ -11,6 +10,7 @@ before_install:
   - mkdir -p $HOME/bin
   - tar -vxz -C $HOME/bin --strip=1 -f glide-v0.13.1-linux-amd64.tar.gz
   - export PATH="$HOME/bin:$PATH"
+  - docker-compose up -d
 
 install: make install
 
@@ -18,4 +18,4 @@ go:
   - 1.9
 
 script:
-  - make test testrace
+  - make testrace
