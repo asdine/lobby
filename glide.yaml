@@ -1,46 +1,52 @@
 package: github.com/asdine/lobby
 import:
+- package: github.com/BurntSushi/toml
+  version: ^0.3.0
 - package: github.com/asaskevich/govalidator
   version: ^8.0.0
 - package: github.com/asdine/storm
   version: ^2.0.0
   subpackages:
   - codec/protobuf
-- package: github.com/golang/protobuf
+- package: github.com/coreos/bbolt
+  version: ^1.3.1-coreos.6
+- package: github.com/coreos/etcd
+  version: ^3.3.0-rc.0
   subpackages:
-  - proto
-- package: github.com/julienschmidt/httprouter
-  version: ~1.1.0
-- package: github.com/mitchellh/go-homedir
-- package: github.com/pkg/errors
-  version: ^0.8.0
-- package: golang.org/x/net
-  subpackages:
-  - context
-- package: google.golang.org/grpc
-  version: ^1.7.5
-  subpackages:
-  - codes
-  - status
-- package: gopkg.in/mgo.v2
-  subpackages:
-  - bson
-- package: github.com/spf13/cobra
-- package: github.com/gogo/protobuf
-  version: ^0.5.0
-  subpackages:
-  - proto
+  - clientv3
+  - mvcc/mvccpb
 - package: github.com/garyburd/redigo
   version: ^1.3.0
   subpackages:
   - redis
-- package: github.com/BurntSushi/toml
-  version: ~0.3.0
-- package: github.com/coreos/bbolt
-  version: ^1.3.1-coreos.6
+- package: github.com/gogo/protobuf
+  version: ^0.5.0
+  subpackages:
+  - proto
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/julienschmidt/httprouter
+  version: ^1.1.0
+- package: github.com/mitchellh/go-homedir
+- package: github.com/nsqio/go-nsq
+  version: ^1.0.7
+- package: github.com/pkg/errors
+  version: ^0.8.0
+- package: github.com/spf13/cobra
+  version: ^0.0.1
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  version: ^1.8.2
+  subpackages:
+  - codes
+  - status
+- package: gopkg.in/mgo.v2
 testImport:
 - package: github.com/stretchr/testify
-  version: ~1.1.4
+  version: ^1.1.4
   subpackages:
   - assert
   - require

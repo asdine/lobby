@@ -1,5 +1,5 @@
-hash: 950a531ba75ca44a85b8cc6140828dda0a2392450ea2c89ef8cb32a8a3f5e5e2
-updated: 2017-12-22T22:07:04.90162993+01:00
+hash: 4050a519cc4dfd874e0a4b4840602c9ef1a7f7d467cfa5e2345674dd1829ed78
+updated: 2017-12-24T16:58:26.246763764+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 521b25f4b05fd26bec69d9dedeb8f9c9a83939a8
@@ -16,6 +16,14 @@ imports:
   version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/coreos/bbolt
   version: 48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d
+- name: github.com/coreos/etcd
+  version: f7a395f0308d6c921937b3b5d7c716ffb8018e9e
+  subpackages:
+  - auth/authpb
+  - clientv3
+  - etcdserver/api/v3rpc/rpctypes
+  - etcdserver/etcdserverpb
+  - mvcc/mvccpb
 - name: github.com/garyburd/redigo
   version: 47dc60e71eed504e3ef8e77ee3c6fe720f3be57f
   subpackages:
@@ -24,7 +32,9 @@ imports:
 - name: github.com/gogo/protobuf
   version: 342cbe0a04158f6dcb03ca0079991a51a4248c02
   subpackages:
+  - gogoproto
   - proto
+  - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
   version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
@@ -42,15 +52,15 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nsqio/go-nsq
-  version: 8c1ff52dff6fd3ecc19c418649bc643b18e862fc
+  version: eee57a3ac4174c55924125bb15eeeda8cffb6e6f
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/spf13/cobra
-  version: ccaecb155a2177302cb56cae929251a256d0f646
+  version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
 - name: github.com/spf13/pflag
   version: 4c012f6dcd9546820e378d0bdda4d8fc772cdfea
 - name: golang.org/x/net
-  version: d866cfc389cec985d6fda2859936a575a55a3ab6
+  version: 66aacef3dd8a676686c7ae3716979581e8b03c47
   subpackages:
   - context
   - context/ctxhttp
@@ -61,19 +71,19 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 83801418e1b59fb1880e363299581ee543af32ca
+  version: ebfc5b4631820b793c9010c87fd8fef0f39eb082
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: eb22672bea55af56d225d4e35405f4d2e9f062a0
+  version: b19bf474d317b857955b12035d2c5acb57ce8b01
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: a8101f21cf983e773d0c1133ebc5424792003214
+  version: 09f6ed296fc66555a25fe4ce95173148778dfa85
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
@@ -87,6 +97,7 @@ imports:
   - encoding
   - grpclb/grpc_lb_v1/messages
   - grpclog
+  - health/grpc_health_v1
   - internal
   - keepalive
   - metadata
@@ -178,15 +189,17 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/sirupsen/logrus
-  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
+  version: f006c2ac4710855cf0f916dd6b77acf6b048dc6e
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - require
 - name: golang.org/x/crypto
-  version: d585fd2cc9195196078f516b69daff6744ef5e84
+  version: 9419663f5a44be8b34ca85f08abc5fe1be11f8a3
   subpackages:
+  - bcrypt
+  - blowfish
   - ssh/terminal
 - name: gopkg.in/ory-am/dockertest.v3
   version: 59e045640952457da1046932eae73e20cb3afe70
