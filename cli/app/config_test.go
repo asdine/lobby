@@ -18,7 +18,7 @@ func TestPaths(t *testing.T) {
 
 	t.Run("Empty Socket dir", func(t *testing.T) {
 		p := Paths{
-			ConfigDir: "some path",
+			DataDir: "some path",
 		}
 		err := p.Create()
 		require.Error(t, err)
@@ -26,7 +26,7 @@ func TestPaths(t *testing.T) {
 
 	t.Run("Bad dir", func(t *testing.T) {
 		p := Paths{
-			ConfigDir: "/some path",
+			DataDir:   "/some path",
 			SocketDir: "/some path",
 		}
 		err := p.Create()
@@ -44,7 +44,7 @@ func TestPaths(t *testing.T) {
 		require.NoError(t, err)
 
 		p := Paths{
-			ConfigDir: path.Join(name, "config"),
+			DataDir:   path.Join(name, "config"),
 			SocketDir: path.Join(name, "config", "sockets"),
 		}
 		err = p.Create()
@@ -57,13 +57,13 @@ func TestPaths(t *testing.T) {
 		defer os.RemoveAll(name)
 
 		p := Paths{
-			ConfigDir: path.Join(name, "config"),
+			DataDir:   path.Join(name, "config"),
 			SocketDir: path.Join(name, "config", "sockets"),
 		}
 		err = p.Create()
 		require.NoError(t, err)
 
-		_, err = os.Stat(p.ConfigDir)
+		_, err = os.Stat(p.DataDir)
 		require.NoError(t, err)
 
 		_, err = os.Stat(p.SocketDir)

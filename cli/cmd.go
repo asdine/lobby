@@ -1,13 +1,11 @@
 package cli
 
 import (
-	"log"
 	"os"
 	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/asdine/lobby/cli/app"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -20,12 +18,8 @@ func New() *cobra.Command {
 }
 
 func newRootCmd(app *app.App) *rootCmd {
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defaultConfigDir := path.Join(home, ".config/lobby")
+	defaultDataDir := ".lobby"
+	var configPath string
 
 	var cfgMeta toml.MetaData
 
@@ -33,7 +27,6 @@ func newRootCmd(app *app.App) *rootCmd {
 		Use:          "lobby",
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			configPath := path.Join(app.Config.Paths.ConfigDir, "lobby.toml")
 			f, err := os.Open(configPath)
 			if err == nil {
 				cfgMeta, err = toml.DecodeReader(f, &app.Config)
@@ -44,13 +37,14 @@ func newRootCmd(app *app.App) *rootCmd {
 			}
 
 			if app.Config.Paths.SocketDir == "" {
-				app.Config.Paths.SocketDir = path.Join(app.Config.Paths.ConfigDir, "sockets")
+				app.Config.Paths.SocketDir = path.Join(app.Config.Paths.DataDir, "sockets")
 			}
 			return nil
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&app.Config.Paths.ConfigDir, "config-dir", "c", defaultConfigDir, "Location of Lobby configuration files")
+	cmd.PersistentFlags().StringVarP(&configPath, "config-file", "c", "./lobby.toml", "Path to the Lobby config file")
+	cmd.PersistentFlags().StringVar(&app.Config.Paths.DataDir, "data-dir", defaultDataDir, "Path to Lobby data files")
 
 	return &rootCmd{
 		Command: &cmd,

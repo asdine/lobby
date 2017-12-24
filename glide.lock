@@ -1,5 +1,5 @@
-hash: 4050a519cc4dfd874e0a4b4840602c9ef1a7f7d467cfa5e2345674dd1829ed78
-updated: 2017-12-24T16:58:26.246763764+01:00
+hash: c0be1ae2b3eaa89a35b20bb5bc8feb77cd9dac99e9f8b29e09ea4422b2f387f0
+updated: 2017-12-24T18:56:03.874961242+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 521b25f4b05fd26bec69d9dedeb8f9c9a83939a8
@@ -49,8 +49,6 @@ imports:
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
-- name: github.com/mitchellh/go-homedir
-  version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nsqio/go-nsq
   version: eee57a3ac4174c55924125bb15eeeda8cffb6e6f
 - name: github.com/pkg/errors
@@ -123,7 +121,7 @@ testImports:
   subpackages:
   - winterm
 - name: github.com/cenk/backoff
-  version: 309aa717adbf351e92864cbedf9cca0b769a4b5a
+  version: 2ea60e5f094469f9e65adb9cd103795b73ae743e
 - name: github.com/containerd/continuity
   version: b2b946a77f5973f420514090d6f6dd58b08303f0
   subpackages:

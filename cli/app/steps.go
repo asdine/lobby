@@ -65,7 +65,7 @@ func (directoriesStep) teardown(ctx context.Context, app *App) error {
 type registryStep int
 
 func (registryStep) setup(ctx context.Context, app *App) error {
-	dataPath := path.Join(app.Config.Paths.ConfigDir, "data")
+	dataPath := path.Join(app.Config.Paths.DataDir, "db")
 	err := createDir(dataPath)
 	if err != nil {
 		return err
@@ -234,7 +234,7 @@ func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
 			ctx,
 			name,
 			path.Join(app.Config.Paths.PluginDir, fmt.Sprintf("lobby-%s", name)),
-			app.Config.Paths.ConfigDir,
+			app.Config.Paths.DataDir,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to run backend '%s'", name)

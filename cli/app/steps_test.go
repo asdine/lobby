@@ -22,8 +22,8 @@ func appHelper(t *testing.T) (*App, func()) {
 
 	var app App
 	app.errc = make(chan error)
-	app.Config.Paths.ConfigDir = path.Join(dir, "config")
-	app.Config.Paths.SocketDir = path.Join(app.Config.Paths.ConfigDir, "sockets")
+	app.Config.Paths.DataDir = path.Join(dir, "data")
+	app.Config.Paths.SocketDir = path.Join(app.Config.Paths.DataDir, "sockets")
 	err = app.Config.Paths.Create()
 	require.NoError(t, err)
 
@@ -171,7 +171,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.DataDir = "dataDir"
 		app.Config.Paths.PluginDir = "pluginDir"
 		app.Config.Plugins.Backend = make([]string, 5)
 		var m mock.Registry
@@ -183,7 +183,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		s := newBackendPluginsStep()
 		var i int
-		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, dataDir string) (lobby.Backend, lobby.Plugin, error) {
 			i++
 			if i == 3 {
 				return nil, nil, errors.New("unexpected error")
@@ -208,7 +208,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.DataDir = "dataDir"
 		app.Config.Paths.PluginDir = "pluginDir"
 		app.Config.Plugins.Backend = make([]string, 5)
 		var m mock.Registry
@@ -219,7 +219,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 		}
 
 		s := newBackendPluginsStep()
-		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, dataDir string) (lobby.Backend, lobby.Plugin, error) {
 			return new(mock.Backend), new(mock.Plugin), nil
 		}
 
@@ -253,7 +253,7 @@ func TestBackendPluginsSteps(t *testing.T) {
 		app, cleanup := appHelper(t)
 		defer cleanup()
 
-		app.Config.Paths.ConfigDir = "configDir"
+		app.Config.Paths.DataDir = "dataDir"
 		app.Config.Paths.PluginDir = "pluginDir"
 		app.Config.Plugins.Backend = make([]string, 5)
 		var m mock.Registry
@@ -265,10 +265,10 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		s := newBackendPluginsStep()
 		var i int
-		s.pluginLoader = func(ctx context.Context, name, cmdPath, configDir string) (lobby.Backend, lobby.Plugin, error) {
+		s.pluginLoader = func(ctx context.Context, name, cmdPath, dataDir string) (lobby.Backend, lobby.Plugin, error) {
 			require.Equal(t, fmt.Sprintf("plugin%d", i), name)
 			require.Equal(t, fmt.Sprintf("pluginDir/lobby-plugin%d", i), cmdPath)
-			require.Equal(t, "configDir", configDir)
+			require.Equal(t, "dataDir", dataDir)
 			i++
 			return new(mock.Backend), new(mock.Plugin), nil
 		}

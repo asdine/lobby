@@ -22,15 +22,15 @@ type Plugins struct {
 
 // Paths contains directory paths needed by the app.
 type Paths struct {
-	ConfigDir string `toml:"-"`
+	DataDir   string `toml:"-"`
 	PluginDir string `toml:"plugin-dir"`
 	SocketDir string `toml:"socket-dir"`
 }
 
 // Create the ConfigDir and SocketDir if they don't exist.
 func (p *Paths) Create() error {
-	if p.ConfigDir == "" {
-		return errors.New("unspecified config directory")
+	if p.DataDir == "" {
+		return errors.New("unspecified data directory")
 	}
 
 	if p.SocketDir == "" {
@@ -38,7 +38,7 @@ func (p *Paths) Create() error {
 	}
 
 	paths := []string{
-		p.ConfigDir,
+		p.DataDir,
 		p.SocketDir,
 	}
 
