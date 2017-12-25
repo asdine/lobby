@@ -20,7 +20,7 @@ func newRunCmd(app *app.App) *cobra.Command {
 		Short: "Run the lobby server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if backends != nil {
-				app.Config.Plugins.Backend = backends
+				app.Config.Plugins.Backends = backends
 			}
 
 			if pluginDir != "" {

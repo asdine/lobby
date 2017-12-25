@@ -19,7 +19,7 @@ var (
 	endpoints   = []string{"localhost:2379"}
 )
 
-func etcdHelper(t *testing.T) (*clientv3.Client, func()) {
+func etcdHelper(t require.TestingT) (*clientv3.Client, func()) {
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: dialTimeout,
@@ -41,12 +41,12 @@ func TestEtcdRegistry(t *testing.T) {
 
 	reg, err := NewRegistry(client, "lobby-tests")
 	require.NoError(t, err)
-	require.Len(t, reg.topics, 5)
+	require.Equal(t, reg.topics.size(), 5)
 
 	reg.RegisterBackend("backend", new(mock.Backend))
 	err = reg.Create("backend", "sometopic")
 	require.NoError(t, err)
-	require.Len(t, reg.topics, 6)
+	require.Equal(t, reg.topics.size(), 6)
 
 	_, err = reg.Topic("sometopic")
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestEtcdRegistry(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func createTopics(t *testing.T, client *clientv3.Client, namespace string, count int) {
+func createTopics(t require.TestingT, client *clientv3.Client, namespace string, count int) {
 	for i := 0; i < count; i++ {
 		key := fmt.Sprintf("%s/topics/topic-%d", namespace, i)
 		raw, err := proto.Marshal(&etcdpb.Topic{

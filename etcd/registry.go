@@ -30,7 +30,9 @@ func NewRegistry(client *clientv3.Client, namespace string) (*Registry, error) {
 		namespace:    namespace,
 		topicsPrefix: topicsPrefix,
 		backends:     make(map[string]lobby.Backend),
-		topics:       make(map[string]*etcdpb.Topic),
+		topics: &topics{
+			topics: make(map[string]*etcdpb.Topic),
+		},
 	}
 
 	resp, err := client.Get(ctx, topicsPrefix, clientv3.WithPrefix())
@@ -60,8 +62,7 @@ type Registry struct {
 	namespace     string
 	topicsPrefix  string
 	topicsWatcher clientv3.Watcher
-	topics        map[string]*etcdpb.Topic
-	mu            sync.RWMutex
+	topics        *topics
 	wg            sync.WaitGroup
 	backends      map[string]lobby.Backend
 }
@@ -94,10 +95,7 @@ func (r *Registry) storeTopic(key, value []byte) error {
 	}
 
 	name := strings.TrimPrefix(string(key), r.topicsPrefix)
-
-	r.mu.Lock()
-	r.topics[name] = &t
-	r.mu.Unlock()
+	r.topics.set(name, &t)
 	return nil
 }
 
@@ -107,20 +105,15 @@ func (r *Registry) Create(backendName, topicName string) error {
 		return lobby.ErrBackendNotFound
 	}
 
-	r.mu.Lock()
-	_, ok := r.topics[topicName]
-	if ok {
-		r.mu.Unlock()
-		return lobby.ErrTopicAlreadyExists
-	}
-
 	topic := etcdpb.Topic{
 		Name:    topicName,
 		Backend: backendName,
 	}
 
-	r.topics[topicName] = &topic
-	r.mu.Unlock()
+	exists := r.topics.setIfNotExist(topicName, &topic)
+	if exists {
+		return lobby.ErrTopicAlreadyExists
+	}
 
 	raw, err := proto.Marshal(&topic)
 	if err != nil {
@@ -133,10 +126,7 @@ func (r *Registry) Create(backendName, topicName string) error {
 
 // Topic returns the selected topic from the Backend.
 func (r *Registry) Topic(name string) (lobby.Topic, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	topic, ok := r.topics[name]
+	topic, ok := r.topics.get(name)
 	if !ok {
 		return nil, lobby.ErrTopicNotFound
 	}
@@ -165,4 +155,39 @@ func (r *Registry) Close() error {
 		return errors.Wrap(err, "failed to close etcd watcher")
 	}
 	return nil
+}
+
+type topics struct {
+	sync.RWMutex
+	topics map[string]*etcdpb.Topic
+}
+
+func (t *topics) set(k string, v *etcdpb.Topic) {
+	t.Lock()
+	t.topics[k] = v
+	t.Unlock()
+}
+
+func (t *topics) setIfNotExist(k string, v *etcdpb.Topic) (exists bool) {
+	t.Lock()
+	_, exists = t.topics[k]
+	if !exists {
+		t.topics[k] = v
+	}
+	t.Unlock()
+	return
+}
+
+func (t *topics) get(k string) (*etcdpb.Topic, bool) {
+	t.RLock()
+	tp, ok := t.topics[k]
+	t.RUnlock()
+	return tp, ok
+}
+
+func (t *topics) size() int {
+	t.RLock()
+	size := len(t.topics)
+	t.RUnlock()
+	return size
 }

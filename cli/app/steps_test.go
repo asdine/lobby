@@ -173,12 +173,12 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		app.Config.Paths.DataDir = "dataDir"
 		app.Config.Paths.PluginDir = "pluginDir"
-		app.Config.Plugins.Backend = make([]string, 5)
+		app.Config.Plugins.Backends = make([]string, 5)
 		var m mock.Registry
 		app.registry = &m
 
 		for i := 0; i < 5; i++ {
-			app.Config.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Backends[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newBackendPluginsStep()
@@ -210,12 +210,12 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		app.Config.Paths.DataDir = "dataDir"
 		app.Config.Paths.PluginDir = "pluginDir"
-		app.Config.Plugins.Backend = make([]string, 5)
+		app.Config.Plugins.Backends = make([]string, 5)
 		var m mock.Registry
 		app.registry = &m
 
 		for i := 0; i < 5; i++ {
-			app.Config.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Backends[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newBackendPluginsStep()
@@ -255,12 +255,12 @@ func TestBackendPluginsSteps(t *testing.T) {
 
 		app.Config.Paths.DataDir = "dataDir"
 		app.Config.Paths.PluginDir = "pluginDir"
-		app.Config.Plugins.Backend = make([]string, 5)
+		app.Config.Plugins.Backends = make([]string, 5)
 		var m mock.Registry
 		app.registry = &m
 
 		for i := 0; i < 5; i++ {
-			app.Config.Plugins.Backend[i] = fmt.Sprintf("plugin%d", i)
+			app.Config.Plugins.Backends[i] = fmt.Sprintf("plugin%d", i)
 		}
 
 		s := newBackendPluginsStep()

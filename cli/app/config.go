@@ -19,8 +19,8 @@ type Config struct {
 
 // Plugins contains the list of backend and server plugins.
 type Plugins struct {
-	Backend []string
-	Config  map[string]toml.Primitive
+	Backends []string
+	Config   map[string]toml.Primitive
 }
 
 // Paths contains directory paths needed by the app.

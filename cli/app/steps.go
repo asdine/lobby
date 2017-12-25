@@ -274,7 +274,7 @@ type backendPluginsStep struct {
 }
 
 func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
-	for _, name := range app.Config.Plugins.Backend {
+	for _, name := range app.Config.Plugins.Backends {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
