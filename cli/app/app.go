@@ -30,9 +30,9 @@ func (a *App) Run(ctx context.Context) error {
 
 	if a.steps == nil {
 		a.steps = []step{
-			new(directoriesStep),
+			directoriesStep(),
 			new(registryStep),
-			new(boltBackendStep),
+			boltBackendStep(),
 			newBackendPluginsStep(),
 			newGRPCUnixSocketStep(a),
 			newGRPCPortStep(a),

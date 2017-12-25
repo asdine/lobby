@@ -45,6 +45,7 @@ func newRootCmd(app *app.App) *rootCmd {
 
 	cmd.PersistentFlags().StringVarP(&configPath, "config-file", "c", "./lobby.toml", "Path to the Lobby config file")
 	cmd.PersistentFlags().StringVar(&app.Config.Paths.DataDir, "data-dir", defaultDataDir, "Path to Lobby data files")
+	cmd.PersistentFlags().BoolVar(&app.Config.Debug, "debug", false, "Enable debug mode")
 
 	return &rootCmd{
 		Command: &cmd,

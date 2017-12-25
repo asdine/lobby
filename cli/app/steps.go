@@ -53,14 +53,26 @@ func (s steps) teardown(ctx context.Context, app *App) []error {
 	return errs
 }
 
-type directoriesStep int
-
-func (directoriesStep) setup(ctx context.Context, app *App) error {
-	return app.Config.Paths.Create()
+func setupFunc(fn func(ctx context.Context, app *App) error) step {
+	return &stepFn{fn: fn}
 }
 
-func (directoriesStep) teardown(ctx context.Context, app *App) error {
+type stepFn struct {
+	fn func(ctx context.Context, app *App) error
+}
+
+func (s *stepFn) setup(ctx context.Context, app *App) error {
+	return s.fn(ctx, app)
+}
+
+func (s *stepFn) teardown(ctx context.Context, app *App) error {
 	return nil
+}
+
+func directoriesStep() step {
+	return setupFunc(func(ctx context.Context, app *App) error {
+		return app.Config.Paths.Create()
+	})
 }
 
 type registryStep int
@@ -103,7 +115,7 @@ func boltRegistry(ctx context.Context, app *App) (lobby.Registry, error) {
 
 	registryPath := path.Join(boltPath, "registry.db")
 
-	return bolt.NewRegistry(registryPath)
+	return bolt.NewRegistry(registryPath, log.New(log.Prefix("bolt registry:"), log.Debug(app.Config.Debug)))
 }
 
 func etcdRegistry(ctx context.Context, app *App) (lobby.Registry, error) {
@@ -130,35 +142,35 @@ func (registryStep) teardown(ctx context.Context, app *App) error {
 	return nil
 }
 
-type boltBackendStep int
+func boltBackendStep() step {
+	return setupFunc(func(ctx context.Context, app *App) error {
+		if len(app.Config.Plugins.Backends) > 0 && !app.Config.Bolt.Backend {
+			return nil
+		}
 
-func (boltBackendStep) setup(ctx context.Context, app *App) error {
-	dataPath := path.Join(app.Config.Paths.DataDir, "db")
-	err := createDir(dataPath)
-	if err != nil {
-		return err
-	}
+		dataPath := path.Join(app.Config.Paths.DataDir, "db")
+		err := createDir(dataPath)
+		if err != nil {
+			return err
+		}
 
-	boltPath := path.Join(dataPath, "bolt")
-	err = createDir(boltPath)
-	if err != nil {
-		return err
-	}
+		boltPath := path.Join(dataPath, "bolt")
+		err = createDir(boltPath)
+		if err != nil {
+			return err
+		}
 
-	backendPath := path.Join(boltPath, "backend.db")
+		backendPath := path.Join(boltPath, "backend.db")
 
-	// Creating default backend.
-	bck, err := bolt.NewBackend(backendPath)
-	if err != nil {
-		return err
-	}
+		// Creating default backend.
+		bck, err := bolt.NewBackend(backendPath)
+		if err != nil {
+			return err
+		}
 
-	app.registry.RegisterBackend("bolt", bck)
-	return nil
-}
-
-func (boltBackendStep) teardown(ctx context.Context, app *App) error {
-	return nil
+		app.registry.RegisterBackend("bolt", bck)
+		return nil
+	})
 }
 
 func newGRPCUnixSocketStep(app *App) *gRPCUnixSocketStep {

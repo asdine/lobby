@@ -13,9 +13,12 @@ import (
 type Config struct {
 	Debug    bool
 	Registry string
-	Etcd     clientv3.Config
-	Paths    Paths
-	Plugins  Plugins
+	Bolt     struct {
+		Backend bool
+	}
+	Etcd    clientv3.Config
+	Paths   Paths
+	Plugins Plugins
 }
 
 // Plugins contains the list of backend and server plugins.
@@ -26,7 +29,7 @@ type Plugins struct {
 
 // Paths contains directory paths needed by the app.
 type Paths struct {
-	DataDir   string `toml:"-"`
+	DataDir   string `toml:"data-dir"`
 	PluginDir string `toml:"plugin-dir"`
 	SocketDir string `toml:"socket-dir"`
 }

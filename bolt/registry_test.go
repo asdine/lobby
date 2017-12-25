@@ -1,10 +1,12 @@
 package bolt_test
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/bolt"
+	"github.com/asdine/lobby/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +21,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("create", func(t *testing.T) {
 		pathReg, cleanupReg := preparePath(t, "reg.db")
 		defer cleanupReg()
-		r, err := bolt.NewRegistry(pathReg)
+		r, err := bolt.NewRegistry(pathReg, log.New(log.Output(ioutil.Discard)))
 		require.NoError(t, err)
 		defer r.Close()
 
@@ -45,7 +47,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("topic", func(t *testing.T) {
 		pathReg, cleanupReg := preparePath(t, "reg.db")
 		defer cleanupReg()
-		r, err := bolt.NewRegistry(pathReg)
+		r, err := bolt.NewRegistry(pathReg, log.New(log.Output(ioutil.Discard)))
 		require.NoError(t, err)
 		defer r.Close()
 
