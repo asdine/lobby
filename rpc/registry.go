@@ -2,19 +2,18 @@ package rpc
 
 import (
 	"context"
-	"log"
-	"os"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/rpc/proto"
 	"github.com/asdine/lobby/validation"
 	"google.golang.org/grpc"
 )
 
-func newRegistryService(r lobby.Registry) *registryService {
+func newRegistryService(r lobby.Registry, logger *log.Logger) *registryService {
 	return &registryService{
 		registry: r,
-		logger:   log.New(os.Stderr, "", log.LstdFlags),
+		logger:   logger,
 	}
 }
 

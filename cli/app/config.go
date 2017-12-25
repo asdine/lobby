@@ -11,6 +11,7 @@ import (
 
 // Config of the application.
 type Config struct {
+	Debug    bool
 	Registry string
 	Etcd     clientv3.Config
 	Paths    Paths

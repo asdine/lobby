@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/cli"
 	nsq "github.com/nsqio/go-nsq"
@@ -38,6 +41,8 @@ func NewBackend(addr string) (*Backend, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	p.SetLogger(log.New(os.Stderr, "", 0), nsq.LogLevelInfo)
 
 	return &Backend{
 		producer: p,

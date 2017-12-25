@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/rpc"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -22,7 +23,7 @@ func newServer(t *testing.T, r lobby.Registry) (*grpc.ClientConn, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(rpc.WithTopicService(r), rpc.WithRegistryService(r))
+	srv := rpc.NewServer(log.New(ioutil.Discard, ""), rpc.WithTopicService(r), rpc.WithRegistryService(r))
 
 	go func() {
 		srv.Serve(l)

@@ -2,10 +2,10 @@ package http
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/validation"
 )
 
@@ -19,7 +19,7 @@ const (
 // writeError writes an API error message to the response and logger.
 func writeError(w http.ResponseWriter, err error, code int, logger *log.Logger) {
 	// Log error.
-	logger.Printf("http error: %s (code=%d)", err, code)
+	logger.Debugf("http error: %s (code=%d)", err, code)
 
 	// Hide error from client if it is internal.
 	if code == http.StatusInternalServerError {

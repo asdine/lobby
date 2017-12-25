@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/validation"
 	"github.com/julienschmidt/httprouter"
 )
@@ -70,7 +70,7 @@ func (s *wrapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handler.ServeHTTP(rw, r)
 	}
 
-	s.logger.Printf(
+	s.logger.Debugf(
 		"%s %s %s %d %d %s",
 		clientIP(r),
 		r.Method,

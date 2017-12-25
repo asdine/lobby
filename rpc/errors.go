@@ -1,10 +1,10 @@
 package rpc
 
 import (
-	"log"
 	"strings"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/validation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -34,7 +34,7 @@ func newError(err error, logger *log.Logger) error {
 	}
 
 	// Log error.
-	logger.Printf("grpc error: %s (code=%s)", err, code.String())
+	logger.Debugf("grpc error: %s (code=%s)", err, code.String())
 
 	// Hide error from client if it is internal.
 	if code == codes.Unknown {

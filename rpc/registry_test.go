@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/mock"
 	"github.com/asdine/lobby/rpc"
 	"github.com/asdine/lobby/rpc/proto"
@@ -192,7 +193,7 @@ func newRegistry(t *testing.T, r lobby.Registry) (*rpc.Registry, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(rpc.WithTopicService(r), rpc.WithRegistryService(r))
+	srv := rpc.NewServer(log.New(ioutil.Discard, ""), rpc.WithTopicService(r), rpc.WithRegistryService(r))
 
 	go func() {
 		srv.Serve(l)

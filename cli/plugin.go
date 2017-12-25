@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	stdlog "log"
 	"net"
 	"os"
 	"os/signal"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/asdine/lobby"
 	cliapp "github.com/asdine/lobby/cli/app"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/rpc"
 	"github.com/spf13/cobra"
 )
@@ -48,7 +50,8 @@ func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) 
 		}
 		defer l.Close()
 
-		srv := rpc.NewServer(rpc.WithTopicService(bck))
+		stdlog.SetFlags(0)
+		srv := rpc.NewServer(log.New(os.Stderr, ""), rpc.WithTopicService(bck))
 
 		go func() {
 			defer wg.Done()
@@ -69,6 +72,4 @@ func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) 
 	if err != nil {
 		os.Exit(1)
 	}
-
-	os.Exit(0)
 }

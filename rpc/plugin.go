@@ -81,9 +81,12 @@ func LoadPlugin(ctx context.Context, name, cmdPath, dataDir string) (lobby.Plugi
 	}
 
 	cmd := execCommand(cmdPath, "--data-dir", dataDir)
-	prefix := fmt.Sprintf("[%s] ", name)
-	cmd.Stdout = lobby.NewPrefixWriter(prefix, os.Stdout)
-	cmd.Stderr = lobby.NewPrefixWriter(prefix, os.Stderr)
+	prefixFn := func() []byte {
+		return []byte(time.Now().Format("2006/01/02 15:04:05") + " [" + name + "] ")
+	}
+
+	cmd.Stdout = lobby.NewFuncPrefixWriter(prefixFn, os.Stdout)
+	cmd.Stderr = lobby.NewFuncPrefixWriter(prefixFn, os.Stderr)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 		Pgid:    0,

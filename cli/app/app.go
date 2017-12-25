@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
-	"log"
 	"os"
 	"sync"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 )
 
 // App is the main application. It bootstraps all the components
@@ -24,7 +24,7 @@ type App struct {
 // NewApp create a configured App.
 func NewApp() *App {
 	app := App{
-		Logger: log.New(os.Stderr, "[lobby] ", log.LstdFlags),
+		Logger: log.New(os.Stderr, "lobby:"),
 		errc:   make(chan error),
 	}
 
@@ -44,6 +44,9 @@ func NewApp() *App {
 // Run all the app components. Can be gracefully shutdown using the provided context.
 func (a *App) Run(ctx context.Context) error {
 	var errs Errors
+
+	a.Logger.DebugEnabled = a.Config.Debug
+	a.logLobbyInfos()
 
 	err := a.steps.setup(ctx, a)
 	if err != nil && err != context.Canceled {
@@ -87,4 +90,9 @@ func (a *App) Run(ctx context.Context) error {
 		return errs
 	}
 	return nil
+}
+
+func (a *App) logLobbyInfos() {
+	a.Logger.Println("lobby Version:", lobby.Version)
+	a.Logger.Debug("Debug mode enabled")
 }

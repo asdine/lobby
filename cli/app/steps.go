@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path"
@@ -13,6 +12,7 @@ import (
 	"github.com/asdine/lobby/bolt"
 	"github.com/asdine/lobby/etcd"
 	"github.com/asdine/lobby/http"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/rpc"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
@@ -111,7 +111,7 @@ func etcdRegistry(ctx context.Context, app *App) (lobby.Registry, error) {
 		return nil, err
 	}
 
-	return etcd.NewRegistry(client, "lobby")
+	return etcd.NewRegistry(client, log.New(os.Stderr, "etcd registry:"), "lobby")
 }
 
 func (registryStep) teardown(ctx context.Context, app *App) error {
@@ -158,7 +158,7 @@ func (boltBackendStep) teardown(ctx context.Context, app *App) error {
 func newGRPCUnixSocketStep() *gRPCUnixSocketStep {
 	return &gRPCUnixSocketStep{
 		serverStep: &serverStep{
-			logger: log.New(os.Stderr, "[gRPC] ", log.LstdFlags),
+			logger: log.New(os.Stderr, "gRPC server:"),
 		},
 	}
 }
@@ -174,6 +174,7 @@ func (g *gRPCUnixSocketStep) setup(ctx context.Context, app *App) error {
 	}
 
 	srv := rpc.NewServer(
+		g.serverStep.logger,
 		rpc.WithTopicService(app.registry),
 		rpc.WithRegistryService(app.registry),
 	)
@@ -183,7 +184,7 @@ func (g *gRPCUnixSocketStep) setup(ctx context.Context, app *App) error {
 func newGRPCPortStep() *gRPCPortStep {
 	return &gRPCPortStep{
 		serverStep: &serverStep{
-			logger: log.New(os.Stderr, "[gRPC] ", log.LstdFlags),
+			logger: log.New(os.Stderr, "gRPC server:"),
 		},
 	}
 }
@@ -199,6 +200,7 @@ func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
 	}
 
 	srv := rpc.NewServer(
+		g.serverStep.logger,
 		rpc.WithTopicService(app.registry),
 		rpc.WithRegistryService(app.registry),
 	)
@@ -208,7 +210,7 @@ func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
 func newHTTPStep() *httpStep {
 	return &httpStep{
 		serverStep: &serverStep{
-			logger: log.New(os.Stderr, "[http] ", log.LstdFlags),
+			logger: log.New(os.Stderr, "http server:"),
 		},
 	}
 }
@@ -242,7 +244,7 @@ func (s *serverStep) runServer(srv lobby.Server, l net.Listener, app *App) error
 		defer app.wg.Done()
 
 		s.srv = srv
-		s.logger.Printf("Listening %s requests on %s.\n", srv.Name(), l.Addr().String())
+		s.logger.Printf("Listening for requests on %s.\n", l.Addr().String())
 		close(c)
 		err := srv.Serve(l)
 		if err != nil {
@@ -263,12 +265,10 @@ func (s *serverStep) teardown(ctx context.Context, app *App) error {
 func newBackendPluginsStep() *backendPluginsStep {
 	return &backendPluginsStep{
 		pluginLoader: rpc.LoadBackendPlugin,
-		logger:       log.New(os.Stderr, "[lobby] ", log.LstdFlags),
 	}
 }
 
 type backendPluginsStep struct {
-	logger       *log.Logger
 	pluginLoader func(context.Context, string, string, string) (lobby.Backend, lobby.Plugin, error)
 	plugins      []lobby.Plugin
 }

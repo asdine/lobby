@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/mock"
 	"github.com/asdine/lobby/rpc"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(rpc.WithTopicService(b))
+	srv := rpc.NewServer(log.New(ioutil.Discard, ""), rpc.WithTopicService(b))
 
 	var wg sync.WaitGroup
 	wg.Add(1)

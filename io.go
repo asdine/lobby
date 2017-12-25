@@ -13,11 +13,20 @@ func NewPrefixWriter(prefix string, to io.Writer) *PrefixWriter {
 	}
 }
 
+// NewFuncPrefixWriter creates a PrefixWriter that uses a function to generate a prefix.
+func NewFuncPrefixWriter(prefixFn func() []byte, to io.Writer) *PrefixWriter {
+	return &PrefixWriter{
+		prefixFn: prefixFn,
+		to:       to,
+	}
+}
+
 // PrefixWriter is a writer that adds a prefix before every line.
 type PrefixWriter struct {
-	to     io.Writer
-	buf    bytes.Buffer
-	prefix []byte
+	to       io.Writer
+	buf      bytes.Buffer
+	prefix   []byte
+	prefixFn func() []byte
 }
 
 func (w *PrefixWriter) Write(p []byte) (int, error) {
@@ -42,7 +51,11 @@ func (w *PrefixWriter) Write(p []byte) (int, error) {
 			return n, err
 		}
 
-		n, err = w.to.Write(w.prefix)
+		if w.prefixFn != nil {
+			n, err = w.to.Write(w.prefixFn())
+		} else {
+			n, err = w.to.Write(w.prefix)
+		}
 		if err != nil {
 			return n, err
 		}

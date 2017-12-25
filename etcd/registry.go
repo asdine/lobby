@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"log"
 	"path"
 	"strings"
 	"sync"
@@ -10,22 +9,22 @@ import (
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/etcd/etcdpb"
+	"github.com/asdine/lobby/log"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 )
 
-var _ lobby.Registry = new(Registry)
-
 // NewRegistry returns an etcd Registry.
-func NewRegistry(client *clientv3.Client, namespace string) (*Registry, error) {
+func NewRegistry(client *clientv3.Client, logger *log.Logger, namespace string) (*Registry, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	namespace = path.Join(strings.TrimLeft(namespace, "/"), "/")
 	topicsPrefix := path.Join(namespace, "topics") + "/"
 	reg := Registry{
+		logger:       logger,
 		client:       client,
 		namespace:    namespace,
 		topicsPrefix: topicsPrefix,
@@ -59,6 +58,7 @@ func NewRegistry(client *clientv3.Client, namespace string) (*Registry, error) {
 // Registry is an etcd registry.
 type Registry struct {
 	client        *clientv3.Client
+	logger        *log.Logger
 	namespace     string
 	topicsPrefix  string
 	topicsWatcher clientv3.Watcher
@@ -76,13 +76,20 @@ func (r *Registry) watchTopics(c clientv3.WatchChan) {
 	defer r.wg.Done()
 
 	for wresp := range c {
+		r.logger.Debugf("Synchronizing %d topic events\n", len(wresp.Events))
 		for _, ev := range wresp.Events {
 			switch ev.Type {
 			case mvccpb.PUT:
 				err := r.storeTopic(ev.Kv.Key, ev.Kv.Value)
 				if err != nil {
-					log.Printf("Can't decode topic %s from etcd registry\n", ev.Kv.Key)
+					r.logger.Printf("Can't decode topic %s from etcd registry\n", ev.Kv.Key)
+				} else {
+					r.logger.Debugf("Synchronizing new topic %s from etcd registry\n", ev.Kv.Key)
 				}
+			case mvccpb.DELETE:
+				k := string(ev.Kv.Key)
+				r.topics.delete(k)
+				r.logger.Debugf("Deleting topic %s\n", k)
 			}
 		}
 	}
@@ -183,6 +190,12 @@ func (t *topics) get(k string) (*etcdpb.Topic, bool) {
 	tp, ok := t.topics[k]
 	t.RUnlock()
 	return tp, ok
+}
+
+func (t *topics) delete(k string) {
+	t.Lock()
+	delete(t.topics, k)
+	t.Unlock()
 }
 
 func (t *topics) size() int {
