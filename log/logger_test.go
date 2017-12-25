@@ -20,7 +20,7 @@ func TestLogger(t *testing.T) {
 		t.Run("WithPrefix", func(t *testing.T) {
 			var buff bytes.Buffer
 			stdlog.SetFlags(0)
-			logger := log.New(&buff, "prefix")
+			logger := log.New(log.Output(&buff), log.Prefix("prefix"))
 			test(logger)
 			require.Equal(t, "i | prefix message\n", buff.String())
 		})
@@ -28,7 +28,7 @@ func TestLogger(t *testing.T) {
 		t.Run("WithoutPrefix", func(t *testing.T) {
 			var buff bytes.Buffer
 			stdlog.SetFlags(0)
-			logger := log.New(&buff, "")
+			logger := log.New(log.Output(&buff))
 			test(logger)
 			require.Equal(t, "i | message\n", buff.String())
 		})
@@ -45,7 +45,7 @@ func TestLoggerDebug(t *testing.T) {
 		t.Run("WithoutDebug", func(t *testing.T) {
 			var buff bytes.Buffer
 			stdlog.SetFlags(0)
-			logger := log.New(&buff, "prefix")
+			logger := log.New(log.Output(&buff), log.Prefix("prefix"))
 			test(logger)
 			require.Equal(t, "", buff.String())
 		})
@@ -53,8 +53,11 @@ func TestLoggerDebug(t *testing.T) {
 		t.Run("WithDebugAndPrefix", func(t *testing.T) {
 			var buff bytes.Buffer
 			stdlog.SetFlags(0)
-			logger := log.New(&buff, "prefix")
-			logger.DebugEnabled = true
+			logger := log.New(
+				log.Output(&buff),
+				log.Prefix("prefix"),
+				log.Debug(true),
+			)
 			test(logger)
 			require.Equal(t, "d | prefix message\n", buff.String())
 		})
@@ -62,8 +65,10 @@ func TestLoggerDebug(t *testing.T) {
 		t.Run("WithDebugNoPrefix", func(t *testing.T) {
 			var buff bytes.Buffer
 			stdlog.SetFlags(0)
-			logger := log.New(&buff, "")
-			logger.DebugEnabled = true
+			logger := log.New(
+				log.Output(&buff),
+				log.Debug(true),
+			)
 			test(logger)
 			require.Equal(t, "d | message\n", buff.String())
 		})
@@ -71,7 +76,7 @@ func TestLoggerDebug(t *testing.T) {
 }
 
 func BenchmarkLog(b *testing.B) {
-	logger := log.New(ioutil.Discard, "prefix")
+	logger := log.New(log.Output(ioutil.Discard), log.Prefix("prefix"))
 	vs := make([]interface{}, 5)
 	for i := 0; i < 5; i++ {
 		vs[i] = "foo"

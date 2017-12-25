@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"path"
 	"time"
 
@@ -73,11 +72,13 @@ func (registryStep) setup(ctx context.Context, app *App) error {
 	case "":
 		fallthrough
 	case "bolt":
+		app.Logger.Debug("Using bolt registry")
 		reg, err = boltRegistry(ctx, app)
 	case "etcd":
+		app.Logger.Debug("Using etcd registry")
 		reg, err = etcdRegistry(ctx, app)
 	default:
-		return errors.New("unknown registry")
+		err = errors.New("unknown registry")
 	}
 	if err != nil {
 		return err
@@ -111,11 +112,16 @@ func etcdRegistry(ctx context.Context, app *App) (lobby.Registry, error) {
 		return nil, err
 	}
 
-	return etcd.NewRegistry(client, log.New(os.Stderr, "etcd registry:"), "lobby")
+	return etcd.NewRegistry(
+		client,
+		log.New(log.Prefix("etcd registry:"), log.Debug(app.Config.Debug)),
+		"lobby",
+	)
 }
 
 func (registryStep) teardown(ctx context.Context, app *App) error {
 	if app.registry != nil {
+		app.Logger.Debug("Closing registry")
 		err := app.registry.Close()
 		app.registry = nil
 		return err
@@ -155,10 +161,10 @@ func (boltBackendStep) teardown(ctx context.Context, app *App) error {
 	return nil
 }
 
-func newGRPCUnixSocketStep() *gRPCUnixSocketStep {
+func newGRPCUnixSocketStep(app *App) *gRPCUnixSocketStep {
 	return &gRPCUnixSocketStep{
 		serverStep: &serverStep{
-			logger: log.New(os.Stderr, "gRPC server:"),
+			logger: log.New(log.Prefix("gRPC server:"), log.Debug(app.Config.Debug)),
 		},
 	}
 }
@@ -181,10 +187,10 @@ func (g *gRPCUnixSocketStep) setup(ctx context.Context, app *App) error {
 	return g.runServer(srv, l, app)
 }
 
-func newGRPCPortStep() *gRPCPortStep {
+func newGRPCPortStep(app *App) *gRPCPortStep {
 	return &gRPCPortStep{
 		serverStep: &serverStep{
-			logger: log.New(os.Stderr, "gRPC server:"),
+			logger: log.New(log.Prefix("gRPC server:"), log.Debug(app.Config.Debug)),
 		},
 	}
 }
@@ -207,10 +213,10 @@ func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
 	return g.runServer(srv, l, app)
 }
 
-func newHTTPStep() *httpStep {
+func newHTTPStep(app *App) *httpStep {
 	return &httpStep{
 		serverStep: &serverStep{
-			logger: log.New(os.Stderr, "http server:"),
+			logger: log.New(log.Prefix("http server:"), log.Debug(app.Config.Debug)),
 		},
 	}
 }
@@ -257,6 +263,7 @@ func (s *serverStep) runServer(srv lobby.Server, l net.Listener, app *App) error
 }
 
 func (s *serverStep) teardown(ctx context.Context, app *App) error {
+	s.logger.Debugf("Shutting down")
 	err := s.srv.Stop()
 	s.srv = nil
 	return err
@@ -288,6 +295,7 @@ func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
 			return errors.Wrapf(err, "failed to run backend '%s'", name)
 		}
 
+		app.Logger.Debugf("Started %s plugin \n", name)
 		app.registry.RegisterBackend(name, bck)
 		s.plugins = append(s.plugins, plg)
 	}
@@ -301,6 +309,13 @@ func (s *backendPluginsStep) teardown(ctx context.Context, app *App) error {
 		if err != nil {
 			app.errc <- err
 		}
+
+		err = p.Wait()
+		if err != nil {
+			app.errc <- err
+		}
+
+		app.Logger.Debugf("Stopped %s plugin\n", p.Name())
 	}
 
 	return nil

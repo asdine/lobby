@@ -44,13 +44,15 @@ func newRunCmd(app *app.App) *cobra.Command {
 			var err error
 
 			select {
-			case <-quit:
+			case sig := <-quit:
 				fmt.Println()
+				app.Logger.Printf("Received %s signal. Shutting down...\n", sig)
 				cancel()
 				err = <-errc
 			case err = <-errc:
 			}
 
+			app.Logger.Println("Shutdown complete")
 			return err
 		},
 	}

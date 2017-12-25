@@ -32,7 +32,7 @@ func (s *mockStep) teardown(ctx context.Context, app *App) error {
 
 func TestApp(t *testing.T) {
 	t.Run("SetupError", func(t *testing.T) {
-		app := NewApp()
+		var app App
 
 		m := mockStep{
 			setupFn: func(ctx context.Context, app *App) error {
@@ -51,7 +51,7 @@ func TestApp(t *testing.T) {
 	})
 
 	t.Run("Goroutine error", func(t *testing.T) {
-		app := NewApp()
+		var app App
 
 		m := mockStep{
 			setupFn: func(ctx context.Context, app *App) error {
@@ -78,7 +78,7 @@ func TestApp(t *testing.T) {
 
 	t.Run("Cancel", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		app := NewApp()
+		var app App
 		quit := make(chan struct{})
 
 		m := mockStep{

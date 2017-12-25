@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"os"
 	"sync"
 
 	"github.com/asdine/lobby"
@@ -21,32 +20,25 @@ type App struct {
 	steps    steps
 }
 
-// NewApp create a configured App.
-func NewApp() *App {
-	app := App{
-		Logger: log.New(os.Stderr, "lobby:"),
-		errc:   make(chan error),
-	}
-
-	app.steps = []step{
-		new(directoriesStep),
-		new(registryStep),
-		new(boltBackendStep),
-		newGRPCUnixSocketStep(),
-		newGRPCPortStep(),
-		newHTTPStep(),
-		newBackendPluginsStep(),
-	}
-
-	return &app
-}
-
 // Run all the app components. Can be gracefully shutdown using the provided context.
 func (a *App) Run(ctx context.Context) error {
 	var errs Errors
+	a.errc = make(chan error)
+	a.Logger = log.New(log.Prefix("lobby:"), log.Debug(a.Config.Debug))
 
-	a.Logger.DebugEnabled = a.Config.Debug
 	a.logLobbyInfos()
+
+	if a.steps == nil {
+		a.steps = []step{
+			new(directoriesStep),
+			new(registryStep),
+			new(boltBackendStep),
+			newBackendPluginsStep(),
+			newGRPCUnixSocketStep(a),
+			newGRPCPortStep(a),
+			newHTTPStep(a),
+		}
+	}
 
 	err := a.steps.setup(ctx, a)
 	if err != nil && err != context.Canceled {
@@ -89,6 +81,7 @@ func (a *App) Run(ctx context.Context) error {
 	if len(errs) != 0 {
 		return errs
 	}
+
 	return nil
 }
 

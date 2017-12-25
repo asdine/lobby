@@ -19,8 +19,8 @@ import (
 
 // RunBackend runs a plugin as a backend.
 func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) {
-	app := cliapp.NewApp()
-	root := newRootCmd(app)
+	var app cliapp.App
+	root := newRootCmd(&app)
 	root.Use = fmt.Sprintf("lobby-%s", name)
 	root.Short = fmt.Sprintf("%s plugin", name)
 	root.RunE = func(cmd *cobra.Command, args []string) error {
@@ -51,8 +51,9 @@ func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) 
 		defer l.Close()
 
 		stdlog.SetFlags(0)
-		srv := rpc.NewServer(log.New(os.Stderr, ""), rpc.WithTopicService(bck))
+		srv := rpc.NewServer(log.New(), rpc.WithTopicService(bck))
 
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			_ = srv.Serve(l)

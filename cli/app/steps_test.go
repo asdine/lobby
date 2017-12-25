@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/asdine/lobby"
+	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +22,7 @@ func appHelper(t *testing.T) (*App, func()) {
 	require.NoError(t, err)
 
 	var app App
+	app.Logger = log.New(log.Output(ioutil.Discard))
 	app.errc = make(chan error)
 	app.Config.Paths.DataDir = path.Join(dir, "data")
 	app.Config.Paths.SocketDir = path.Join(app.Config.Paths.DataDir, "sockets")
@@ -145,9 +147,9 @@ func TestServersSteps(t *testing.T) {
 	defer cleanup()
 
 	testCases := []step{
-		newHTTPStep(),
-		newGRPCUnixSocketStep(),
-		newGRPCPortStep(),
+		newHTTPStep(app),
+		newGRPCUnixSocketStep(app),
+		newGRPCPortStep(app),
 	}
 
 	for _, s := range testCases {

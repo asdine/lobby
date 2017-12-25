@@ -70,6 +70,7 @@ type Registry struct {
 // RegisterBackend registers a backend under the given name.
 func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
 	r.backends[name] = backend
+	r.logger.Debugf("Registered %s backend\n", name)
 }
 
 func (r *Registry) watchTopics(c clientv3.WatchChan) {
@@ -155,6 +156,8 @@ func (r *Registry) Close() error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to close backend %s", name)
 		}
+
+		r.logger.Debugf("Stopped %s backend\n", name)
 	}
 
 	err := r.topicsWatcher.Close()

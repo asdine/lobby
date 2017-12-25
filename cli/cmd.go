@@ -11,9 +11,9 @@ import (
 
 // New returns the lobby CLI application.
 func New() *cobra.Command {
-	app := app.NewApp()
-	cmd := newRootCmd(app)
-	cmd.AddCommand(newRunCmd(app))
+	var app app.App
+	cmd := newRootCmd(&app)
+	cmd.AddCommand(newRunCmd(&app))
 	return cmd.Command
 }
 
