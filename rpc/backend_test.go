@@ -28,7 +28,7 @@ func newBackend(t *testing.T, b lobby.Backend) (*rpc.Backend, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(log.New(ioutil.Discard, ""), rpc.WithTopicService(b))
+	srv := rpc.NewServer(log.New(log.Output(ioutil.Discard)), rpc.WithTopicService(b))
 
 	var wg sync.WaitGroup
 	wg.Add(1)

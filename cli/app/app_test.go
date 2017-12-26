@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,6 +34,7 @@ func (s *mockStep) teardown(ctx context.Context, app *App) error {
 func TestApp(t *testing.T) {
 	t.Run("SetupError", func(t *testing.T) {
 		var app App
+		app.out = ioutil.Discard
 
 		m := mockStep{
 			setupFn: func(ctx context.Context, app *App) error {
@@ -52,6 +54,7 @@ func TestApp(t *testing.T) {
 
 	t.Run("Goroutine error", func(t *testing.T) {
 		var app App
+		app.out = ioutil.Discard
 
 		m := mockStep{
 			setupFn: func(ctx context.Context, app *App) error {
@@ -79,6 +82,7 @@ func TestApp(t *testing.T) {
 	t.Run("Cancel", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		var app App
+		app.out = ioutil.Discard
 		quit := make(chan struct{})
 
 		m := mockStep{

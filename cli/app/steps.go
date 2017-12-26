@@ -176,7 +176,11 @@ func boltBackendStep() step {
 func newGRPCUnixSocketStep(app *App) *gRPCUnixSocketStep {
 	return &gRPCUnixSocketStep{
 		serverStep: &serverStep{
-			logger: log.New(log.Prefix("gRPC server:"), log.Debug(app.Config.Debug)),
+			logger: log.New(
+				log.Prefix("gRPC server:"),
+				log.Output(app.out),
+				log.Debug(app.Config.Debug),
+			),
 		},
 	}
 }
@@ -202,7 +206,11 @@ func (g *gRPCUnixSocketStep) setup(ctx context.Context, app *App) error {
 func newGRPCPortStep(app *App) *gRPCPortStep {
 	return &gRPCPortStep{
 		serverStep: &serverStep{
-			logger: log.New(log.Prefix("gRPC server:"), log.Debug(app.Config.Debug)),
+			logger: log.New(
+				log.Prefix("gRPC server:"),
+				log.Output(app.out),
+				log.Debug(app.Config.Debug),
+			),
 		},
 	}
 }
@@ -228,7 +236,11 @@ func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
 func newHTTPStep(app *App) *httpStep {
 	return &httpStep{
 		serverStep: &serverStep{
-			logger: log.New(log.Prefix("http server:"), log.Debug(app.Config.Debug)),
+			logger: log.New(
+				log.Prefix("http server:"),
+				log.Output(app.out),
+				log.Debug(app.Config.Debug),
+			),
 		},
 	}
 }

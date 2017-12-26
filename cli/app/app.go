@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"io"
+	"os"
 	"sync"
 
 	"github.com/asdine/lobby"
@@ -16,6 +18,7 @@ type App struct {
 
 	wg       sync.WaitGroup
 	errc     chan error
+	out      io.Writer
 	registry lobby.Registry
 	steps    steps
 }
@@ -24,7 +27,15 @@ type App struct {
 func (a *App) Run(ctx context.Context) error {
 	var errs Errors
 	a.errc = make(chan error)
-	a.Logger = log.New(log.Prefix("lobby:"), log.Debug(a.Config.Debug))
+	if a.out == nil {
+		a.out = os.Stderr
+	}
+
+	a.Logger = log.New(
+		log.Prefix("lobby:"),
+		log.Output(a.out),
+		log.Debug(a.Config.Debug),
+	)
 
 	a.logLobbyInfos()
 

@@ -44,7 +44,7 @@ func TestEtcdRegistry(t *testing.T) {
 
 	createTopics(t, client, "lobby-tests", 5)
 
-	reg, err := NewRegistry(client, log.New(ioutil.Discard, ""), "lobby-tests")
+	reg, err := NewRegistry(client, log.New(log.Output(ioutil.Discard)), "lobby-tests")
 	require.NoError(t, err)
 	require.Equal(t, reg.topics.size(), 5)
 

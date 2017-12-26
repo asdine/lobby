@@ -22,6 +22,7 @@ func appHelper(t *testing.T) (*App, func()) {
 	require.NoError(t, err)
 
 	var app App
+	app.out = ioutil.Discard
 	app.Logger = log.New(log.Output(ioutil.Discard))
 	app.errc = make(chan error)
 	app.Config.Paths.DataDir = path.Join(dir, "data")

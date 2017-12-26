@@ -3,9 +3,9 @@ package http_test
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -19,7 +19,7 @@ import (
 func TestCreateTopic(t *testing.T) {
 	t.Run("EmptyBody", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", bytes.NewReader([]byte(nil)))
@@ -29,7 +29,7 @@ func TestCreateTopic(t *testing.T) {
 
 	t.Run("InvalidJSON", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`hello`))
@@ -39,7 +39,7 @@ func TestCreateTopic(t *testing.T) {
 
 	t.Run("ValidationError", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   "}`))
@@ -57,7 +57,7 @@ func TestCreateTopic(t *testing.T) {
 			return lobby.ErrBackendNotFound
 		}
 
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
@@ -75,7 +75,7 @@ func TestCreateTopic(t *testing.T) {
 			return lobby.ErrTopicAlreadyExists
 		}
 
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ","backend": "backend"}`))
@@ -93,7 +93,7 @@ func TestCreateTopic(t *testing.T) {
 			return errors.New("something unexpected happened !")
 		}
 
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
@@ -111,7 +111,7 @@ func TestCreateTopic(t *testing.T) {
 			return nil
 		}
 
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
@@ -123,7 +123,7 @@ func TestCreateTopic(t *testing.T) {
 func TestSaveMessage(t *testing.T) {
 	t.Run("EmptyBody", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest("POST", "/v1/topics/topic/key", bytes.NewReader([]byte(nil)))
@@ -133,7 +133,7 @@ func TestSaveMessage(t *testing.T) {
 
 	t.Run("TopicNotFound", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		registry.TopicFn = func(name string) (lobby.Topic, error) {
 			require.Equal(t, "topic", name)
@@ -149,7 +149,7 @@ func TestSaveMessage(t *testing.T) {
 
 	t.Run("InternalError", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		registry.TopicFn = func(name string) (lobby.Topic, error) {
 			require.Equal(t, "topic", name)
@@ -165,7 +165,7 @@ func TestSaveMessage(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		var registry mock.Registry
-		h := lobbyHttp.NewHandler(&registry, log.New(os.Stderr, ""))
+		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		registry.TopicFn = func(name string) (lobby.Topic, error) {
 			require.Equal(t, "topic", name)

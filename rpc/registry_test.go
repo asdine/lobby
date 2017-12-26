@@ -193,7 +193,7 @@ func newRegistry(t *testing.T, r lobby.Registry) (*rpc.Registry, func()) {
 	l, err := net.Listen("unix", socketPath)
 	require.NoError(t, err)
 
-	srv := rpc.NewServer(log.New(ioutil.Discard, ""), rpc.WithTopicService(r), rpc.WithRegistryService(r))
+	srv := rpc.NewServer(log.New(log.Output(ioutil.Discard)), rpc.WithTopicService(r), rpc.WithRegistryService(r))
 
 	go func() {
 		srv.Serve(l)
