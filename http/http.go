@@ -153,6 +153,11 @@ type handler struct {
 func (h *handler) createTopic(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var req topicCreationRequest
 
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		writeError(w, nil, http.StatusUnsupportedMediaType, h.logger)
+		return
+	}
+
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		writeError(w, errInvalidJSON, http.StatusBadRequest, h.logger)

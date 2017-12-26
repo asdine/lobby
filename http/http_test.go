@@ -3,6 +3,7 @@ package http_test
 import (
 	"bytes"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,13 +17,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func createTopicRequest(t *testing.T, r io.Reader) *http.Request {
+	req, err := http.NewRequest("POST", "/v1/topics", r)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
 func TestCreateTopic(t *testing.T) {
 	t.Run("EmptyBody", func(t *testing.T) {
 		var registry mock.Registry
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", bytes.NewReader([]byte(nil)))
+		r := createTopicRequest(t, bytes.NewReader([]byte(nil)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusBadRequest, w.Code)
 	})
@@ -32,7 +40,7 @@ func TestCreateTopic(t *testing.T) {
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`hello`))
+		r := createTopicRequest(t, strings.NewReader(`hello`))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusBadRequest, w.Code)
 	})
@@ -42,7 +50,7 @@ func TestCreateTopic(t *testing.T) {
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   "}`))
+		r := createTopicRequest(t, strings.NewReader(`{"name": "   "}`))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusBadRequest, w.Code)
 	})
@@ -60,7 +68,7 @@ func TestCreateTopic(t *testing.T) {
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
+		r := createTopicRequest(t, strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusNotFound, w.Code)
 	})
@@ -78,7 +86,7 @@ func TestCreateTopic(t *testing.T) {
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ","backend": "backend"}`))
+		r := createTopicRequest(t, strings.NewReader(`{"name": "   topic   ","backend": "backend"}`))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusBadRequest, w.Code)
 	})
@@ -96,7 +104,7 @@ func TestCreateTopic(t *testing.T) {
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
+		r := createTopicRequest(t, strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusInternalServerError, w.Code)
 	})
@@ -114,7 +122,7 @@ func TestCreateTopic(t *testing.T) {
 		h := lobbyHttp.NewHandler(&registry, log.New(log.Output(ioutil.Discard)))
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/topics", strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
+		r := createTopicRequest(t, strings.NewReader(`{"name": "   topic   ", "backend": "backend"}`))
 		h.ServeHTTP(w, r)
 		require.Equal(t, http.StatusCreated, w.Code)
 	})

@@ -26,8 +26,12 @@ func writeError(w http.ResponseWriter, err error, code int, logger *log.Logger) 
 		err = errInternal
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
+	if err == nil {
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 
 	enc := json.NewEncoder(w)
 	switch {
@@ -40,9 +44,7 @@ func writeError(w http.ResponseWriter, err error, code int, logger *log.Logger) 
 		err = enc.Encode(&errorResponse{Err: err.Error()})
 	}
 
-	if err != nil {
-		logger.Println(err)
-	}
+	logger.Println(err)
 }
 
 // errorResponse is a generic response for sending an error.
