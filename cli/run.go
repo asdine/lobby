@@ -12,31 +12,7 @@ import (
 )
 
 func setCoreCmd(cmd *cobra.Command, app *app.App) {
-	var backends []string
-	var pluginDir string
-	var httpPort, gRPCPort int
-
 	cmd.Short = "start a lobby server"
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if backends != nil {
-			app.Config.Plugins.Backends = backends
-		}
-
-		if pluginDir != "" {
-			app.Config.Paths.PluginDir = pluginDir
-		}
-
-		if httpPort != 0 {
-			app.Config.HTTP.Port = httpPort
-		}
-
-		if gRPCPort != 0 {
-			app.Config.Grpc.Port = gRPCPort
-		}
-
-		return nil
-	}
-
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -64,8 +40,8 @@ func setCoreCmd(cmd *cobra.Command, app *app.App) {
 		return err
 	}
 
-	cmd.Flags().StringSliceVar(&backends, "backend", nil, "Name of the backend to use")
-	cmd.Flags().StringVar(&pluginDir, "plugin-dir", "", "Location of plugins")
-	cmd.Flags().IntVar(&httpPort, "http-port", 0, "HTTP API port to listen on")
-	cmd.Flags().IntVar(&gRPCPort, "grpc-port", 0, "gRPC API port to listen on")
+	cmd.Flags().StringSliceVar(&app.Config.Plugins.Backends, "backend", nil, "Name of the backend to use")
+	cmd.Flags().StringVar(&app.Config.Paths.PluginDir, "plugin-dir", "", "Location of plugins")
+	cmd.Flags().IntVar(&app.Config.Grpc.Port, "grpc-port", 5656, "gRPC API port to listen on")
+	cmd.Flags().IntVar(&app.Config.HTTP.Port, "http-port", 5657, "HTTP API port to listen on")
 }

@@ -288,9 +288,13 @@ func (s *serverStep) runServer(srv lobby.Server, l net.Listener, app *App) error
 
 func (s *serverStep) teardown(ctx context.Context, app *App) error {
 	s.logger.Debugf("Shutting down")
-	err := s.srv.Stop()
-	s.srv = nil
-	return err
+	if s.srv != nil {
+		err := s.srv.Stop()
+		s.srv = nil
+		return err
+	}
+
+	return nil
 }
 
 func newBackendPluginsStep() *backendPluginsStep {

@@ -19,9 +19,6 @@ func New() *cobra.Command {
 
 func newRootCmd(app *app.App) *rootCmd {
 	var configPath string
-	var debugMode bool
-	var dataDir string
-
 	var cfgMeta toml.MetaData
 
 	cmd := cobra.Command{
@@ -37,14 +34,6 @@ func newRootCmd(app *app.App) *rootCmd {
 				}
 			}
 
-			if debugMode {
-				app.Config.Debug = true
-			}
-
-			if dataDir != "" {
-				app.Config.Paths.DataDir = dataDir
-			}
-
 			if app.Config.Paths.SocketDir == "" {
 				app.Config.Paths.SocketDir = path.Join(app.Config.Paths.DataDir, "sockets")
 			}
@@ -54,8 +43,8 @@ func newRootCmd(app *app.App) *rootCmd {
 	}
 
 	cmd.PersistentFlags().StringVarP(&configPath, "config-file", "c", "./lobby.toml", "Path to the Lobby config file")
-	cmd.PersistentFlags().StringVar(&dataDir, "data-dir", ".lobby", "Path to Lobby data files")
-	cmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Enable debug mode")
+	cmd.PersistentFlags().StringVar(&app.Config.Paths.DataDir, "data-dir", ".lobby", "Path to Lobby data files")
+	cmd.PersistentFlags().BoolVar(&app.Config.Debug, "debug", false, "Enable debug mode")
 
 	return &rootCmd{
 		Command: &cmd,
