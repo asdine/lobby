@@ -13,7 +13,7 @@ import (
 func New() *cobra.Command {
 	var app app.App
 	cmd := newRootCmd(&app)
-	cmd.AddCommand(newRunCmd(&app))
+	setCoreCmd(cmd.Command, &app)
 	return cmd.Command
 }
 
