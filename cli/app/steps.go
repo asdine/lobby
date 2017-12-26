@@ -220,7 +220,7 @@ type gRPCPortStep struct {
 }
 
 func (g *gRPCPortStep) setup(ctx context.Context, app *App) error {
-	l, err := net.Listen("tcp", ":5656")
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", app.Config.Grpc.Port))
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ type httpStep struct {
 }
 
 func (h *httpStep) setup(ctx context.Context, app *App) error {
-	l, err := net.Listen("tcp", ":5657")
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", app.Config.HTTP.Port))
 	if err != nil {
 		return err
 	}

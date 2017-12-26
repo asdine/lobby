@@ -13,7 +13,13 @@ import (
 type Config struct {
 	Debug    bool
 	Registry string
-	Bolt     struct {
+	HTTP     struct {
+		Port int
+	}
+	Grpc struct {
+		Port int
+	}
+	Bolt struct {
 		Backend bool
 	}
 	Etcd    clientv3.Config

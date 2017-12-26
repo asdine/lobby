@@ -14,6 +14,7 @@ import (
 func newRunCmd(app *app.App) *cobra.Command {
 	var backends []string
 	var pluginDir string
+	var httpPort, gRPCPort int
 
 	cmd := cobra.Command{
 		Use:   "run",
@@ -25,6 +26,14 @@ func newRunCmd(app *app.App) *cobra.Command {
 
 			if pluginDir != "" {
 				app.Config.Paths.PluginDir = pluginDir
+			}
+
+			if httpPort != 0 {
+				app.Config.HTTP.Port = httpPort
+			}
+
+			if gRPCPort != 0 {
+				app.Config.Grpc.Port = gRPCPort
 			}
 
 			return nil
@@ -59,6 +68,8 @@ func newRunCmd(app *app.App) *cobra.Command {
 
 	cmd.Flags().StringSliceVar(&backends, "backend", nil, "Name of the backend to use")
 	cmd.Flags().StringVar(&pluginDir, "plugin-dir", "", "Location of plugins")
+	cmd.Flags().IntVar(&httpPort, "http-port", 0, "HTTP API port to listen on")
+	cmd.Flags().IntVar(&gRPCPort, "grpc-port", 0, "gRPC API port to listen on")
 
 	return &cmd
 }
