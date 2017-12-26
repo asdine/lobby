@@ -13,8 +13,9 @@ import (
 // App is the main application. It bootstraps all the components
 // and can be gracefully shutdown.
 type App struct {
-	Config Config
-	Logger *log.Logger
+	Config     Config
+	ConfigPath string
+	Logger     *log.Logger
 
 	wg       sync.WaitGroup
 	errc     chan error

@@ -35,6 +35,11 @@ func RunBackend(name string, fn func() (lobby.Backend, error), cfg interface{}) 
 			}
 		}
 
+		err := app.Config.Paths.Create()
+		if err != nil {
+			return err
+		}
+
 		bck, err := fn()
 		if err != nil {
 			return err

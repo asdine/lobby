@@ -16,14 +16,6 @@ func TestPaths(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("Empty Socket dir", func(t *testing.T) {
-		p := Paths{
-			DataDir: "some path",
-		}
-		err := p.Create()
-		require.Error(t, err)
-	})
-
 	t.Run("Bad dir", func(t *testing.T) {
 		p := Paths{
 			DataDir:   "/some path",
@@ -51,15 +43,13 @@ func TestPaths(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("OK", func(t *testing.T) {
+	okTest := func(t *testing.T, fn func(string) *Paths) {
 		name, err := ioutil.TempDir("", "lobby")
 		require.NoError(t, err)
 		defer os.RemoveAll(name)
 
-		p := Paths{
-			DataDir:   path.Join(name, "config"),
-			SocketDir: path.Join(name, "config", "sockets"),
-		}
+		p := fn(name)
+
 		err = p.Create()
 		require.NoError(t, err)
 
@@ -71,5 +61,22 @@ func TestPaths(t *testing.T) {
 
 		err = p.Create()
 		require.NoError(t, err)
+	}
+
+	t.Run("OK", func(t *testing.T) {
+		okTest(t, func(name string) *Paths {
+			return &Paths{
+				DataDir:   path.Join(name, "config"),
+				SocketDir: path.Join(name, "config", "sockets"),
+			}
+		})
+	})
+
+	t.Run("No socket dir", func(t *testing.T) {
+		okTest(t, func(name string) *Paths {
+			return &Paths{
+				DataDir: path.Join(name, "config"),
+			}
+		})
 	})
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/coreos/etcd/clientv3"
@@ -47,7 +48,7 @@ func (p *Paths) Create() error {
 	}
 
 	if p.SocketDir == "" {
-		return errors.New("unspecified socket directory")
+		p.SocketDir = path.Join(p.DataDir, "sockets")
 	}
 
 	paths := []string{
