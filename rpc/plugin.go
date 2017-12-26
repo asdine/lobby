@@ -31,6 +31,10 @@ func (p *process) Name() string {
 }
 
 func (p *process) Wait() error {
+	if p.closed {
+		return nil
+	}
+
 	status, err := p.Process.Wait()
 	if err != nil {
 		return err
@@ -82,7 +86,7 @@ func LoadPlugin(ctx context.Context, name, cmdPath, dataDir string) (lobby.Plugi
 
 	cmd := execCommand(cmdPath, "--data-dir", dataDir)
 	prefixFn := func() []byte {
-		return []byte(time.Now().Format("2006/01/02 15:04:05") + " [" + name + "] ")
+		return []byte(time.Now().Format("2006/01/02 15:04:05") + " i | " + name + ": ")
 	}
 
 	cmd.Stdout = lobby.NewFuncPrefixWriter(prefixFn, os.Stdout)
@@ -132,6 +136,7 @@ Loop:
 	conn, err := grpc.Dial("",
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
+		grpc.WithTimeout(1*time.Second),
 		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
 			return net.DialTimeout("unix", socketPath, timeout)
 		}),

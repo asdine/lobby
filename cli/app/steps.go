@@ -279,6 +279,7 @@ func (s *serverStep) runServer(srv lobby.Server, l net.Listener, app *App) error
 		err := srv.Serve(l)
 		if err != nil {
 			s.logger.Println(err)
+			app.errc <- err
 		}
 	}()
 
@@ -326,6 +327,17 @@ func (s *backendPluginsStep) setup(ctx context.Context, app *App) error {
 		app.Logger.Debugf("Started %s plugin \n", name)
 		app.registry.RegisterBackend(name, bck)
 		s.plugins = append(s.plugins, plg)
+
+		app.wg.Add(1)
+		go func(p lobby.Plugin) {
+			defer app.wg.Done()
+
+			err := p.Wait()
+			if err != nil {
+				app.Logger.Println(err)
+				app.errc <- err
+			}
+		}(plg)
 	}
 
 	return nil
@@ -335,11 +347,13 @@ func (s *backendPluginsStep) teardown(ctx context.Context, app *App) error {
 	for _, p := range s.plugins {
 		err := p.Close()
 		if err != nil {
+			app.Logger.Printf("Error while closing plugin %s: %s\n", p.Name(), err)
 			app.errc <- err
 		}
 
 		err = p.Wait()
 		if err != nil {
+			app.Logger.Printf("Error while waiting for plugin %s to close: %s\n", p.Name(), err)
 			app.errc <- err
 		}
 

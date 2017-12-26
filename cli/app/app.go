@@ -53,6 +53,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	err := a.steps.setup(ctx, a)
 	if err != nil && err != context.Canceled {
+		a.Logger.Println(err)
 		errs = append(errs, err)
 	}
 

@@ -1,5 +1,5 @@
-hash: c568d1aada03fb31a39ab5247461dd1f2340f3fb54a26a2b48982e9f4c0e2da6
-updated: 2017-12-25T20:30:32.914631441+01:00
+hash: 8dddb522ec93df874f42f56351fe9d7778f3cff92d93b18b8605c6bb5fcd47e8
+updated: 2017-12-26T19:12:31.996093239+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 521b25f4b05fd26bec69d9dedeb8f9c9a83939a8
@@ -45,6 +45,10 @@ imports:
   - ptypes/timestamp
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/grpc-ecosystem/go-grpc-middleware
+  version: 967bee733a734780623ac3d7c8e9216e4372ea62
+  subpackages:
+  - grpc_recovery
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/julienschmidt/httprouter

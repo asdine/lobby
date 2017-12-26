@@ -43,6 +43,9 @@ import:
   - codes
   - status
 - package: gopkg.in/mgo.v2
+- package: github.com/grpc-ecosystem/go-grpc-middleware
+  subpackages:
+  - grpc_recovery
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4

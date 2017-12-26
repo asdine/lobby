@@ -1,11 +1,17 @@
 package mock
 
-import "github.com/asdine/lobby"
+import (
+	"sync"
+
+	"github.com/asdine/lobby"
+)
 
 var _ lobby.Plugin = new(Plugin)
 
 // Plugin is a mock service that runs provided functions. Useful for testing.
 type Plugin struct {
+	sync.Mutex
+
 	NameFn      func() string
 	NameInvoked int
 
@@ -18,6 +24,8 @@ type Plugin struct {
 
 // Name runs NameFn and increments NameInvoked when invoked.
 func (s *Plugin) Name() string {
+	s.Lock()
+	defer s.Unlock()
 	s.NameInvoked++
 
 	if s.NameFn != nil {
@@ -29,6 +37,8 @@ func (s *Plugin) Name() string {
 
 // Close runs CloseFn and increments CloseInvoked when invoked.
 func (s *Plugin) Close() error {
+	s.Lock()
+	defer s.Unlock()
 	s.CloseInvoked++
 
 	if s.CloseFn != nil {
@@ -40,6 +50,8 @@ func (s *Plugin) Close() error {
 
 // Wait runs WaitFn and increments WaitInvoked when invoked.
 func (s *Plugin) Wait() error {
+	s.Lock()
+	defer s.Unlock()
 	s.WaitInvoked++
 
 	if s.WaitFn != nil {

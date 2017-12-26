@@ -6,12 +6,18 @@ import (
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/rpc/proto"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"google.golang.org/grpc"
 )
 
 // NewServer returns a configured gRPC server.
 func NewServer(logger *log.Logger, services ...func(*grpc.Server, *log.Logger)) lobby.Server {
-	g := grpc.NewServer()
+	g := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_recovery.UnaryServerInterceptor(),
+		)),
+	)
 
 	for _, s := range services {
 		s(g, logger)
