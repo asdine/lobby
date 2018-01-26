@@ -6,7 +6,7 @@
 
 Lobby is an open-source pluggable platform for data delivery.
 
-![Credits @jrmneveu](https://user-images.githubusercontent.com/2102036/27262061-60c8c4ee-544f-11e7-96d7-17464a41fc1d.png)
+![Credits @jrmneveu](https://user-images.githubusercontent.com/2102036/35443117-29b9226e-02aa-11e8-8b03-217d650ef4af.png)
 
 ## Overview
 
