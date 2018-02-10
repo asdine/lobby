@@ -51,7 +51,7 @@ func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
 }
 
 // Create a topic in the registry.
-func (r *Registry) Create(backendName, topicName string) error {
+func (r *Registry) Create(backendName, path string) error {
 	if _, ok := r.backends[backendName]; !ok {
 		return lobby.ErrBackendNotFound
 	}
@@ -62,37 +62,37 @@ func (r *Registry) Create(backendName, topicName string) error {
 	}
 	defer tx.Rollback()
 
-	var topic boltpb.Topic
+	var topic boltpb.Endpoint
 
-	err = tx.One("Name", topicName, &topic)
+	err = tx.One("Path", path, &topic)
 	if err == nil {
-		return lobby.ErrTopicAlreadyExists
+		return lobby.ErrEndpointAlreadyExists
 	}
 
 	if err != storm.ErrNotFound {
-		return errors.Wrapf(err, "failed to fetch topic %s", topicName)
+		return errors.Wrapf(err, "failed to fetch topic %s", path)
 	}
 
-	err = tx.Save(&boltpb.Topic{
-		Name:    topicName,
+	err = tx.Save(&boltpb.Endpoint{
+		Path:    path,
 		Backend: backendName,
 	})
 
 	if err != nil {
-		return errors.Wrapf(err, "failed to create topic %s", topicName)
+		return errors.Wrapf(err, "failed to create topic %s", path)
 	}
 
 	err = tx.Commit()
 	return errors.Wrap(err, "failed to commit")
 }
 
-// Topic returns the selected topic from the Backend.
-func (r *Registry) Topic(name string) (lobby.Topic, error) {
-	var topic boltpb.Topic
+// Endpoint returns the selected topic from the Backend.
+func (r *Registry) Endpoint(name string) (lobby.Endpoint, error) {
+	var topic boltpb.Endpoint
 
-	err := r.DB.One("Name", name, &topic)
+	err := r.DB.One("Path", name, &topic)
 	if err == storm.ErrNotFound {
-		return nil, lobby.ErrTopicNotFound
+		return nil, lobby.ErrEndpointNotFound
 	}
 
 	if err != nil {
@@ -101,10 +101,10 @@ func (r *Registry) Topic(name string) (lobby.Topic, error) {
 
 	backend, ok := r.backends[topic.Backend]
 	if !ok {
-		return nil, lobby.ErrTopicNotFound
+		return nil, lobby.ErrEndpointNotFound
 	}
 
-	return backend.Topic(name)
+	return backend.Endpoint(name)
 }
 
 // Close BoltDB connection and registered backends.

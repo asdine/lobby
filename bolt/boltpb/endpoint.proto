@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package boltpb;
 
-message Topic {
+message Endpoint {
   // @inject_tag: storm:"id"
-  string Name = 1;
+  string Path = 1;
   string Backend = 2;
 }
