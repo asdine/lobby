@@ -2,11 +2,11 @@ package mock
 
 import "github.com/asdine/lobby"
 
-var _ lobby.Topic = new(Topic)
+var _ lobby.Endpoint = new(Endpoint)
 
-// Topic is a mock service that runs provided functions. Useful for testing.
-type Topic struct {
-	SendFn      func(*lobby.Message) error
+// Endpoint is a mock service that runs provided functions. Useful for testing.
+type Endpoint struct {
+	SendFn      func(*lobby.Request) error
 	SendInvoked int
 
 	CloseFn      func() error
@@ -14,22 +14,22 @@ type Topic struct {
 }
 
 // Send runs SendFn and increments SendInvoked when invoked.
-func (b *Topic) Send(message *lobby.Message) error {
-	b.SendInvoked++
+func (e *Endpoint) Send(message *lobby.Request) error {
+	e.SendInvoked++
 
-	if b.SendFn != nil {
-		return b.SendFn(message)
+	if e.SendFn != nil {
+		return e.SendFn(message)
 	}
 
 	return nil
 }
 
 // Close runs CloseFn and increments CloseInvoked when invoked.
-func (b *Topic) Close() error {
-	b.CloseInvoked++
+func (e *Endpoint) Close() error {
+	e.CloseInvoked++
 
-	if b.CloseFn != nil {
-		return b.CloseFn()
+	if e.CloseFn != nil {
+		return e.CloseFn()
 	}
 
 	return nil

@@ -9,8 +9,8 @@ type Registry struct {
 	CreateFn      func(string, string) error
 	CreateInvoked int
 
-	TopicFn      func(string) (lobby.Topic, error)
-	TopicInvoked int
+	EndpointFn      func(string) (lobby.Endpoint, error)
+	EndpointInvoked int
 
 	CloseFn      func() error
 	CloseInvoked int
@@ -38,12 +38,12 @@ func (r *Registry) Create(backendName, topicName string) error {
 	return nil
 }
 
-// Topic runs TopicFn and increments TopicInvoked when invoked.
-func (r *Registry) Topic(name string) (lobby.Topic, error) {
-	r.TopicInvoked++
+// Endpoint runs EndpointFn and increments EndpointInvoked when invoked.
+func (r *Registry) Endpoint(name string) (lobby.Endpoint, error) {
+	r.EndpointInvoked++
 
-	if r.TopicFn != nil {
-		return r.TopicFn(name)
+	if r.EndpointFn != nil {
+		return r.EndpointFn(name)
 	}
 
 	return nil, nil

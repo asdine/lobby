@@ -6,19 +6,19 @@ var _ lobby.Backend = new(Backend)
 
 // Backend is a mock service that runs provided functions. Useful for testing.
 type Backend struct {
-	TopicFn      func(name string) (lobby.Topic, error)
-	TopicInvoked int
+	EndpointFn      func(path string) (lobby.Endpoint, error)
+	EndpointInvoked int
 
 	CloseFn      func() error
 	CloseInvoked int
 }
 
-// Topic runs TopicFn and increments TopicInvoked when invoked.
-func (s *Backend) Topic(name string) (lobby.Topic, error) {
-	s.TopicInvoked++
+// Endpoint runs EndpointFn and increments EndpointInvoked when invoked.
+func (s *Backend) Endpoint(path string) (lobby.Endpoint, error) {
+	s.EndpointInvoked++
 
-	if s.TopicFn != nil {
-		return s.TopicFn(name)
+	if s.EndpointFn != nil {
+		return s.EndpointFn(path)
 	}
 
 	return nil, nil
