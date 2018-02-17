@@ -3,16 +3,17 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/asdine/lobby"
 	"github.com/asdine/lobby/log"
 	"github.com/asdine/lobby/validation"
 	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
 )
 
 const maxBodySize = 1024 * 1024
@@ -119,39 +120,72 @@ func encodeJSON(w http.ResponseWriter, v interface{}, status int, logger *log.Lo
 	}
 }
 
-// encodeJSON encodes v to w in JSON format. Error() is called if encoding fails.
-func writeRawJSON(w http.ResponseWriter, v []byte, status int, logger *log.Logger) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if _, err := w.Write(v); err != nil {
-		writeError(w, err, http.StatusInternalServerError, logger)
-	}
-}
-
 // NewHandler instantiates a configured Handler.
-func NewHandler(r lobby.Registry, logger *log.Logger) http.Handler {
+func NewHandler(r lobby.Registry, logger *log.Logger) (http.Handler, error) {
 	router := httprouter.New()
 
 	h := handler{
-		registry: r,
-		logger:   logger,
-		router:   router,
+		registry:     r,
+		logger:       logger,
+		router:       router,
+		newEndpointC: make(chan lobby.Endpoint),
 	}
 
-	router.POST("/v1/topics", h.createTopic)
-	router.POST("/v1/topics/:topic", h.postMessage)
-	router.POST("/v1/topics/:topic/:group", h.postMessage)
-	return &wrapper{handler: router, logger: h.logger}
+	err := h.setupRouter()
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		for range h.newEndpointC {
+			err := h.setupRouter()
+			if err != nil {
+				logger.Printf("failed to refresh router, err: %s", err)
+			}
+		}
+	}()
+
+	return &wrapper{handler: router, logger: h.logger}, nil
 }
 
 type handler struct {
-	registry lobby.Registry
-	router   *httprouter.Router
-	logger   *log.Logger
+	sync.RWMutex
+
+	registry     lobby.Registry
+	router       *httprouter.Router
+	logger       *log.Logger
+	newEndpointC chan lobby.Endpoint
 }
 
-func (h *handler) createTopic(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var req topicCreationRequest
+func (h *handler) setupRouter() error {
+	h.Lock()
+	defer h.Unlock()
+
+	endpoints, err := h.registry.Endpoints()
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch endpoints from registry")
+	}
+
+	router := httprouter.New()
+
+	router.POST("/_/v1/endpoints", h.createEndpoint)
+
+	for _, e := range endpoints {
+		router.Handler(e.Method(), e.Path(), e)
+	}
+
+	h.router = router
+	return nil
+}
+
+func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.RLock()
+	h.router.ServeHTTP(w, r)
+	h.RUnlock()
+}
+
+func (h *handler) createEndpoint(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var req endpointCreationRequest
 
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		writeError(w, nil, http.StatusUnsupportedMediaType, h.logger)
@@ -170,63 +204,33 @@ func (h *handler) createTopic(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	err = h.registry.Create(req.Backend, req.Name)
-	switch err {
-	case nil:
-		w.WriteHeader(http.StatusCreated)
-	case lobby.ErrBackendNotFound:
-		http.NotFound(w, r)
-	case lobby.ErrTopicAlreadyExists:
-		writeError(w, validation.AddError(nil, "name", err), http.StatusBadRequest, h.logger)
-	default:
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-	}
-}
-
-func (h *handler) postMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if r.ContentLength == 0 {
-		writeError(w, errEmptyContent, http.StatusBadRequest, h.logger)
-		return
-	}
-
-	defer r.Body.Close()
-	value, err := ioutil.ReadAll(r.Body)
+	endpoint, err := h.registry.Create(req.Backend, req.Path)
 	if err != nil {
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	t, err := h.registry.Topic(ps.ByName("topic"))
-	if err != nil {
-		if err == lobby.ErrTopicNotFound {
+		switch err {
+		case lobby.ErrBackendNotFound:
 			http.NotFound(w, r)
-			return
+		case lobby.ErrEndpointAlreadyExists:
+			writeError(w, validation.AddError(nil, "path", err), http.StatusConflict, h.logger)
+		default:
+			writeError(w, err, http.StatusInternalServerError, h.logger)
 		}
-
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-		return
 	}
 
-	err = t.Send(&lobby.Message{
-		Group: ps.ByName("group"),
-		Value: value,
-	})
-	if err != nil {
-		writeError(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	writeRawJSON(w, nil, http.StatusCreated, h.logger)
+	encodeJSON(w, &endpointCreationResponse{Path: endpoint.Path(), Backend: req.Backend}, http.StatusCreated, h.logger)
 }
 
-type topicCreationRequest struct {
-	Name    string `json:"name" valid:"required,alphanum,stringlength(1|64)"`
+type endpointCreationRequest struct {
+	Path    string `json:"path" valid:"required,stringlength(1|64)"`
 	Backend string `json:"backend" valid:"required,alphanum"`
 }
 
-func (t *topicCreationRequest) Validate() error {
-	t.Name = strings.TrimSpace(t.Name)
+func (t *endpointCreationRequest) Validate() error {
 	t.Backend = strings.TrimSpace(t.Backend)
 
 	return validation.Validate(t)
+}
+
+type endpointCreationResponse struct {
+	Path    string `json:"path"`
+	Backend string `json:"backend"`
 }

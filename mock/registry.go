@@ -6,11 +6,14 @@ var _ lobby.Registry = new(Registry)
 
 // Registry is a mock service that runs provided functions. Useful for testing.
 type Registry struct {
-	CreateFn      func(string, string) error
+	CreateFn      func(string, string) (lobby.Endpoint, error)
 	CreateInvoked int
 
 	EndpointFn      func(string) (lobby.Endpoint, error)
 	EndpointInvoked int
+
+	EndpointsFn      func() ([]lobby.Endpoint, error)
+	EndpointsInvoked int
 
 	CloseFn      func() error
 	CloseInvoked int
@@ -28,14 +31,14 @@ func (r *Registry) RegisterBackend(name string, backend lobby.Backend) {
 }
 
 // Create runs CreateFn and increments CreateInvoked when invoked.
-func (r *Registry) Create(backendName, topicName string) error {
+func (r *Registry) Create(backendName, topicName string) (lobby.Endpoint, error) {
 	r.CreateInvoked++
 
 	if r.CreateFn != nil {
 		return r.CreateFn(backendName, topicName)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // Endpoint runs EndpointFn and increments EndpointInvoked when invoked.
@@ -44,6 +47,17 @@ func (r *Registry) Endpoint(name string) (lobby.Endpoint, error) {
 
 	if r.EndpointFn != nil {
 		return r.EndpointFn(name)
+	}
+
+	return nil, nil
+}
+
+// Endpoints runs EndpointsFn and increments EndpointsInvoked when invoked.
+func (r *Registry) Endpoints() ([]lobby.Endpoint, error) {
+	r.EndpointsInvoked++
+
+	if r.EndpointsFn != nil {
+		return r.EndpointsFn()
 	}
 
 	return nil, nil

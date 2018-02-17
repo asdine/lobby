@@ -1,6 +1,9 @@
 package lobby
 
-import "io"
+import (
+	"io"
+	"net/http"
+)
 
 // Errors.
 const (
@@ -9,44 +12,38 @@ const (
 	ErrEndpointAlreadyExists = Error("endpoint already exists")
 )
 
-// Request ...
-type Request struct {
-	Header map[string]string
-	Body   io.Reader
-}
-
 // An Endpoint ...
 type Endpoint interface {
-	// Send data to the endpoint.
-	Send(*Request) error
+	io.Closer
+	http.Handler
 
-	// Close the endpoint. Can be used to close sessions if required.
-	Close() error
+	Method() string
+	Path() string
 }
 
 // EndpointFunc creates a endpoint from a send function.
-func EndpointFunc(fn func(*Request) error) Endpoint {
-	return &endpointFunc{fn}
-}
+// func EndpointFunc(fn func(*http.Request) error) Endpoint {
+// 	return &endpointFunc{fn}
+// }
 
-type endpointFunc struct {
-	fn func(*Request) error
-}
+// type endpointFunc struct {
+// 	fn func(*http.Request) error
+// }
 
-func (t *endpointFunc) Send(r *Request) error {
-	return t.fn(r)
-}
+// func (t *endpointFunc) Send(r *http.Request) error {
+// 	return t.fn(r)
+// }
 
-func (t *endpointFunc) Close() error {
-	return nil
-}
+// func (t *endpointFunc) Close() error {
+// 	return nil
+// }
 
 // A Backend is able to create endpoints.
 type Backend interface {
+	io.Closer
+
 	// Get an endpoint by path.
 	Endpoint(path string) (Endpoint, error)
-	// Close the backend connection.
-	Close() error
 }
 
 // A Registry manages the endpoints, their configuration and their associated Backend.
@@ -56,5 +53,7 @@ type Registry interface {
 	// Register a backend under the given name.
 	RegisterBackend(name string, backend Backend)
 	// Create a endpoint and register it to the Registry.
-	Create(backendName, path string) error
+	Create(backendName, path string) (Endpoint, error)
+	// List of all the endpoints paths.
+	Endpoints() ([]Endpoint, error)
 }
